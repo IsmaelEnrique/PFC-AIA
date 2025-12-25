@@ -40,11 +40,11 @@ export default function Login() {
 
   //Funcion: manejador del envio del formulario
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();      //Evita el refresh automatico del formulario
     setSuccess(false);       //Resetea el mensaje de exito
 
-    //Si pasa la validacion, simula un login exitoso
+    /*/Si pasa la validacion, simula un login exitoso
     if (validateForm()) {
       console.log("Inicio de sesión correcto ✅", { email, password });
       
@@ -54,6 +54,34 @@ export default function Login() {
       setPassword("");
       setErrors({});
     }
+    */
+    if (!validateForm()) return;
+
+    try {
+      const response = await fetch("http://localhost:4000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ general: data.message });
+        return;
+      }
+
+      console.log("Login correcto ✅", data);
+      setSuccess(true);
+      setEmail("");
+      setPassword("");
+      setErrors({});
+    } catch (error) {
+      setErrors({ general: "No se pudo conectar con el servidor" });
+    }
+
   };
 
   //Render: Estructura visual del formulario
@@ -96,11 +124,19 @@ export default function Login() {
             {errors.password && <p className="error-text">{errors.password}</p>}
         </div>
 
-         {/* Botón de envío */}
-        <button type="submit" className="btn btn-primary">Iniciar sesión</button>
-        
-        {/* Mensaje de éxito si la validación fue correcta */}
-          {success && <p className="success-text">Inicio de sesión exitoso 🎉</p>}
+        <button type="submit" className="btn btn-primary">
+          Iniciar sesión
+        </button>
+
+        {/* Error general del backend */}
+        {errors.general && (
+          <p className="error-text">{errors.general}</p>
+        )}
+
+        {/* Mensaje de éxito */}
+        {success && (
+          <p className="success-text">Inicio de sesión exitoso 🎉</p>
+        )}
     </form>
 
         {/* Enlace hacia la página de registro */}

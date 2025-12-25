@@ -1,6 +1,45 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express();
+
+// 🔴 MIDDLEWARES (ORDEN IMPORTANTE)
+app.use(cors({
+  origin: "http://localhost:5173"
+}));
+app.use(express.json());
+
+// 🔴 RUTA LOGIN
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  console.log("Login recibido:", email, password);
+
+  if (email === "test@test.com" && password === "123456") {
+    return res.json({
+      ok: true,
+      user: { email }
+    });
+  }
+
+  res.status(401).json({
+    message: "Correo o contraseña incorrectos"
+  });
+});
+
+// 🔴 SERVER
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
+});
+
+
+/*import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 import usuarioRoutes from "./routes/usuario.js";
 
 // 🔹 Cargar variables de entorno (.env)
@@ -38,9 +77,34 @@ const PORT = (typeof process !== "undefined" && process.env && process.env.PORT)
   ? process.env.PORT
   : 4000;
 
+app.get("/", (req, res) => {
+  res.send("Backend Emprendify funcionando ✅");
+});
+
+//Simulacion temporal del login 
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // 🔴 Simulación temporal (después va DB)
+  if (email === "test@test.com" && password === "123456") {
+    return res.json({
+      ok: true,
+      user: {
+        email,
+      },
+    });
+  }
+
+  res.status(401).json({
+    message: "Correo o contraseña incorrectos",
+  });
+});
+
+
 // 🔹 Iniciar el servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
 });
 
 export default app;
+*/
