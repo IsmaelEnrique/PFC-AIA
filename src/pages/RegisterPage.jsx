@@ -7,6 +7,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [nombreUsuario, setNombreUsuario] = useState(""); //PRI ----
+
 
   // -------------------------
   // ✅ Validar el formulario
@@ -39,7 +41,7 @@ export default function Register() {
   // -------------------------
   // 📤 Envío del formulario
   // -------------------------
-  const handleSubmit = (e) => {
+  /*const handleSubmit = (e) => {
     e.preventDefault();
     setSuccess(false);
 
@@ -51,7 +53,49 @@ export default function Register() {
       setConfirmPassword("");
       setErrors({});
     }
-  };
+  };---------------PRII*/
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSuccess(false);
+
+  if (!validateForm()) return;
+
+  try {
+    const response = await fetch(
+      "http://localhost:4000/api/usuarios",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          nombre_usuario: nombreUsuario,
+          mail: email,
+          contrasena: password
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setErrors({ general: data.error || "Error al registrarse" });
+      return;
+    }
+
+    // ✅ Registro OK
+    setSuccess(true);
+    setNombreUsuario("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setErrors({});
+  } catch (error) {
+    console.error(error);
+    setErrors({ general: "Error de conexión con el servidor" });
+  }
+};
+
 
   // -------------------------
   // 🧱 Estructura visual
@@ -67,6 +111,17 @@ export default function Register() {
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          {/* Campo nombre de usuario */}
+         <div className="form-group">
+            <label htmlFor="nombreUsuario">Nombre de usuario</label>
+            <input
+            type="text"
+            id="nombreUsuario"
+            placeholder="Tu nombre de usuario"
+            value={nombreUsuario}
+            onChange={(e) => setNombreUsuario(e.target.value)}
+            />
+          </div>
           {/* Campo email */}
           <div className="form-group">
             <label htmlFor="email">Correo electrónico</label>
@@ -111,7 +166,9 @@ export default function Register() {
           <button type="submit" className="btn btn-primary">
             Registrarse
           </button>
-
+          {errors.general && (
+            <p className="error-text">{errors.general}</p>
+        )}
           {success && (
             <p className="success-text">Cuenta creada con éxito 🎉</p>
           )}
