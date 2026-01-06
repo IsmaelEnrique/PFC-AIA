@@ -40,49 +40,46 @@ export default function Login() {
 
   //Funcion: manejador del envio del formulario
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();      //Evita el refresh automatico del formulario
-    setSuccess(false);       //Resetea el mensaje de exito
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSuccess(false);
 
-    /*/Si pasa la validacion, simula un login exitoso
-    if (validateForm()) {
-      console.log("Inicio de sesión correcto ✅", { email, password });
-      
-      //Muestra mensaje de exito y limpia el formulario
-      setSuccess(true);
-      setEmail("");
-      setPassword("");
-      setErrors({});
-    }
-    */
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    try {
-      const response = await fetch("http://localhost:4000/login", {
+  try {
+    const response = await fetch(
+      "http://localhost:4000/api/usuarios/login",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: data.message });
-        return;
+        body: JSON.stringify({
+          mail: email,
+          contrasena: password,
+        }),
       }
+    );
 
-      console.log("Login correcto ✅", data);
-      setSuccess(true);
-      setEmail("");
-      setPassword("");
-      setErrors({});
-    } catch (error) {
-      setErrors({ general: "No se pudo conectar con el servidor" });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setErrors({ general: data.error || "Credenciales inválidas" });
+      return;
     }
 
-  };
+    // ✅ LOGIN OK
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    console.log("Login correcto ✅", data);
+    setSuccess(true);
+    setEmail("");
+    setPassword("");
+    setErrors({});
+  } catch (error) {
+    setErrors({ general: "No se pudo conectar con el servidor" });
+  }
+};
 
   //Render: Estructura visual del formulario
 

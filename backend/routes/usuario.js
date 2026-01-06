@@ -9,8 +9,6 @@ const router = express.Router();
 
 router.get("/", getUsuarios);
 router.post("/", createUsuario);
-
-// 🔐 LOGIN
 router.post("/login", loginUsuario);
 
 export default router;
