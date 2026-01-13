@@ -1,0 +1,68 @@
+/* =====================
+   TEMPLATE COLORFUL
+===================== */
+
+.colorful {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: white;
+  font-family: "Montserrat", sans-serif;
+}
+
+/* HERO */
+.colorful-hero {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.colorful-hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.colorful-hero button {
+  margin-top: 1.5rem;
+  background: #facc15;
+  color: #1f2937;
+  border: none;
+  padding: 0.9rem 2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  animation: pulse 1.5s infinite;
+}
+
+/* CAROUSEL */
+.colorful-carousel {
+  display: flex;
+  gap: 1.2rem;
+  padding: 2rem;
+  overflow-x: auto;
+}
+
+.colorful-slide {
+  min-width: 220px;
+  background: rgba(255,255,255,0.2);
+  padding: 1rem;
+  border-radius: 18px;
+  backdrop-filter: blur(8px);
+  transition: transform 0.3s ease;
+}
+
+.colorful-slide:hover {
+  transform: scale(1.05);
+}
+
+.colorful-slide .img {
+  height: 120px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 12px;
+  margin-bottom: 0.8rem;
+}
+
+/* ANIMACIÓN */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}

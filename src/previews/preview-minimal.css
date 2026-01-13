@@ -1,0 +1,29 @@
+.preview-minimal {
+  height: 100%;
+  padding: 0.75rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pm-line {
+  height: 10px;
+  background: #ddd;
+  width: 70%;
+}
+
+.pm-line.small {
+  width: 40%;
+}
+
+.pm-boxes {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.pm-boxes div {
+  flex: 1;
+  background: #f1f1f1;
+}

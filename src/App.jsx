@@ -5,6 +5,10 @@ import Home from "./pages/HomePage";              // ✅
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
 import "./styles/index.css";
+import DesignSelector from "./pages/DesignSelector";
+import StorePreview from "./pages/StorePreview";
+
+
 
 
 export default function App() {
@@ -19,6 +23,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/design" element={<DesignSelector />} />
+          <Route path="/store-preview" element={<StorePreview />} />
         </Routes>
       </main>
 

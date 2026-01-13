@@ -1,0 +1,30 @@
+.preview-colorful {
+  height: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pc-banner {
+  background: #facc15;
+  color: #000;
+  font-size: 0.7rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
+.pc-row {
+  display: flex;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.pc-row div {
+  flex: 1;
+  background: rgba(255,255,255,.35);
+  border-radius: 6px;
+}

@@ -1,0 +1,87 @@
+/* =====================
+   TEMPLATE MODERN
+===================== */
+
+.modern {
+  background: #f8fafc;
+  color: #1f2937;
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: "Poppins", sans-serif;
+}
+
+/* HEADER */
+.modern-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.modern-header h1 {
+  color: #6366f1;
+  font-size: 2rem;
+}
+
+.modern-header nav a {
+  margin-left: 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* HERO */
+.modern-hero {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  margin-bottom: 3rem;
+}
+
+.modern-hero button {
+  margin-top: 1rem;
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* GRID PRODUCTOS */
+.modern-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.modern-card {
+  background: white;
+  padding: 1.2rem;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.modern-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 35px rgba(0,0,0,0.12);
+}
+
+.modern-card .img {
+  height: 140px;
+  background: #e0e7ff;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+
+.modern-card button {
+  margin-top: 0.5rem;
+  width: 100%;
+  border: none;
+  background: #6366f1;
+  color: white;
+  padding: 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
