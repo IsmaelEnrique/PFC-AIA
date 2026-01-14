@@ -18,7 +18,7 @@ export default function Home() {
 
             <div className="hero-ctas">
               <button className="btn btn-primary" onClick={() => navigate("/register")}>
-                Crear tienda
+                Comenza ahora
               </button>
               <button className="btn btn-ghost" onClick={() => navigate("/login")}>
                 ¿Ya sos parte? Ingresar

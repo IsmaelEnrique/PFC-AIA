@@ -1,4 +1,4 @@
-import pool from "../db.js";
+import pool from "../db/db.js";
 import bcrypt from "bcrypt";
 // Obtener todos los usuarios
 export const getUsuarios = async (req, res) => {
@@ -17,12 +17,18 @@ export const getUsuarios = async (req, res) => {
 // Crear un nuevo usuario
 export const createUsuario = async (req, res) => {
   try {
-    const { nombre_usuario, mail, contrasena } = req.body;
+    const { nombre, apellido, mail, contrasena } = req.body;
 
-    if (!nombre_usuario || !mail || !contrasena) {
+    if (!nombre || !apellido || !mail || !contrasena) {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
+    
+    const format = (texto) => texto
+      .trim()
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
 
+    const nombre_usuario = `${format(apellido)} ${format(nombre)}`;
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
     const result = await pool.query(

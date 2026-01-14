@@ -1,9 +1,12 @@
 //Imporamos los hooks del react y el componente link de react router
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+
 
 //componente funcional login
 export default function Login() {
+  const navigate = useNavigate();              //Hook para redirigir entre paginas
   //Estados local del componente
   const [email, setEmail] = useState("");         //Guarda el mail que el usuario ingresa
   const [password, setPassword] = useState("");   //Guarda la contraseña que el usuario ingresa
@@ -76,6 +79,8 @@ const handleSubmit = async (e) => {
     setEmail("");
     setPassword("");
     setErrors({});
+    // redirigir al panel
+    navigate("/admin");
   } catch (error) {
     setErrors({ general: "No se pudo conectar con el servidor" });
   }

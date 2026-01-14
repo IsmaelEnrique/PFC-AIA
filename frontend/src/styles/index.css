@@ -446,3 +446,53 @@ html, body {
   margin-top: 1rem;
   font-weight: 600;
 }
+
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  color: var(--accent-2);
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(252, 163, 17, 0.2);
+}
+
+textarea {
+  resize: none;
+}
+
+
+.panel-page {
+  width: 100%;
+  min-height: calc(100vh - 70px); /* resta navbar */
+  background: var(--bg);
+  padding: 2rem 1rem;
+}
+
+.panel-container {
+  max-width: var(--container);
+  margin: 0 auto;
+}
+.panel-title {
+  font-size: 2rem;
+  margin-bottom: 0.3rem;
+  color: var(--accent-2);
+}
+
+.panel-subtitle {
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+.panel-form {
+  max-width: 600px;   /* 💡 controlás el ancho, no ocupa TODO */
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}

@@ -7,7 +7,8 @@ import Register from "./pages/RegisterPage";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
 import StorePreview from "./pages/StorePreview";
-
+import AdminPanel from "./pages/AdminPanel";
+import ActivarComercio from "./pages/ActivarComercio";
 
 
 
@@ -23,8 +24,10 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/design" element={<DesignSelector />} />
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/disenar-pagina" element={<DesignSelector />} />
           <Route path="/store-preview" element={<StorePreview />} />
+          <Route path="/activar-comercio" element={<ActivarComercio />} />
         </Routes>
       </main>
 
