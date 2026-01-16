@@ -1,12 +1,3 @@
-
--- =====================================================
---  SCRIPT DE CREACIÓN DE BASE DE DATOS ECOMMERCE
---  Autor: Priscila Rouiller
---  Fecha: 2025-11-06
---  Descripción: E-commerce multi-comercio (base única)
--- =====================================================
-
-
 --CREATE DATABASE ecommerce;
 --\c ecommerce; -- Conectar a la base ecommerce
 
@@ -17,6 +8,8 @@ CREATE TABLE usuario (
     mail VARCHAR(100) NOT NULL,
     contrasena VARCHAR(100) NOT NULL,
     verificado BOOLEAN NOT NULL,
+    cta_bancaria CHAR(20),
+    dni CHAR(10),
     CONSTRAINT usuario_pk PRIMARY KEY (id_usuario),
     CONSTRAINT usuario_mail_uk UNIQUE (mail)
 );
@@ -26,6 +19,8 @@ CREATE TABLE categoria (
     nombre_cat VARCHAR(50) NOT NULL,
     CONSTRAINT categoria_pk PRIMARY KEY (id_categoria)
 );
+
+
 
 CREATE TABLE metodo_pago (
     id_pago SERIAL NOT NULL,
@@ -64,36 +59,21 @@ CREATE TABLE producto_variante (
 --  TABLAS CON DEPENDENCIAS DIRECTAS NIVEL 2
 -- ======================================================
 
-CREATE TABLE administrador (
-    id_administrador SERIAL NOT NULL,
-    id_usuario INT NOT NULL,
-    cta_bancaria CHAR(20),
-    dni CHAR(10),
-    CONSTRAINT administrador_pk PRIMARY KEY (id_administrador),
-    CONSTRAINT administrador_fk_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario(id_usuario)
-);
-
-CREATE TABLE consumidor (
-    id_consumidor SERIAL NOT NULL,
-    id_usuario INT NOT NULL,
-    CONSTRAINT consumidor_pk PRIMARY KEY (id_consumidor),
-    CONSTRAINT consumidor_fk_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario(id_usuario)
-);
 
 CREATE TABLE comercio (
     id_comercio SERIAL NOT NULL,
-    id_administrador INT NOT NULL,
+    id_usuario INT NOT NULL,
     nombre_comercio VARCHAR(50) NOT NULL,
     descripcion VARCHAR(100),
     cuit CHAR(11),
     tipo_diseño VARCHAR(50),
     logo VARCHAR(200),
+    activo BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT comercio_pk PRIMARY KEY (id_comercio),
-    CONSTRAINT comercio_fk_administrador FOREIGN KEY (id_administrador)
-        REFERENCES administrador(id_administrador)
+    CONSTRAINT comercio_fk_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
 );
+
 
 CREATE TABLE valor (
     id_valor SERIAL NOT NULL,
@@ -102,6 +82,18 @@ CREATE TABLE valor (
     CONSTRAINT valor_pk PRIMARY KEY (id_valor),
     CONSTRAINT valor_fk_caracteristica FOREIGN KEY (id_caracteristica)
         REFERENCES caracteristica(id_caracteristica)
+);
+
+/* no son usuarios del sistema si no que consumidores de cada comercio */
+CREATE TABLE consumidor (
+    id_consumidor SERIAL PRIMARY KEY,
+    id_comercio INT NOT NULL,
+    nombre VARCHAR(100),
+    email VARCHAR(100) NOT NULL,
+    telefono VARCHAR(30),
+    CONSTRAINT consumidor_fk_comercio
+        FOREIGN KEY (id_comercio)
+        REFERENCES comercio(id_comercio)
 );
 
 -- ======================================================
@@ -120,6 +112,9 @@ CREATE TABLE producto (
     CONSTRAINT producto_fk_comercio FOREIGN KEY (id_comercio)
         REFERENCES comercio(id_comercio)
 );
+
+
+
 
 CREATE TABLE pedido (
     id_pedido SERIAL NOT NULL,
@@ -218,26 +213,3 @@ CREATE TABLE detalle_pedido (
 -- ======================================================
 --  FIN DE SCRIPT
 -- ======================================================
-
-DROP TABLE IF EXISTS detalle_pedido CASCADE;
-DROP TABLE IF EXISTS m_n_prodrvar_carac CASCADE;
-DROP TABLE IF EXISTS m_n_prod_provar CASCADE;
-DROP TABLE IF EXISTS m_n_prod_carrito CASCADE;
-DROP TABLE IF EXISTS m_n_cat_prod CASCADE;
-
-DROP TABLE IF EXISTS pedido CASCADE;
-DROP TABLE IF EXISTS producto CASCADE;
-DROP TABLE IF EXISTS valor CASCADE;
-DROP TABLE IF EXISTS producto_variante CASCADE;
-DROP TABLE IF EXISTS carrito CASCADE;
-
-DROP TABLE IF EXISTS consumidor CASCADE;
-DROP TABLE IF EXISTS comercio CASCADE;
-
-DROP TABLE IF EXISTS caracteristica CASCADE;
-DROP TABLE IF EXISTS metodo_envio CASCADE;
-DROP TABLE IF EXISTS metodo_pago CASCADE;
-DROP TABLE IF EXISTS categoria CASCADE;
-
-DROP TABLE IF EXISTS usuario CASCADE;
-
