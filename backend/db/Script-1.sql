@@ -72,7 +72,6 @@ CREATE TABLE comercio (
         REFERENCES usuario(id_usuario)
 );
 
-
 CREATE TABLE valor (
     id_valor SERIAL NOT NULL,
     id_caracteristica INT NOT NULL,
@@ -208,3 +207,8 @@ CREATE TABLE detalle_pedido (
         REFERENCES producto(id_producto)
 );
 
+/* CAMBIOS EXTRA*/
+ALTER TABLE comercio
+ADD COLUMN rubro VARCHAR(50),
+ADD COLUMN direccion VARCHAR(100),
+ADD COLUMN contacto VARCHAR(50);

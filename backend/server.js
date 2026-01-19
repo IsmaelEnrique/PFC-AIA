@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import usuarioRoutes from "./routes/usuario.routes.js";
+import comercioRoutes from "./routes/comercio.routes.js";
+
+
+
 
 dotenv.config(); //Lee el archivo .env y carga las variables en process.env.
 
@@ -14,7 +18,7 @@ app.use(cors({
 app.use(express.json());
 
 
-
+app.use("/api/comercio", comercioRoutes);
 app.use("/api/usuarios", usuarioRoutes);
 
 // 🔴 SERVER

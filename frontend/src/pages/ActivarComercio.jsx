@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export default function ActivarComercio() {
+  const user = JSON.parse(localStorage.getItem("user"));
   const [form, setForm] = useState({
     nombre: "",
     rubro: "",
@@ -31,18 +32,58 @@ export default function ActivarComercio() {
   // -------------------------
   // 📤 Envío
   // -------------------------
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSuccess(false);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSuccess(false);
 
-    if (!validateForm()) return;
+  
+  if (!user) {
+  setErrors({ general: "Debés iniciar sesión para activar un comercio" });
+  return;
+  }
+  if (!validateForm()) return;
+  
 
-    // 🔜 Acá después va el fetch al backend
-    console.log("Comercio activado ✅", form);
+  try {
+    const response = await fetch(
+      "http://localhost:4000/api/comercio/activar",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_usuario: user.id_usuario,
+          nombre: form.nombre,
+          rubro: form.rubro,
+          descripcion: form.descripcion,
+          direccion: form.direccion,
+          contacto: form.contacto,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setErrors({ general: data.error || "Error al activar comercio" });
+      return;
+    }
 
     setSuccess(true);
+    setForm({
+      nombre: "",
+      rubro: "",
+      descripcion: "",
+      direccion: "",
+      contacto: "",
+    });
     setErrors({});
-  };
+  } catch (error) {
+    setErrors({ general: "No se pudo conectar con el servidor" });
+  }
+};
+  
 
   // -------------------------
   // 🧱 UI
