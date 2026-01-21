@@ -1,93 +1,161 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ActivarComercio() {
   const user = JSON.parse(localStorage.getItem("user"));
+
   const [form, setForm] = useState({
     nombre: "",
     rubro: "",
     descripcion: "",
     direccion: "",
     contacto: "",
+    cuit: "",
   });
 
+  const [formOriginal, setFormOriginal] = useState(null);
+
+  const [activo, setActivo] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
 
-  // -------------------------
-  // ✅ Validación
-  // -------------------------
+  // 🔄 Cargar comercio si existe
+  useEffect(() => {
+    if (!user) return;
+
+    fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          const datosComercio = {
+            nombre: data.nombre_comercio || "",
+            rubro: data.rubro || "",
+            descripcion: data.descripcion || "",
+            direccion: data.direccion || "",
+            contacto: data.contacto || "",
+            cuit: data.cuit || "",
+          };
+          setForm(datosComercio);
+          setFormOriginal(datosComercio);
+          setActivo(data.activo);
+        }
+      });
+  }, []);
+
+  // Detectar cambios en el formulario
+  const cambiosRealizados = formOriginal !== null && JSON.stringify(form) !== JSON.stringify(formOriginal);
+
   const validateForm = () => {
     const newErrors = {};
-
-    if (!form.nombre) newErrors.nombre = "El nombre del comercio es obligatorio.";
-    if (!form.rubro) newErrors.rubro = "Seleccioná un rubro.";
-    if (!form.descripcion) newErrors.descripcion = "La descripción es obligatoria.";
-    if (!form.direccion) newErrors.direccion = "La dirección es obligatoria.";
-    if (!form.contacto) newErrors.contacto = "El contacto es obligatorio.";
-
+    if (!form.nombre) newErrors.nombre = "El nombre es obligatorio";
+    if (!form.rubro) newErrors.rubro = "Seleccioná un rubro";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // -------------------------
-  // 📤 Envío
-  // -------------------------
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSuccess(false);
+  const handleGuardarCambios = async (e) => {
+    e.preventDefault();
+    setSuccess(false);
 
-  
-  if (!user) {
-  setErrors({ general: "Debés iniciar sesión para activar un comercio" });
-  return;
-  }
-  if (!validateForm()) return;
-  
-
-  try {
-    const response = await fetch(
-      "http://localhost:4000/api/comercio/activar",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_usuario: user.id_usuario,
-          nombre: form.nombre,
-          rubro: form.rubro,
-          descripcion: form.descripcion,
-          direccion: form.direccion,
-          contacto: form.contacto,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setErrors({ general: data.error || "Error al activar comercio" });
+    if (!user) {
+      setErrors({ general: "Debés iniciar sesión" });
       return;
     }
 
-    setSuccess(true);
-    setForm({
-      nombre: "",
-      rubro: "",
-      descripcion: "",
-      direccion: "",
-      contacto: "",
-    });
-    setErrors({});
-  } catch (error) {
-    setErrors({ general: "No se pudo conectar con el servidor" });
-  }
-};
-  
+    // Validar el formulario
+    if (!validateForm()) return;
 
-  // -------------------------
-  // 🧱 UI
-  // -------------------------
+    // Pedir confirmación al usuario
+    if (!window.confirm("¿Estás seguro que querés guardar los cambios?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:4000/api/comercio/activar",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_usuario: user.id_usuario,
+            nombre: form.nombre,
+            rubro: form.rubro,
+            descripcion: form.descripcion,
+            direccion: form.direccion,
+            contacto: form.contacto,
+            cuit: form.cuit || null,
+            activo: activo,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ general: data.error });
+        return;
+      }
+
+      // Actualizar el formulario original
+      setFormOriginal(form);
+      setSuccess(true);
+      setErrors({});
+    } catch (error) {
+      console.error("Error:", error);
+      setErrors({ general: "No se pudo conectar al servidor" });
+    }
+  };
+
+  const handleActivarDesactivar = async (e) => {
+    e.preventDefault();
+    setSuccess(false);
+
+    if (!user) {
+      setErrors({ general: "Debés iniciar sesión" });
+      return;
+    }
+
+    // Si está inactivo y quiere activar, validar nombre y rubro
+    if (!activo && !validateForm()) return;
+
+    try {
+      const nuevoEstado = !activo;
+
+      const response = await fetch(
+        "http://localhost:4000/api/comercio/activar",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_usuario: user.id_usuario,
+            nombre: form.nombre,
+            rubro: form.rubro,
+            descripcion: form.descripcion,
+            direccion: form.direccion,
+            contacto: form.contacto,
+            cuit: form.cuit || null,
+            activo: nuevoEstado,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ general: data.error });
+        return;
+      }
+
+      // Actualizar estados
+      setActivo(nuevoEstado);
+      setFormOriginal(form);
+      setSuccess(true);
+      setErrors({});
+    } catch (error) {
+      console.error("Error:", error);
+      setErrors({ general: "No se pudo conectar al servidor" });
+    }
+  };
+
   return (
     <section className="panel-page">
       <div className="panel-container">
@@ -96,30 +164,35 @@ export default function ActivarComercio() {
         </h1>
 
         <p className="panel-subtitle">
-          Completá los datos de tu emprendimiento para activarlo
+          Completá los datos de tu emprendimiento
         </p>
 
-        <form className="panel-form" onSubmit={handleSubmit} noValidate>
+        <form className="panel-form" noValidate>
+
+          {errors.general && (
+            <p className="error-text">{errors.general}</p>
+          )}
+
           {/* Nombre */}
           <div className="form-group">
             <label>Nombre del comercio</label>
             <input
               type="text"
-              className={errors.nombre ? "error-input" : ""}
               value={form.nombre}
-              onChange={(e) =>
+              className={errors.nombre ? "error-input" : ""}
+              onChange={e =>
                 setForm({ ...form, nombre: e.target.value })
               }
             />
             {errors.nombre && <p className="error-text">{errors.nombre}</p>}
           </div>
 
-          {/* Rubro */}
+          {/* Rubro*/}
           <div className="form-group">
             <label>Rubro</label>
             <select
               value={form.rubro}
-              onChange={(e) =>
+              onChange={e =>
                 setForm({ ...form, rubro: e.target.value })
               }
             >
@@ -139,13 +212,10 @@ export default function ActivarComercio() {
             <textarea
               rows="4"
               value={form.descripcion}
-              onChange={(e) =>
+              onChange={e =>
                 setForm({ ...form, descripcion: e.target.value })
               }
             />
-            {errors.descripcion && (
-              <p className="error-text">{errors.descripcion}</p>
-            )}
           </div>
 
           {/* Dirección */}
@@ -153,41 +223,61 @@ export default function ActivarComercio() {
             <label>Dirección</label>
             <input
               type="text"
-              className={errors.nombre ? "error-input" : ""}
               value={form.direccion}
-              onChange={(e) =>
+              onChange={e =>
                 setForm({ ...form, direccion: e.target.value })
               }
             />
-            {errors.direccion && (
-              <p className="error-text">{errors.direccion}</p>
-            )}
           </div>
 
-          {/* Contacto */}
+          {/* Contacto*/}
           <div className="form-group">
-            <label>Datos de contacto</label>
+            <label>Contacto</label>
             <input
               type="text"
-              className={errors.nombre ? "error-input" : ""}
-              placeholder="Teléfono"
               value={form.contacto}
-              onChange={(e) =>
+              onChange={e =>
                 setForm({ ...form, contacto: e.target.value })
               }
             />
-            {errors.contacto && (
-              <p className="error-text">{errors.contacto}</p>
-            )}
           </div>
 
-          <button type="submit" className="btn btn-primary">
-            Activar negocio
-          </button>
+          {/* CUIT - Opcional */}
+          <div className="form-group">
+            <label>CUIT (Opcional)</label>
+            <input
+              type="text"
+              placeholder="Ej: 20-12345678-9"
+              value={form.cuit}
+              onChange={e =>
+                setForm({ ...form, cuit: e.target.value })
+              }
+            />
+          </div>
+
+          {/* Botones */}
+          <div style={{ display: "flex", gap: "10px" }}>
+            {cambiosRealizados && (
+              <button 
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGuardarCambios}
+              >
+                Guardar cambios
+              </button>
+            )}
+            <button 
+              type="button"
+              className="btn btn-primary"
+              onClick={handleActivarDesactivar}
+            >
+              {activo ? "Desactivar comercio" : "Activar comercio"}
+            </button>
+          </div>
 
           {success && (
             <p className="success-text">
-              Comercio activado correctamente 🎉
+              Comercio guardado correctamente ✔
             </p>
           )}
         </form>

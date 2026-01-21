@@ -1,5 +1,6 @@
 import pool from "../db/db.js";
 import bcrypt from "bcrypt";
+
 // Obtener todos los usuarios
 export const getUsuarios = async (req, res) => {
   try {
@@ -12,7 +13,6 @@ export const getUsuarios = async (req, res) => {
     res.status(500).json({ error: "Error al obtener usuarios" });
   }
 };
-
 
 // Crear un nuevo usuario
 export const createUsuario = async (req, res) => {
@@ -45,7 +45,6 @@ export const createUsuario = async (req, res) => {
   }
 };
 
-
 export const loginUsuario = async (req, res) => {
   try {
     const { mail, contrasena } = req.body;
@@ -74,18 +73,15 @@ export const loginUsuario = async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
+    // ✅ CAMBIO: Retornar directamente el usuario sin envolver en { ok, user }
     res.json({
-      ok: true,
-      user: {
-        id: usuario.id_usuario, // 👈 ACÁ
-        nombre_usuario: usuario.nombre_usuario,
-        mail: usuario.mail,
-        verificado: usuario.verificado
-      }
+      id_usuario: usuario.id_usuario,
+      nombre_usuario: usuario.nombre_usuario,
+      mail: usuario.mail,
+      verificado: usuario.verificado
     });
   } catch (error) {
     console.error("Error en login:", error);
     res.status(500).json({ error: "Error en login" });
   }
 };
-

@@ -4,9 +4,6 @@ import dotenv from "dotenv";
 import usuarioRoutes from "./routes/usuario.routes.js";
 import comercioRoutes from "./routes/comercio.routes.js";
 
-
-
-
 dotenv.config(); //Lee el archivo .env y carga las variables en process.env.
 
 const app = express();
