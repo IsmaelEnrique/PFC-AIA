@@ -1,67 +1,51 @@
-import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";     // ✅ sin barra inicial
-import Footer from "./components/Footer";     // ✅
-import Home from "./pages/HomePage";              // ✅
+import { Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Home from "./pages/HomePage";
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
+import Perfil from "./pages/Perfil";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
 import StorePreview from "./pages/StorePreview";
 import AdminPanel from "./pages/AdminPanel";
 import ActivarComercio from "./pages/ActivarComercio";
+import GestionProductos from "./pages/GestionProductos";
+import GestionCategorias from "./pages/GestionCategorias";
 
+// Componente para proteger rutas
+function ProtectedRoute({ element }) {
+  const user = localStorage.getItem("user");
+  return user ? element : <Navigate to="/login" replace />;
+}
 
+// Componente para rutas públicas que redirijen si hay sesión
+function PublicRoute({ element }) {
+  const user = localStorage.getItem("user");
+  return user ? <Navigate to="/admin" replace /> : element;
+}
 
 export default function App() {
   return (
     <div className="layout">
-      {/* 🔹 Navbar global (siempre visible arriba) */}
       <Navbar />
 
-      {/* 🔹 Contenido central que cambia según la ruta */}
       <main className="content">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/disenar-pagina" element={<DesignSelector />} />
-          <Route path="/store-preview" element={<StorePreview />} />
-          <Route path="/activar-comercio" element={<ActivarComercio />} />
+          <Route path="/" element={<PublicRoute element={<Home />} />} />
+          <Route path="/login" element={<PublicRoute element={<Login />} />} />
+          <Route path="/register" element={<PublicRoute element={<Register />} />} />
+          <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
+          <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector />} />} />
+          <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
+          <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
+          <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
+          <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
+          <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
         </Routes>
       </main>
 
-      {/* 🔹 Footer global (siempre visible abajo) */}
       <Footer />
     </div>
   );
 }
-
-/*import { Routes, Route } from 'react-router-dom'
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'  
-import HomePage from './pages/HomePage.jsx'
-import LoginPage from './pages/LoginPage.jsx'
-import RegisterPage from './pages/RegisterPage.jsx'
-import ShopPage from './pages/ShopPage.jsx'
-import CartPage from './pages/CartPage.jsx'
-import AdminPanel from './pages/AdminPanel.jsx' 
-
-function App() {
-  return (
-    <div className="layout">
-      <Navbar />
-      <main className="content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
-  );
-}
-
-export default App;
-*/

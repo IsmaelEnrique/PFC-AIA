@@ -1,8 +1,12 @@
 import express from "express";
 import pool from "../db/db.js";
-import { activarComercio } from "../controllers/comercioController.js";
+import { activarComercio, getComercioByUsuario } from "../controllers/comercioController.js";
 const router = express.Router();
 
+// Obtener comercio por usuario (usando query string)
+router.get("/", getComercioByUsuario);
+
+// Obtener comercio por usuario (usando params - compatibilidad)
 router.get("/:id_usuario", async (req, res) => {
   const id_usuario = Number(req.params.id_usuario);
 
@@ -22,7 +26,6 @@ router.get("/:id_usuario", async (req, res) => {
     res.status(500).json({ error: "Error en el servidor" });
   }
 });
-
 
 // Activar o actualizar comercio
 router.post("/activar", activarComercio); 

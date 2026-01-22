@@ -47,7 +47,6 @@ export default function ActivarComercio() {
   const validateForm = () => {
     const newErrors = {};
     if (!form.nombre) newErrors.nombre = "El nombre es obligatorio";
-    if (!form.rubro) newErrors.rubro = "Seleccioná un rubro";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -78,10 +77,10 @@ export default function ActivarComercio() {
           body: JSON.stringify({
             id_usuario: user.id_usuario,
             nombre: form.nombre,
-            rubro: form.rubro,
-            descripcion: form.descripcion,
-            direccion: form.direccion,
-            contacto: form.contacto,
+            rubro: form.rubro || null,
+            descripcion: form.descripcion || null,
+            direccion: form.direccion || null,
+            contacto: form.contacto || null,
             cuit: form.cuit || null,
             activo: activo,
           }),
@@ -114,12 +113,20 @@ export default function ActivarComercio() {
       return;
     }
 
-    // Si está inactivo y quiere activar, validar nombre y rubro
+    // Si está inactivo y quiere activar, validar solo nombre
     if (!activo && !validateForm()) return;
 
-    try {
-      const nuevoEstado = !activo;
+    // Pedir confirmación al usuario
+    const nuevoEstado = !activo;
+    const mensaje = nuevoEstado 
+      ? "¿Estás seguro que querés activar el comercio?" 
+      : "¿Estás seguro que querés desactivar el comercio?";
+    
+    if (!window.confirm(mensaje)) {
+      return;
+    }
 
+    try {
       const response = await fetch(
         "http://localhost:4000/api/comercio/activar",
         {
@@ -128,10 +135,10 @@ export default function ActivarComercio() {
           body: JSON.stringify({
             id_usuario: user.id_usuario,
             nombre: form.nombre,
-            rubro: form.rubro,
-            descripcion: form.descripcion,
-            direccion: form.direccion,
-            contacto: form.contacto,
+            rubro: form.rubro || null,
+            descripcion: form.descripcion || null,
+            direccion: form.direccion || null,
+            contacto: form.contacto || null,
             cuit: form.cuit || null,
             activo: nuevoEstado,
           }),
@@ -160,11 +167,11 @@ export default function ActivarComercio() {
     <section className="panel-page">
       <div className="panel-container">
         <h1 className="panel-title">
-          Activar <span className="accent">Comercio</span>
+          Gestión <span className="accent"> del comercio</span>
         </h1>
 
         <p className="panel-subtitle">
-          Completá los datos de tu emprendimiento
+          Completá los datos de tu emprendimiento. Los datos con * son obligarios.
         </p>
 
         <form className="panel-form" noValidate>
@@ -175,7 +182,7 @@ export default function ActivarComercio() {
 
           {/* Nombre */}
           <div className="form-group">
-            <label>Nombre del comercio</label>
+            <label>Nombre del comercio *</label>
             <input
               type="text"
               value={form.nombre}
@@ -203,7 +210,6 @@ export default function ActivarComercio() {
               <option value="tecnologia">Tecnología</option>
               <option value="otro">Otro</option>
             </select>
-            {errors.rubro && <p className="error-text">{errors.rubro}</p>}
           </div>
 
           {/* Descripción */}
@@ -244,7 +250,7 @@ export default function ActivarComercio() {
 
           {/* CUIT - Opcional */}
           <div className="form-group">
-            <label>CUIT (Opcional)</label>
+            <label>CUIT </label>
             <input
               type="text"
               placeholder="Ej: 20-12345678-9"
@@ -268,7 +274,7 @@ export default function ActivarComercio() {
             )}
             <button 
               type="button"
-              className="btn btn-primary"
+              className="btn btn-dark-gray"
               onClick={handleActivarDesactivar}
             >
               {activo ? "Desactivar comercio" : "Activar comercio"}

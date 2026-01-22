@@ -3,20 +3,20 @@ import cors from "cors";
 import dotenv from "dotenv";
 import usuarioRoutes from "./routes/usuario.routes.js";
 import comercioRoutes from "./routes/comercio.routes.js";
+import categoriaRoutes from "./routes/categoria.routes.js";
 
 dotenv.config(); //Lee el archivo .env y carga las variables en process.env.
 
 const app = express();
-
 
 app.use(cors({
   origin: "http://localhost:5173"
 }));
 app.use(express.json());
 
-
 app.use("/api/comercio", comercioRoutes);
 app.use("/api/usuarios", usuarioRoutes);
+app.use("/api/categorias", categoriaRoutes);
 
 // 🔴 SERVER
 const PORT = process.env.PORT || 4000;

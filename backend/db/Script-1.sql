@@ -212,3 +212,15 @@ ALTER TABLE comercio
 ADD COLUMN rubro VARCHAR(50),
 ADD COLUMN direccion VARCHAR(100),
 ADD COLUMN contacto VARCHAR(50);
+
+alter table usuario 
+add column nombre_banco VARCHAR(50),
+add column nombre_titular VARCHAR(50);
+
+
+
+ALTER TABLE categoria ADD COLUMN id_comercio INT NOT NULL;
+
+ALTER TABLE categoria 
+ADD CONSTRAINT categoria_fk_comercio FOREIGN KEY (id_comercio)
+REFERENCES comercio(id_comercio);

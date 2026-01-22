@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 export default function AdminPanel() {
@@ -24,6 +23,14 @@ export default function AdminPanel() {
 
           <Link to="/disenar-pagina" className="btn btn-secondary">
             Diseñar página
+          </Link>
+
+          <Link to="/gestion-productos" className="btn btn-secondary">
+            Gestión de productos
+          </Link>
+
+          <Link to="/gestion-categorias" className="btn btn-secondary">
+            Gestión de categorías
           </Link>
         </div>
       </div>
