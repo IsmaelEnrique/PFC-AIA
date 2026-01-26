@@ -4,6 +4,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/HomePage";
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
+import LogoUpload from "./pages/LogoUpload";
 import Perfil from "./pages/Perfil";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
@@ -26,6 +27,12 @@ function PublicRoute({ element }) {
 }
 
 export default function App() {
+  const [storeLogo, setStoreLogo] = useState(null);
+
+  const handleLogoUpload = (logo) => {
+    setStoreLogo(logo);
+  };
+
   return (
     <div className="layout">
       <Navbar />
@@ -36,7 +43,8 @@ export default function App() {
           <Route path="/login" element={<PublicRoute element={<Login />} />} />
           <Route path="/register" element={<PublicRoute element={<Register />} />} />
           <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
-          <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector />} />} />
+          <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
+          <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector storeLogo={storeLogo} />} />} />
           <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
           <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
           <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />

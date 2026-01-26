@@ -1,18 +1,95 @@
 .preview-modern {
   height: 100%;
-  padding: 0.75rem;
-  background: #f8fafc;
+  width: 100%;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  padding: 0.75rem;
 }
 
+/* HEADER */
 .pm-header {
-  height: 24px;
-  background: #6366f1;
-  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
+.pm-logo {
+  width: 50px;
+  height: 10px;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  border-radius: 2px;
+}
+
+.pm-logo-img {
+  max-width: 50px;
+  max-height: 12px;
+  object-fit: contain;
+}
+
+.pm-nav {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.pm-nav-item {
+  width: 18px;
+  height: 6px;
+  background: #ddd;
+  border-radius: 1px;
+}
+
+/* HERO */
+.pm-hero {
+  display: flex;
+  gap: 0.6rem;
+  flex: 1;
+  background: white;
+  padding: 0.6rem;
+  border-radius: 4px;
+}
+
+.pm-hero-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pm-title {
+  width: 100%;
+  height: 12px;
+  background: #4F46E5;
+  border-radius: 2px;
+}
+
+.pm-subtitle {
+  width: 85%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.pm-btn {
+  width: 50%;
+  height: 10px;
+  background: #4F46E5;
+  border-radius: 2px;
+  margin-top: 0.2rem;
+}
+
+.pm-hero-image {
+  flex: 1;
+  background: linear-gradient(135deg, #E0E7FF, #DDD6FE);
+  border-radius: 3px;
+}
+
+/* GRID */
 .pm-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -22,6 +99,31 @@
 
 .pm-card {
   background: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+  border-radius: 4px;
+  padding: 0.4rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.pm-img {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #E0E7FF, #DDD6FE);
+  border-radius: 3px;
+  margin-bottom: 0.4rem;
+}
+
+.pm-card-text {
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(
+    to bottom,
+    #ddd 0%,
+    #ddd 40%,
+    #f0f0f0 40%,
+    #f0f0f0 50%,
+    #ddd 50%,
+    #ddd 70%
+  );
+  border-radius: 2px;
 }
