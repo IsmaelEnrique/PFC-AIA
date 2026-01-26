@@ -3,11 +3,13 @@
 ===================== */
 
 .modern {
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 100%);
   color: #1f2937;
   min-height: 100vh;
-  padding: 2rem;
-  font-family: "Poppins", sans-serif;
+  padding: 0;
+  font-family: "Poppins", -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 /* HEADER */
@@ -15,73 +17,230 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
-}
-
-.modern-header h1 {
-  color: #6366f1;
-  font-size: 2rem;
-}
-
-.modern-header nav a {
-  margin-left: 1.5rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-/* HERO */
-.modern-hero {
+  padding: 1.5rem 2rem;
   background: white;
-  padding: 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  margin-bottom: 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 80px;
 }
 
-.modern-hero button {
-  margin-top: 1rem;
-  background: #6366f1;
+.modern-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7C3AED, #EC4899, #F97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modern-logo-img {
+  max-height: 70px;
+  max-width: 250px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.modern-nav {
+  display: flex;
+  gap: 2rem;
+}
+
+.modern-nav a {
+  text-decoration: none;
+  color: #666;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.modern-nav a:hover {
+  color: #4F46E5;
+}
+
+/* HERO SECTION */
+.modern-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  gap: 3rem;
+}
+
+.modern-hero-content {
+  flex: 1;
+}
+
+.modern-hero h2 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+}
+
+.modern-hero-btn {
+  background: linear-gradient(135deg, #EC4899, #F97316, #FBBF24);
   color: white;
   border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 999px;
+  padding: 14px 36px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.3);
 }
 
-/* GRID PRODUCTOS */
+.modern-hero-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(79, 70, 229, 0.3);
+}
+
+.modern-hero-image {
+  flex: 1;
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, #E0E7FF, #DDD6FE);
+  border-radius: 16px;
+  box-shadow: 0 20px 48px rgba(79, 70, 229, 0.15);
+}
+
+/* SECCIÓN PRODUCTOS */
+.modern-products {
+  padding: 4rem 2rem;
+  background: white;
+  margin-top: 2rem;
+}
+
+.modern-products h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 2.5rem 0;
+  text-align: center;
+  color: #1f2937;
+}
+
 .modern-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
+/* TARJETA DE PRODUCTO */
 .modern-card {
   background: white;
-  padding: 1.2rem;
-  border-radius: 18px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid #e5e7eb;
 }
 
 .modern-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 35px rgba(0,0,0,0.12);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(79, 70, 229, 0.15);
+  border-color: #4F46E5;
 }
 
-.modern-card .img {
-  height: 140px;
-  background: #e0e7ff;
-  border-radius: 14px;
-  margin-bottom: 1rem;
-}
-
-.modern-card button {
-  margin-top: 0.5rem;
+.modern-card-image {
   width: 100%;
-  border: none;
-  background: #6366f1;
+  height: 220px;
+  background: linear-gradient(135deg, #E0E7FF, #DDD6FE);
+  transition: all 0.3s ease;
+}
+
+.modern-card:hover .modern-card-image {
+  background: linear-gradient(135deg, #C7D2FE, #BFDBFE);
+}
+
+.modern-card-content {
+  padding: 1.5rem;
+}
+
+.modern-card-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+}
+
+.modern-card-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #4F46E5;
+  margin: 0.5rem 0 1.5rem 0;
+}
+
+.modern-card-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #10B981, #14B8A6);
   color: white;
-  padding: 0.6rem;
-  border-radius: 999px;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.modern-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* FOOTER */
+.modern-footer {
+  background: #1f2937;
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  margin-top: auto;
+  font-size: 0.9rem;
+}
+
+.modern-footer p {
+  margin: 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .modern-hero {
+    flex-direction: column;
+    padding: 2rem 1rem;
+  }
+
+  .modern-hero h2 {
+    font-size: 2rem;
+  }
+
+  .modern-hero-image {
+    height: 300px;
+  }
+
+  .modern-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .modern-nav {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }

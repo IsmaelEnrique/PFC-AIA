@@ -1,9 +1,11 @@
 import { Routes, Route } from "react-router-dom";
+import { useState } from "react";
 import Navbar from "./components/Navbar";     // ✅ sin barra inicial
 import Footer from "./components/Footer";     // ✅
 import Home from "./pages/HomePage";              // ✅
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
+import LogoUpload from "./pages/LogoUpload";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
 import StorePreview from "./pages/StorePreview";
@@ -13,6 +15,12 @@ import ActivarComercio from "./pages/ActivarComercio";
 
 
 export default function App() {
+  const [storeLogo, setStoreLogo] = useState(null);
+
+  const handleLogoUpload = (logo) => {
+    setStoreLogo(logo);
+  };
+
   return (
     <div className="layout">
       {/* 🔹 Navbar global (siempre visible arriba) */}
@@ -25,7 +33,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/disenar-pagina" element={<DesignSelector />} />
+          <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
+          <Route path="/disenar-pagina" element={<DesignSelector storeLogo={storeLogo} />} />
           <Route path="/store-preview" element={<StorePreview />} />
           <Route path="/activar-comercio" element={<ActivarComercio />} />
         </Routes>
