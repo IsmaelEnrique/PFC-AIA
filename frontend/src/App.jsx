@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -12,6 +13,7 @@ import StorePreview from "./pages/StorePreview";
 import AdminPanel from "./pages/AdminPanel";
 import ActivarComercio from "./pages/ActivarComercio";
 import GestionProductos from "./pages/GestionProductos";
+import AgregarProducto from "./pages/AgregarProducto";
 import GestionCategorias from "./pages/GestionCategorias";
 
 // Componente para proteger rutas
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
           <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
           <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
+          <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
           <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
           <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
         </Routes>

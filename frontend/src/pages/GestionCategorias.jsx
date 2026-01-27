@@ -1,7 +1,9 @@
 // frontend/src/pages/GestionCategorias.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function GestionCategorias() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const [comercio, setComercio] = useState(null);
   const [categorias, setCategorias] = useState([]);
@@ -127,9 +129,35 @@ export default function GestionCategorias() {
   return (
     <section className="panel-page">
       <div className="panel-container">
-        <h1 className="panel-title">
-          Gestión de <span className="accent">Categorías</span>
-        </h1>
+        <div
+          className="panel-title"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+        >
+          <span>
+            Gestión de <span className="accent">Categorías</span>
+          </span>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => navigate("/admin")}
+            style={{
+              background: "white",
+              color: "#667eea",
+              border: "2px solid #667eea",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.3s",
+            }}
+          >
+            ← Volver al panel
+          </button>
+        </div>
 
         <p className="panel-subtitle">
           Organizá las categorías de tu tienda

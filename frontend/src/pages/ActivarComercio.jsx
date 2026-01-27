@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ActivarComercio() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [form, setForm] = useState({
@@ -166,13 +168,59 @@ export default function ActivarComercio() {
   return (
     <section className="panel-page">
       <div className="panel-container">
-        <h1 className="panel-title">
-          Gestión <span className="accent"> del comercio</span>
-        </h1>
+        <div
+          className="panel-title"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+        >
+          <span>
+            Gestión <span className="accent"> del comercio</span>
+          </span>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => navigate("/admin")}
+            style={{
+              background: "white",
+              color: "#667eea",
+              border: "2px solid #667eea",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+            }}
+          >
+            ← Volver al panel
+          </button>
+        </div>
 
-        <p className="panel-subtitle">
-          Completá los datos de tu emprendimiento. Los datos con * son obligarios.
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+          <p className="panel-subtitle" style={{ margin: 0 }}>
+            Completá los datos de tu emprendimiento. Los datos con * son obligarios.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate("/cargar-logo")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              padding: "16px 26px",
+              fontSize: "16px",
+              fontWeight: 800,
+              minWidth: "210px",
+              letterSpacing: "0.3px",
+              boxShadow: "0 8px 18px rgba(102, 126, 234, 0.25)",
+              borderRadius: "10px"
+            }}
+          >
+          
+            <span style={{ lineHeight: 1 }}>Subir logo</span>
+          </button>
+        </div>
 
         <form className="panel-form" noValidate>
 
