@@ -231,33 +231,33 @@ export const getTiendaPublica = async (req, res) => {
     const productos = productosResult.rows;
     console.log("📦 Productos encontrados:", productos.length);
 
-    // 4️⃣ Obtener variantes para cada producto (opcional si existe la tabla)
+    // 4️⃣ Obtener variantes para cada producto
     for (const producto of productos) {
       try {
         const variantesResult = await pool.query(
-          `SELECT pv.*, mpv.id_producto
-           FROM producto_variante pv
-           INNER JOIN m_n_prod_provar mpv ON pv.id_prod_var = mpv.id_prod_var
-           WHERE mpv.id_producto = $1`,
+          `SELECT * FROM variante WHERE id_producto = $1`,
           [producto.id_producto]
         );
 
         const variantes = variantesResult.rows;
+        console.log(`📊 Producto ${producto.nombre}: ${variantes.length} variantes`);
+        
         for (const variante of variantes) {
           const caracteristicasResult = await pool.query(
             `SELECT c.id_caracteristica, c.nombre_caracteristica, v.id_valor, v.nombre_valor
-             FROM caracteristica c
-             INNER JOIN m_n_prodrvar_carac mpc ON c.id_caracteristica = mpc.id_caracteristica
-             INNER JOIN valor v ON c.id_caracteristica = v.id_caracteristica
-             WHERE mpc.id_prod_var = $1`,
-            [variante.id_prod_var]
+             FROM valor v
+             INNER JOIN variante_valor vv ON v.id_valor = vv.id_valor
+             INNER JOIN caracteristica c ON v.id_caracteristica = c.id_caracteristica
+             WHERE vv.id_variante = $1`,
+            [variante.id_variante]
           );
           variante.caracteristicas = caracteristicasResult.rows;
+          console.log(`  ↳ Variante ${variante.id_variante}: precio=${variante.precio}, caracteristicas=${variante.caracteristicas.length}`);
         }
 
         producto.variantes = variantes;
       } catch (varianteError) {
-        console.log("⚠️ Tabla de variantes no disponible, continuando sin variantes");
+        console.log("⚠️ Error obteniendo variantes:", varianteError.message);
         producto.variantes = [];
       }
 

@@ -40,7 +40,19 @@ export default function TemplateMinimal({ store, template }) {
                 )}
               </div>
               <h4>{p.name}</h4>
-              <p className="minimal-price">${p.price}</p>
+              {p.variantes && p.variantes.length > 0 ? (() => {
+                const precios = p.variantes.map(v => parseFloat(v.precio));
+                const precioUnico = precios.every(precio => precio === precios[0]);
+                
+                if (precioUnico) {
+                  return <p className="minimal-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                } else {
+                  const precioMin = Math.min(...precios);
+                  return <p className="minimal-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                }
+              })() : (
+                <p className="minimal-sin-precio">Consultar precio</p>
+              )}
               <button className="minimal-item-btn">Conocer más</button>
             </div>
           ))}

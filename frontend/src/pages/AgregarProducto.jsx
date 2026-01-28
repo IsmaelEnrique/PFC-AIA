@@ -374,9 +374,23 @@ export default function AgregarProducto() {
     }
     
     setCaracteristicasProducto(nuevas);
+    
+    // Si hay variantes generadas, avisar que deben regenerarse
+    if (showVariantes && variantes.length > 0 && !productoUnico) {
+      setTimeout(() => {
+        alert("⚠️ Recuerda regenerar las variantes después de cambiar los valores");
+      }, 100);
+    }
   };
 
   const eliminarCaracteristica = (index) => {
+    if (showVariantes && variantes.length > 0 && !productoUnico) {
+      if (!window.confirm("⚠️ Al eliminar esta característica, deberás regenerar las variantes. ¿Continuar?")) {
+        return;
+      }
+      setShowVariantes(false);
+      setVariantes([]);
+    }
     setCaracteristicasProducto(caracteristicasProducto.filter((_, i) => i !== index));
   };
 
@@ -890,6 +904,7 @@ export default function AgregarProducto() {
                           <td>
                             <input
                               type="number"
+                              min="0"
                               value={v.stock}
                               onChange={(e) => actualizarVariante(index, "stock", e.target.value)}
                               style={{ width: "80px" }}

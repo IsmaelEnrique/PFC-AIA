@@ -15,19 +15,21 @@ import {
 
 const router = express.Router();
 
-// Rutas de variantes (primero para evitar conflictos)
+// Rutas de productos con subrutas (deben ir ANTES de /:id)
 router.get("/:id_producto/variantes", getVariantes);
 router.post("/:id_producto/variantes", createVariante);
+router.get("/:id_producto/caracteristicas", getCaracteristicasProducto);
+
+// Rutas de variantes
 router.put("/variantes/:id", updateVariante);
 router.delete("/variantes/:id", deleteVariante);
 
 // Rutas de productos
 router.get("/", getProductos);
-router.get("/:id", getProductoById);
-router.get("/:id/caracteristicas", getCaracteristicasProducto);
 router.post("/", createProducto);
+router.patch("/:id/estado", toggleEstadoProducto);
+router.get("/:id", getProductoById);  // Esta debe ir AL FINAL
 router.put("/:id", updateProducto);
 router.delete("/:id", deleteProducto);
-router.patch("/:id/estado", toggleEstadoProducto);
 
 export default router;
