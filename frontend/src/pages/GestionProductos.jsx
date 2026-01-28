@@ -6,6 +6,11 @@ export default function GestionProductos() {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [comercio, setComercio] = useState(null);
+  
+  // Estados para filtros y ordenamiento
+  const [filtroEstado, setFiltroEstado] = useState("todos"); // todos, activos, inactivos
+  const [ordenamiento, setOrdenamiento] = useState("nombre"); // nombre, codigo, recientes
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -65,6 +70,37 @@ export default function GestionProductos() {
     }
   };
 
+  // Función para filtrar y ordenar productos
+  const productosFiltrados = () => {
+    let resultado = [...productos];
+
+    // Filtrar por búsqueda
+    if (busqueda.trim()) {
+      resultado = resultado.filter(p => 
+        p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        p.codigo.toLowerCase().includes(busqueda.toLowerCase())
+      );
+    }
+
+    // Filtrar por estado
+    if (filtroEstado === "activos") {
+      resultado = resultado.filter(p => p.activo);
+    } else if (filtroEstado === "inactivos") {
+      resultado = resultado.filter(p => !p.activo);
+    }
+
+    // Ordenar
+    if (ordenamiento === "nombre") {
+      resultado.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    } else if (ordenamiento === "codigo") {
+      resultado.sort((a, b) => a.codigo.localeCompare(b.codigo));
+    } else if (ordenamiento === "recientes") {
+      resultado.sort((a, b) => b.id_producto - a.id_producto);
+    }
+
+    return resultado;
+  };
+
   return (
     <>
       <style>{`
@@ -109,6 +145,59 @@ export default function GestionProductos() {
 
         .actions-bar {
           margin-bottom: 30px;
+        }
+
+        .filtros-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-bottom: 1px solid #e0e0e0;
+          align-items: flex-end;
+          margin-bottom: 20px;
+        }
+
+        .filtro-grupo {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          min-width: 200px;
+        }
+
+        .filtro-grupo label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #555;
+        }
+
+        .input-busqueda,
+        .select-filtro {
+          padding: 8px 12px;
+          border: 2px solid #e0e0e0;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.3s;
+        }
+
+        .input-busqueda:focus,
+        .select-filtro:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filtro-resultados {
+          display: flex;
+          align-items: center;
+          margin-left: auto;
+          padding: 8px 16px;
+          background: white;
+          border: 2px solid #667eea;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #667eea;
         }
 
         .btn {
@@ -340,15 +429,75 @@ export default function GestionProductos() {
                 </button>
               </div>
 
+              {/* Filtros y Ordenamiento */}
+              {productos.length > 0 && (
+                <div className="filtros-container">
+                  <div className="filtro-grupo">
+                    <label>🔍 Buscar:</label>
+                    <input
+                      type="text"
+                      placeholder="Nombre o código..."
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      className="input-busqueda"
+                    />
+                  </div>
+
+                  <div className="filtro-grupo">
+                    <label>📊 Estado:</label>
+                    <select 
+                      value={filtroEstado} 
+                      onChange={(e) => setFiltroEstado(e.target.value)}
+                      className="select-filtro"
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="activos">Activos</option>
+                      <option value="inactivos">Inactivos</option>
+                    </select>
+                  </div>
+
+                  <div className="filtro-grupo">
+                    <label>⬇️ Ordenar por:</label>
+                    <select 
+                      value={ordenamiento} 
+                      onChange={(e) => setOrdenamiento(e.target.value)}
+                      className="select-filtro"
+                    >
+                      <option value="nombre">Nombre (A-Z)</option>
+                      <option value="codigo">Código</option>
+                      <option value="recientes">Más recientes</option>
+                    </select>
+                  </div>
+
+                  <div className="filtro-resultados">
+                    Mostrando {productosFiltrados().length} de {productos.length} productos
+                  </div>
+                </div>
+              )}
+
               {loading ? (
                 <p>Cargando productos...</p>
               ) : productos.length === 0 ? (
                 <div className="empty-state">
                   <p>No hay productos creados</p>
                 </div>
+              ) : productosFiltrados().length === 0 ? (
+                <div className="empty-state">
+                  <p>No se encontraron productos con los filtros aplicados</p>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setBusqueda("");
+                      setFiltroEstado("todos");
+                      setOrdenamiento("nombre");
+                    }}
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
               ) : (
                 <div className="productos-grid">
-                  {productos.map(p => (
+                  {productosFiltrados().map(p => (
                     <div key={p.id_producto} className="producto-card">
                       <div className="producto-imagen">
                         {p.foto ? (
