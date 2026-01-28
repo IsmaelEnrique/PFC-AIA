@@ -1,10 +1,13 @@
 import express from "express";
 import pool from "../db/db.js";
-import { activarComercio, getComercioByUsuario } from "../controllers/comercioController.js";
+import { activarComercio, getComercioByUsuario, actualizarLogo, actualizarDiseno, getTiendaPublica } from "../controllers/comercioController.js";
 const router = express.Router();
 
 // Obtener comercio por usuario (usando query string)
 router.get("/", getComercioByUsuario);
+
+// Endpoint público para tienda (ANTES de /:id_usuario para evitar conflicto)
+router.get("/tienda/:slug", getTiendaPublica);
 
 // Obtener comercio por usuario (usando params - compatibilidad)
 router.get("/:id_usuario", async (req, res) => {
@@ -29,5 +32,11 @@ router.get("/:id_usuario", async (req, res) => {
 
 // Activar o actualizar comercio
 router.post("/activar", activarComercio); 
+
+// Actualizar logo del comercio
+router.post("/logo", actualizarLogo);
+
+// Actualizar tipo de diseño
+router.post("/diseno", actualizarDiseno);
 
 export default router;

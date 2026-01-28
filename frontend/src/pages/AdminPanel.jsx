@@ -14,11 +14,11 @@ export default function AdminPanel() {
 
         <div className="admin-actions">
           <Link to="/perfil" className="btn btn-primary">
-            Ver perfil
+            Perfil usuario
           </Link>
 
           <Link to="/activar-comercio" className="btn btn-secondary">
-            Activar comercio
+            Perfil comercio
           </Link>
 
           <Link to="/disenar-pagina" className="btn btn-secondary">

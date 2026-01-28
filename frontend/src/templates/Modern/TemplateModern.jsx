@@ -34,10 +34,28 @@ export default function TemplateModern({ store, template }) {
         <div className="modern-grid">
           {store.products.map(p => (
             <div key={p.id} className="modern-card">
-              <div className="modern-card-image"></div>
+              <div className="modern-card-image">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="modern-placeholder">Sin imagen</div>
+                )}
+              </div>
               <div className="modern-card-content">
                 <h4>{p.name}</h4>
-                <p className="modern-card-price">${p.price}</p>
+                {p.variantes && p.variantes.length > 0 ? (() => {
+                  const precios = p.variantes.map(v => parseFloat(v.precio));
+                  const precioUnico = precios.every(precio => precio === precios[0]);
+                  
+                  if (precioUnico) {
+                    return <p className="modern-card-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  } else {
+                    const precioMin = Math.min(...precios);
+                    return <p className="modern-card-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  }
+                })() : (
+                  <p className="modern-sin-precio">Consultar precio</p>
+                )}
                 <button className="modern-card-btn">Agregar al carrito</button>
               </div>
             </div>

@@ -36,10 +36,28 @@ export default function TemplateColorful({ store, template }) {
         <div className="colorful-carousel">
           {store.products.map((p, idx) => (
             <div key={p.id} className={`colorful-slide slide-${idx % 3}`}>
-              <div className="colorful-slide-img"></div>
+              <div className="colorful-slide-img">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="colorful-placeholder">Sin imagen</div>
+                )}
+              </div>
               <h3>{p.name}</h3>
               <div className="colorful-price-container">
-                <span className="colorful-price">${p.price}</span>
+                {p.variantes && p.variantes.length > 0 ? (() => {
+                  const precios = p.variantes.map(v => parseFloat(v.precio));
+                  const precioUnico = precios.every(precio => precio === precios[0]);
+                  
+                  if (precioUnico) {
+                    return <span className="colorful-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
+                  } else {
+                    const precioMin = Math.min(...precios);
+                    return <span className="colorful-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
+                  }
+                })() : (
+                  <span className="colorful-sin-precio">Consultar precio</span>
+                )}
                 <button className="colorful-slide-btn">Comprar</button>
               </div>
             </div>

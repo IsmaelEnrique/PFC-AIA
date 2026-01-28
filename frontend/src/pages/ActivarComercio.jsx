@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ActivarComercio() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [form, setForm] = useState({
@@ -10,6 +12,7 @@ export default function ActivarComercio() {
     direccion: "",
     contacto: "",
     cuit: "",
+    slug: "",
   });
 
   const [formOriginal, setFormOriginal] = useState(null);
@@ -33,6 +36,7 @@ export default function ActivarComercio() {
             direccion: data.direccion || "",
             contacto: data.contacto || "",
             cuit: data.cuit || "",
+            slug: data.slug || "",
           };
           setForm(datosComercio);
           setFormOriginal(datosComercio);
@@ -82,6 +86,7 @@ export default function ActivarComercio() {
             direccion: form.direccion || null,
             contacto: form.contacto || null,
             cuit: form.cuit || null,
+            slug: form.slug || null,
             activo: activo,
           }),
         }
@@ -166,13 +171,59 @@ export default function ActivarComercio() {
   return (
     <section className="panel-page">
       <div className="panel-container">
-        <h1 className="panel-title">
-          Gestión <span className="accent"> del comercio</span>
-        </h1>
+        <div
+          className="panel-title"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+        >
+          <span>
+            Gestión <span className="accent"> del comercio</span>
+          </span>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => navigate("/admin")}
+            style={{
+              background: "white",
+              color: "#667eea",
+              border: "2px solid #667eea",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+            }}
+          >
+            ← Volver al panel
+          </button>
+        </div>
 
-        <p className="panel-subtitle">
-          Completá los datos de tu emprendimiento. Los datos con * son obligarios.
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+          <p className="panel-subtitle" style={{ margin: 0 }}>
+            Completá los datos de tu emprendimiento. Los datos con * son obligarios.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate("/cargar-logo")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              padding: "16px 26px",
+              fontSize: "16px",
+              fontWeight: 800,
+              minWidth: "210px",
+              letterSpacing: "0.3px",
+              boxShadow: "0 8px 18px rgba(102, 126, 234, 0.25)",
+              borderRadius: "10px"
+            }}
+          >
+          
+            <span style={{ lineHeight: 1 }}>Subir logo</span>
+          </button>
+        </div>
 
         <form className="panel-form" noValidate>
 
@@ -259,6 +310,58 @@ export default function ActivarComercio() {
                 setForm({ ...form, cuit: e.target.value })
               }
             />
+          </div>
+
+          {/* Slug - URL personalizada */}
+          <div className="form-group">
+            <label>URL personalizada de tu tienda *</label>
+            <div style={{
+              background: "#f8f9fa",
+              border: "2px solid #e9ecef",
+              borderRadius: "8px",
+              padding: "12px 16px",
+              marginBottom: "8px"
+            }}>
+              <div style={{ 
+                fontSize: "13px", 
+                color: "#6c757d", 
+                marginBottom: "6px",
+                fontWeight: "500"
+              }}>
+                Tu tienda estará disponible en:
+              </div>
+              <div style={{ 
+                fontSize: "16px", 
+                color: "#667eea", 
+                fontWeight: "600",
+                fontFamily: "monospace",
+                wordBreak: "break-all"
+              }}>
+                tudominio.com/tienda/<span style={{ background: "#fff3cd", borderRadius: "4px" }}>{form.slug || "tu-comercio"}</span>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Ej: mi-tienda, mi-emprendimiento"
+              value={form.slug}
+              onChange={e => {
+                const valor = e.target.value.toLowerCase();
+                const slug = valor
+                  .replace(/\s+/g, '-')
+                  .replace(/[^a-z0-9-]/g, '')
+                  .replace(/-+/g, '-')
+                  .replace(/^-|-$/g, '');
+                setForm({ ...form, slug });
+              }}
+            />
+            <p style={{ 
+              fontSize: "13px", 
+              color: "#6c757d", 
+              marginTop: "6px",
+              fontStyle: "italic"
+            }}>
+              💡 Solo letras, números y guiones. Ej: mi-comercio, tienda-online
+            </p>
           </div>
 
           {/* Botones */}
