@@ -32,7 +32,13 @@ export default function TemplateMinimal({ store, template }) {
         <div className="minimal-products">
           {store.products.map(p => (
             <div key={p.id} className="minimal-item">
-              <div className="minimal-item-image"></div>
+              <div className="minimal-item-image">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="minimal-placeholder">Sin imagen</div>
+                )}
+              </div>
               <h4>{p.name}</h4>
               <p className="minimal-price">${p.price}</p>
               <button className="minimal-item-btn">Conocer más</button>

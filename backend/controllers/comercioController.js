@@ -28,7 +28,7 @@ export const getComercioByUsuario = async (req, res) => {
 export const activarComercio = async (req, res) => {
   try {
     const id_usuario = Number(req.body.id_usuario);
-    const { nombre, rubro, descripcion, direccion, contacto, cuit, activo, tipo_diseno } = req.body;
+    const { nombre, rubro, descripcion, direccion, contacto, cuit, activo, tipo_diseno, slug } = req.body;
     const tipoDiseno =
       tipo_diseno === undefined || tipo_diseno === null ? null : Number(tipo_diseno);
 
@@ -58,6 +58,7 @@ export const activarComercio = async (req, res) => {
       const direccionFinal = direccion || null;
       const contactoFinal = contacto || null;
       const cuitFinal = cuit || null;
+      const slugFinal = slug || null;
       const activoFinal = activo !== undefined ? activo : comercioActual.activo;
       const tipoDisenoFinal =
         tipoDiseno !== null ? tipoDiseno : comercioActual["tipo_diseño"] || null;
@@ -71,8 +72,9 @@ export const activarComercio = async (req, res) => {
              contacto = $5, 
              cuit = $6,
              "tipo_diseño" = $7,
-             activo = $8
-         WHERE id_usuario = $9 
+             activo = $8,
+             slug = $9
+         WHERE id_usuario = $10 
          RETURNING *`,
         [
           nombreFinal,
@@ -83,6 +85,7 @@ export const activarComercio = async (req, res) => {
           cuitFinal,
           tipoDisenoFinal,
           activoFinal,
+          slugFinal,
           id_usuario,
         ]
       );
@@ -97,8 +100,8 @@ export const activarComercio = async (req, res) => {
 
     const nuevo = await pool.query(
       `INSERT INTO comercio 
-       (id_usuario, nombre_comercio, rubro, descripcion, direccion, contacto, cuit, "tipo_diseño", activo) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+       (id_usuario, nombre_comercio, rubro, descripcion, direccion, contacto, cuit, "tipo_diseño", activo, slug) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
        RETURNING *`,
       [
         id_usuario,
@@ -110,6 +113,7 @@ export const activarComercio = async (req, res) => {
         cuit || null,
         tipoDiseno || null,
         true,
+        slug || null,
       ]
     );
 
@@ -186,5 +190,104 @@ export const actualizarDiseno = async (req, res) => {
   } catch (error) {
     console.error("Error al actualizar tipo_diseño:", error);
     return res.status(500).json({ error: "Error al guardar el diseño" });
+  }
+};
+
+// Endpoint optimizado para tienda pública
+export const getTiendaPublica = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    console.log("🔍 Buscando tienda con slug:", slug);
+
+    // 1️⃣ Obtener comercio por slug (debe estar activo)
+    const comercioResult = await pool.query(
+      "SELECT * FROM comercio WHERE slug = $1 AND activo = true",
+      [slug]
+    );
+
+    if (comercioResult.rows.length === 0) {
+      console.log("❌ Comercio no encontrado");
+      return res.status(404).json({ error: "Tienda no encontrada" });
+    }
+
+    const comercio = comercioResult.rows[0];
+    console.log("✅ Comercio encontrado:", comercio.nombre_comercio);
+
+    // 2️⃣ Obtener categorías del comercio
+    const categoriasResult = await pool.query(
+      "SELECT * FROM categoria WHERE id_comercio = $1",
+      [comercio.id_comercio]
+    );
+
+    const categorias = categoriasResult.rows;
+    console.log("📁 Categorías encontradas:", categorias.length);
+
+    // 3️⃣ Obtener productos activos
+    const productosResult = await pool.query(
+      "SELECT * FROM producto WHERE id_comercio = $1 AND activo = true ORDER BY nombre",
+      [comercio.id_comercio]
+    );
+
+    const productos = productosResult.rows;
+    console.log("📦 Productos encontrados:", productos.length);
+
+    // 4️⃣ Obtener variantes para cada producto (opcional si existe la tabla)
+    for (const producto of productos) {
+      try {
+        const variantesResult = await pool.query(
+          `SELECT pv.*, mpv.id_producto
+           FROM producto_variante pv
+           INNER JOIN m_n_prod_provar mpv ON pv.id_prod_var = mpv.id_prod_var
+           WHERE mpv.id_producto = $1`,
+          [producto.id_producto]
+        );
+
+        const variantes = variantesResult.rows;
+        for (const variante of variantes) {
+          const caracteristicasResult = await pool.query(
+            `SELECT c.id_caracteristica, c.nombre_caracteristica, v.id_valor, v.nombre_valor
+             FROM caracteristica c
+             INNER JOIN m_n_prodrvar_carac mpc ON c.id_caracteristica = mpc.id_caracteristica
+             INNER JOIN valor v ON c.id_caracteristica = v.id_caracteristica
+             WHERE mpc.id_prod_var = $1`,
+            [variante.id_prod_var]
+          );
+          variante.caracteristicas = caracteristicasResult.rows;
+        }
+
+        producto.variantes = variantes;
+      } catch (varianteError) {
+        console.log("⚠️ Tabla de variantes no disponible, continuando sin variantes");
+        producto.variantes = [];
+      }
+
+      // 5️⃣ Obtener categorías de cada producto
+      try {
+        const categoriasProductoResult = await pool.query(
+          `SELECT c.id_categoria, c.nombre_cat
+           FROM categoria c
+           INNER JOIN m_n_cat_prod mcp ON c.id_categoria = mcp.id_categoria
+           WHERE mcp.id_producto = $1`,
+          [producto.id_producto]
+        );
+        producto.categorias = categoriasProductoResult.rows;
+      } catch (catError) {
+        console.log("⚠️ Error al obtener categorías del producto");
+        producto.categorias = [];
+      }
+    }
+
+    console.log("✅ Datos completos listos para enviar");
+
+    // Respuesta unificada
+    res.json({
+      comercio,
+      categorias,
+      productos
+    });
+
+  } catch (error) {
+    console.error("❌ Error en getTiendaPublica:", error);
+    res.status(500).json({ error: "Error al cargar la tienda" });
   }
 };

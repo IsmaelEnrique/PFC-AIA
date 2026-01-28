@@ -28,12 +28,27 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
+  const [slugTienda, setSlugTienda] = useState(null);
 
   // 🔄 se ejecuta cada vez que cambia la ruta
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     setUser(storedUser ? JSON.parse(storedUser) : null);
   }, [location.pathname]); 
+
+  // 🔍 Obtener slug si el usuario está logueado
+  useEffect(() => {
+    if (user?.id_usuario) {
+      fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data?.slug) setSlugTienda(data.slug);
+        })
+        .catch(() => setSlugTienda(null));
+    } else {
+      setSlugTienda(null);
+    }
+  }, [user]); 
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -50,7 +65,17 @@ export default function Navbar() {
         </Link>
 
         <nav className="nav-links">
-          <Link to="/shop">Tienda</Link>
+          {user && slugTienda ? (
+            <a 
+              href={`/tienda/${slugTienda}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              Ver mi tienda
+            </a>
+          ) : (
+            <Link to="/shop">Tienda</Link>
+          )}
 
           {user ? (
             <>

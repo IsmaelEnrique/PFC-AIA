@@ -36,7 +36,13 @@ export default function TemplateColorful({ store, template }) {
         <div className="colorful-carousel">
           {store.products.map((p, idx) => (
             <div key={p.id} className={`colorful-slide slide-${idx % 3}`}>
-              <div className="colorful-slide-img"></div>
+              <div className="colorful-slide-img">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="colorful-placeholder">Sin imagen</div>
+                )}
+              </div>
               <h3>{p.name}</h3>
               <div className="colorful-price-container">
                 <span className="colorful-price">${p.price}</span>

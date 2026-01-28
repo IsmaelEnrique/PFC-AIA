@@ -34,7 +34,13 @@ export default function TemplateModern({ store, template }) {
         <div className="modern-grid">
           {store.products.map(p => (
             <div key={p.id} className="modern-card">
-              <div className="modern-card-image"></div>
+              <div className="modern-card-image">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="modern-placeholder">Sin imagen</div>
+                )}
+              </div>
               <div className="modern-card-content">
                 <h4>{p.name}</h4>
                 <p className="modern-card-price">${p.price}</p>

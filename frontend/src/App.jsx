@@ -15,6 +15,7 @@ import ActivarComercio from "./pages/ActivarComercio";
 import GestionProductos from "./pages/GestionProductos";
 import AgregarProducto from "./pages/AgregarProducto";
 import GestionCategorias from "./pages/GestionCategorias";
+import TiendaPublica from "./pages/TiendaPublica";
 
 // Componente para proteger rutas
 function ProtectedRoute({ element }) {
@@ -36,27 +37,35 @@ export default function App() {
   };
 
   return (
-    <div className="layout">
-      <Navbar />
+    <>
+      <Routes>
+        {/* Ruta pública sin navbar/footer */}
+        <Route path="/tienda/:slug" element={<TiendaPublica />} />
+      </Routes>
 
-      <main className="content">
-        <Routes>
-          <Route path="/" element={<PublicRoute element={<Home />} />} />
-          <Route path="/login" element={<PublicRoute element={<Login />} />} />
-          <Route path="/register" element={<PublicRoute element={<Register />} />} />
-          <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
-          <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
-          <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector storeLogo={storeLogo} />} />} />
-          <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
-          <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
-          <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
-          <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
-          <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
-          <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
-        </Routes>
-      </main>
+      {/* Rutas con navbar/footer */}
+      <div className="layout">
+        <Navbar />
 
-      <Footer />
-    </div>
+        <main className="content">
+          <Routes>
+            <Route path="/" element={<PublicRoute element={<Home />} />} />
+            <Route path="/login" element={<PublicRoute element={<Login />} />} />
+            <Route path="/register" element={<PublicRoute element={<Register />} />} />
+            <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
+            <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
+            <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector storeLogo={storeLogo} />} />} />
+            <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
+            <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
+            <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
+            <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
+            <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
+            <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
+          </Routes>
+        </main>
+
+        <Footer />
+      </div>
+    </>
   );
 }

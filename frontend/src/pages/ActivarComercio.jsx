@@ -12,6 +12,7 @@ export default function ActivarComercio() {
     direccion: "",
     contacto: "",
     cuit: "",
+    slug: "",
   });
 
   const [formOriginal, setFormOriginal] = useState(null);
@@ -35,6 +36,7 @@ export default function ActivarComercio() {
             direccion: data.direccion || "",
             contacto: data.contacto || "",
             cuit: data.cuit || "",
+            slug: data.slug || "",
           };
           setForm(datosComercio);
           setFormOriginal(datosComercio);
@@ -84,6 +86,7 @@ export default function ActivarComercio() {
             direccion: form.direccion || null,
             contacto: form.contacto || null,
             cuit: form.cuit || null,
+            slug: form.slug || null,
             activo: activo,
           }),
         }
@@ -307,6 +310,58 @@ export default function ActivarComercio() {
                 setForm({ ...form, cuit: e.target.value })
               }
             />
+          </div>
+
+          {/* Slug - URL personalizada */}
+          <div className="form-group">
+            <label>URL personalizada de tu tienda *</label>
+            <div style={{
+              background: "#f8f9fa",
+              border: "2px solid #e9ecef",
+              borderRadius: "8px",
+              padding: "12px 16px",
+              marginBottom: "8px"
+            }}>
+              <div style={{ 
+                fontSize: "13px", 
+                color: "#6c757d", 
+                marginBottom: "6px",
+                fontWeight: "500"
+              }}>
+                Tu tienda estará disponible en:
+              </div>
+              <div style={{ 
+                fontSize: "16px", 
+                color: "#667eea", 
+                fontWeight: "600",
+                fontFamily: "monospace",
+                wordBreak: "break-all"
+              }}>
+                tudominio.com/tienda/<span style={{ background: "#fff3cd", borderRadius: "4px" }}>{form.slug || "tu-comercio"}</span>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Ej: mi-tienda, mi-emprendimiento"
+              value={form.slug}
+              onChange={e => {
+                const valor = e.target.value.toLowerCase();
+                const slug = valor
+                  .replace(/\s+/g, '-')
+                  .replace(/[^a-z0-9-]/g, '')
+                  .replace(/-+/g, '-')
+                  .replace(/^-|-$/g, '');
+                setForm({ ...form, slug });
+              }}
+            />
+            <p style={{ 
+              fontSize: "13px", 
+              color: "#6c757d", 
+              marginTop: "6px",
+              fontStyle: "italic"
+            }}>
+              💡 Solo letras, números y guiones. Ej: mi-comercio, tienda-online
+            </p>
           </div>
 
           {/* Botones */}

@@ -258,3 +258,8 @@ CREATE TABLE variante_valor (
         FOREIGN KEY (id_valor)
         REFERENCES valor(id_valor)
 );
+
+
+ALTER TABLE comercio
+ADD COLUMN slug VARCHAR(255) UNIQUE;
+
