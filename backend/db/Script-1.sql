@@ -46,12 +46,12 @@ CREATE TABLE carrito (
     CONSTRAINT carrito_pk PRIMARY KEY (id_carrito)
 );
 
-CREATE TABLE producto_variante (
+/*CREATE TABLE producto_variante (
     id_prod_var SERIAL NOT NULL,
     stock INT NOT NULL,
     precio DECIMAL(10,2) NOT NULL,
     CONSTRAINT producto_variante_pk PRIMARY KEY (id_prod_var)
-);
+);*/
 
 -- ======================================================
 --  TABLAS CON DEPENDENCIAS DIRECTAS NIVEL 2
@@ -172,7 +172,7 @@ CREATE TABLE m_n_prod_carrito (
         REFERENCES carrito(id_carrito)
 );
 
-CREATE TABLE m_n_prod_provar (
+/*CREATE TABLE m_n_prod_provar (
     id_prod_provar SERIAL NOT NULL,
     id_prod_var INT NOT NULL,
     id_producto INT NOT NULL,
@@ -192,7 +192,7 @@ CREATE TABLE m_n_prodrvar_carac (
         REFERENCES producto_variante(id_prod_var),
     CONSTRAINT m_n_prodrvar_carac_fk_carac FOREIGN KEY (id_caracteristica)
         REFERENCES caracteristica(id_caracteristica)
-);
+);*/
 
 CREATE TABLE detalle_pedido (
     id_detallepedido SERIAL NOT NULL,
@@ -212,3 +212,54 @@ ALTER TABLE comercio
 ADD COLUMN rubro VARCHAR(50),
 ADD COLUMN direccion VARCHAR(100),
 ADD COLUMN contacto VARCHAR(50);
+
+alter table usuario 
+add column nombre_banco VARCHAR(50),
+add column nombre_titular VARCHAR(50);
+
+
+
+ALTER TABLE categoria ADD COLUMN id_comercio INT NOT NULL;
+
+ALTER TABLE categoria 
+ADD CONSTRAINT categoria_fk_comercio FOREIGN KEY (id_comercio)
+REFERENCES comercio(id_comercio);
+
+ALTER TABLE caracteristica ADD COLUMN id_comercio INT NOT NULL;
+
+ALTER TABLE caracteristica  
+ADD CONSTRAINT carac_fk_comercio FOREIGN KEY (id_comercio)
+REFERENCES comercio(id_comercio);
+
+DROP TABLE IF EXISTS m_n_prodrvar_carac CASCADE;
+DROP TABLE IF EXISTS m_n_prod_provar CASCADE;
+DROP TABLE IF EXISTS producto_variante CASCADE;
+
+--remplaza a variante
+CREATE TABLE variante (
+    id_variante SERIAL PRIMARY KEY,
+    id_producto INT NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL,
+    CONSTRAINT variante_fk_producto
+        FOREIGN KEY (id_producto)
+        REFERENCES producto(id_producto)
+);
+
+--tabla relacional entre variante y valores de las carcteristicas
+CREATE TABLE variante_valor (
+    id_variante INT NOT NULL,
+    id_valor INT NOT NULL,
+    PRIMARY KEY (id_variante, id_valor),
+    CONSTRAINT variante_valor_fk_variante
+        FOREIGN KEY (id_variante)
+        REFERENCES variante(id_variante),
+    CONSTRAINT variante_valor_fk_valor
+        FOREIGN KEY (id_valor)
+        REFERENCES valor(id_valor)
+);
+
+
+ALTER TABLE comercio
+ADD COLUMN slug VARCHAR(255) UNIQUE;
+

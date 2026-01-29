@@ -32,9 +32,27 @@ export default function TemplateMinimal({ store, template }) {
         <div className="minimal-products">
           {store.products.map(p => (
             <div key={p.id} className="minimal-item">
-              <div className="minimal-item-image"></div>
+              <div className="minimal-item-image">
+                {p.foto ? (
+                  <img src={p.foto} alt={p.name} />
+                ) : (
+                  <div className="minimal-placeholder">Sin imagen</div>
+                )}
+              </div>
               <h4>{p.name}</h4>
-              <p className="minimal-price">${p.price}</p>
+              {p.variantes && p.variantes.length > 0 ? (() => {
+                const precios = p.variantes.map(v => parseFloat(v.precio));
+                const precioUnico = precios.every(precio => precio === precios[0]);
+                
+                if (precioUnico) {
+                  return <p className="minimal-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                } else {
+                  const precioMin = Math.min(...precios);
+                  return <p className="minimal-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                }
+              })() : (
+                <p className="minimal-sin-precio">Consultar precio</p>
+              )}
               <button className="minimal-item-btn">Conocer más</button>
             </div>
           ))}

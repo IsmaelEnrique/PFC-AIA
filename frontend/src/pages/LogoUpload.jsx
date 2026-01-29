@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/logo-upload.css';
 
@@ -7,7 +7,43 @@ const LogoUpload = ({ onLogoUpload }) => {
   const [logoFile, setLogoFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [logoSize, setLogoSize] = useState(100); // Porcentaje del tamaño
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user'));
+    } catch (err) {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`http://localhost:4000/api/comercio?id_usuario=${user.id_usuario}`);
+        const comercio = await res.json();
+        if (comercio?.logo) {
+          const fullUrl = comercio.logo.startsWith('http')
+            ? comercio.logo
+            : `http://localhost:4000${comercio.logo}`;
+          setLogoPreview(fullUrl);
+          localStorage.setItem('storeLogo', fullUrl);
+        }
+      } catch (err) {
+        console.error('No se pudo cargar el logo existente', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogo();
+  }, [user]);
 
   const removeWhiteBackground = (dataUrl) => {
     return new Promise((resolve) => {
@@ -44,6 +80,17 @@ const LogoUpload = ({ onLogoUpload }) => {
     });
   };
 
+  const dataURLToFile = (dataUrl, filename = 'logo.png') => {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    const u8arr = new Uint8Array(bstr.length);
+    for (let i = 0; i < bstr.length; i += 1) {
+      u8arr[i] = bstr.charCodeAt(i);
+    }
+    return new File([u8arr], filename.endsWith('.png') ? filename : `${filename}.png`, { type: mime });
+  };
+
   const handleLogoChange = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -51,7 +98,7 @@ const LogoUpload = ({ onLogoUpload }) => {
       reader.onload = async (event) => {
         const processedLogo = await removeWhiteBackground(event.target.result);
         setLogoPreview(processedLogo);
-        setLogoFile(file);
+        setLogoFile(dataURLToFile(processedLogo, file.name));
       };
       reader.readAsDataURL(file);
     }
@@ -79,20 +126,72 @@ const LogoUpload = ({ onLogoUpload }) => {
         reader.onload = async (event) => {
           const processedLogo = await removeWhiteBackground(event.target.result);
           setLogoPreview(processedLogo);
-          setLogoFile(file);
+          setLogoFile(dataURLToFile(processedLogo, file.name));
         };
         reader.readAsDataURL(file);
       }
     }
   };
 
-  const handleContinue = () => {
-    if (logoPreview && logoFile) {
-      // Guardamos el logo y su tamaño en localStorage
+  const handleContinue = async () => {
+    if (!logoPreview) return;
+    if (!user) {
+      setError('Necesitás iniciar sesión para guardar el logo.');
+      return;
+    }
+
+    // Solo ajustar tamaño si no se seleccionó un nuevo archivo
+    if (!logoFile) {
       localStorage.setItem('storeLogo', logoPreview);
       localStorage.setItem('logoSize', logoSize);
       onLogoUpload(logoPreview);
       navigate('/disenar-pagina');
+      return;
+    }
+
+    const confirmed = window.confirm('Este logo reemplazará al actual en tu tienda. ¿Querés continuar?');
+    if (!confirmed) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append('imagen', logoFile);
+
+      const uploadRes = await fetch('http://localhost:4000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const message = (await uploadRes.json())?.error || 'No se pudo subir el logo';
+        throw new Error(message);
+      }
+
+      const { url } = await uploadRes.json();
+
+      const saveRes = await fetch('http://localhost:4000/api/comercio/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_usuario: user.id_usuario, logo: url }),
+      });
+
+      if (!saveRes.ok) {
+        const message = (await saveRes.json())?.error || 'No se pudo guardar el logo';
+        throw new Error(message);
+      }
+
+      // Guardamos el logo procesado para la vista previa local y la URL persistida
+      localStorage.setItem('storeLogo', logoPreview);
+      localStorage.setItem('storeLogoUrl', url);
+      localStorage.setItem('logoSize', logoSize);
+      onLogoUpload(logoPreview);
+      navigate('/disenar-pagina');
+    } catch (err) {
+      setError(err.message || 'Ocurrió un error al guardar el logo');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -115,6 +214,10 @@ const LogoUpload = ({ onLogoUpload }) => {
           <h1>Sube tu logo</h1>
           <p>Agrega el logo de tu emprendimiento para que aparezca en la vista previa de tus diseños</p>
         </div>
+
+          {loading && (
+            <p style={{ textAlign: 'center', marginBottom: '16px', color: '#555' }}>Cargando logo...</p>
+          )}
 
         {!logoPreview ? (
           <div
@@ -143,6 +246,15 @@ const LogoUpload = ({ onLogoUpload }) => {
           </div>
         ) : (
           <div className="logo-preview-container">
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+              <button
+                className="btn-remove"
+                onClick={removeLogo}
+                style={{ padding: '10px 18px', fontSize: '14px', fontWeight: 600 }}
+              >
+                Cambiar logo
+              </button>
+            </div>
             <div className="logo-size-control">
               <label htmlFor="logo-size-slider">Tamaño del logo:</label>
               <input
@@ -190,11 +302,6 @@ const LogoUpload = ({ onLogoUpload }) => {
               </div>
             </div>
             
-            <div className="logo-actions">
-              <button className="btn-remove" onClick={removeLogo}>
-                ✕ Cambiar logo
-              </button>
-            </div>
           </div>
         )}
 
@@ -205,10 +312,11 @@ const LogoUpload = ({ onLogoUpload }) => {
           <button
             className="btn-continue"
             onClick={handleContinue}
-            disabled={!logoPreview}
+            disabled={!logoPreview || saving}
           >
-            Continuar →
+            {saving ? 'Guardando...' : 'Continuar →'}
           </button>
+          {error && <p className="error-text" style={{ marginTop: '8px' }}>{error}</p>}
         </div>
       </div>
     </div>

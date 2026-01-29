@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -76,24 +75,21 @@ export default function Register() {
         return;
       }
 
-      // ✅ Registro OK
+      // ✅ Registro OK - Guardar sesión
+      localStorage.setItem("user", JSON.stringify(data));
+      console.log("Registro correcto ✅", data);
+
       setSuccess(true);
-      setNombre("");
-      setApellido("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
       setErrors({});
-      // redirigir al panel
-      navigate("/admin");
+
+      // Esperar para mostrar el mensaje de éxito y luego redirigir
+      setTimeout(() => {
+        navigate("/admin");
+      }, 1000);
     } catch (error) {
       console.error(error);
       setErrors({ general: "Error de conexión con el servidor" });
     }
-
-
-
- 
   };
 
   // -------------------------
@@ -198,4 +194,3 @@ export default function Register() {
     </section>
   );
 }
-
