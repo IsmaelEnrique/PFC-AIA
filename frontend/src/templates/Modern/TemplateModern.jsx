@@ -1,12 +1,18 @@
+import React, { useState } from "react";
 import "./Modern.css";
+import CartModern from "../../components/CartModern";
+import { useCart } from "../../context/CartContext";
+
 export default function TemplateModern({ store, template }) {
+  const [cartOpen, setCartOpen] = useState(false);
+  const { addItem } = useCart();
   return (
     <div className="modern">
       <header className="modern-header">
         {store.logo ? (
-          <img 
-            src={store.logo} 
-            alt="Logo" 
+          <img
+            src={store.logo}
+            alt="Logo"
             className="modern-logo-img"
             style={{ maxHeight: `${store.logoSize || 50}px` }}
           />
@@ -17,7 +23,9 @@ export default function TemplateModern({ store, template }) {
           <a href="#">Productos</a>
           <a href="#">Categorías</a>
           <a href="#">Contacto</a>
-          <a href="#">Carrito</a>
+          <button type="button" style={{marginLeft: 18, background: "#3a3a3a", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 700, cursor: "pointer"}} onClick={() => setCartOpen(open => !open)}>
+            🛒 Carrito
+          </button>
         </nav>
       </header>
 
@@ -46,7 +54,6 @@ export default function TemplateModern({ store, template }) {
                 {p.variantes && p.variantes.length > 0 ? (() => {
                   const precios = p.variantes.map(v => parseFloat(v.precio));
                   const precioUnico = precios.every(precio => precio === precios[0]);
-                  
                   if (precioUnico) {
                     return <p className="modern-card-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                   } else {
@@ -56,12 +63,28 @@ export default function TemplateModern({ store, template }) {
                 })() : (
                   <p className="modern-sin-precio">Consultar precio</p>
                 )}
-                <button className="modern-card-btn">Agregar al carrito</button>
+                <button className="modern-card-btn" onClick={() => {
+                  const precio = p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].precio) : 0;
+                  addItem({
+                    id: p.id,
+                    nombre: p.name || p.nombre,
+                    precio: precio,
+                    cantidad: 1,
+                    imagen: p.foto || p.imagen || ""
+                  });
+                }}>Agregar al carrito</button>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* Carrito modal moderno */}
+      {cartOpen && (
+        <div style={{ position: "fixed", top: 90, right: 36, zIndex: 2100 }}>
+          <CartModern />
+        </div>
+      )}
 
       <footer className="modern-footer">
         <p>© 2024 {store.name}. Todos los derechos reservados.</p>

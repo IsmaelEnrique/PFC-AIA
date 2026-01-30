@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import { CartProvider } from "./context/CartContext";
 import Footer from "./components/Footer";
 import Home from "./pages/HomePage";
 import Login from "./pages/LoginPage";
@@ -16,6 +17,7 @@ import GestionProductos from "./pages/GestionProductos";
 import AgregarProducto from "./pages/AgregarProducto";
 import GestionCategorias from "./pages/GestionCategorias";
 import TiendaPublica from "./pages/TiendaPublica";
+
 
 // Componente para proteger rutas
 function ProtectedRoute({ element }) {
@@ -48,29 +50,36 @@ export default function App() {
           <Route path="/tienda/:slug" element={<TiendaPublica />} />
         </Routes>
       ) : (
-        // Rutas CON navbar/footer
-        <div className="layout">
-          <Navbar />
-
-          <main className="content">
-            <Routes>
-              <Route path="/" element={<PublicRoute element={<Home />} />} />
-              <Route path="/login" element={<PublicRoute element={<Login />} />} />
-              <Route path="/register" element={<PublicRoute element={<Register />} />} />
-              <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
-              <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
-              <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector storeLogo={storeLogo} />} />} />
-              <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
-              <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
-              <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
-              <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
-              <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
-              <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
-            </Routes>
-          </main>
-
-          <Footer />
-        </div>
+        // TODAS las rutas (incluyendo demo-template-colorful) bajo CartProvider
+        <CartProvider>
+          <Routes>
+            <Route
+              path="*"
+              element={
+                <div className="layout">
+                  <Navbar />
+                  <main className="content">
+                    <Routes>
+                      <Route path="/" element={<PublicRoute element={<Home />} />} />
+                      <Route path="/login" element={<PublicRoute element={<Login />} />} />
+                      <Route path="/register" element={<PublicRoute element={<Register />} />} />
+                      <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} />} />
+                      <Route path="/cargar-logo" element={<LogoUpload onLogoUpload={handleLogoUpload} />} />
+                      <Route path="/disenar-pagina" element={<ProtectedRoute element={<DesignSelector storeLogo={storeLogo} />} />} />
+                      <Route path="/store-preview" element={<ProtectedRoute element={<StorePreview />} />} />
+                      <Route path="/activar-comercio" element={<ProtectedRoute element={<ActivarComercio />} />} />
+                      <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
+                      <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
+                      <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
+                      <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
+          </Routes>
+        </CartProvider>
       )}
     </>
   );
