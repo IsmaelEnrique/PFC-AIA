@@ -1,5 +1,5 @@
 import "./Colorful.css";
-export default function TemplateColorful({ store, template }) {
+export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion }) {
   return (
     <div className="colorful">
       {/* HEADER */}
@@ -18,6 +18,21 @@ export default function TemplateColorful({ store, template }) {
           <a href="#">Productos</a>
           <a href="#">Promociones</a>
           <a href="#">Contacto</a>
+          {consumidor ? (
+            <>
+              <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+              <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
+            </>
+          ) : (
+            <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
+          )}
+          <button 
+            className="colorful-carrito-nav" 
+            onClick={abrirCarrito}
+            title="Ver carrito"
+          >
+            🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
+          </button>
         </nav>
       </header>
 
@@ -58,7 +73,18 @@ export default function TemplateColorful({ store, template }) {
                 })() : (
                   <span className="colorful-sin-precio">Consultar precio</span>
                 )}
-                <button className="colorful-slide-btn">Comprar</button>
+                <button 
+                  className="colorful-slide-btn"
+                  onClick={() => {
+                    if (p.variantes && p.variantes.length > 0) {
+                      agregarAlCarrito(p, p.variantes[0]);
+                    } else {
+                      agregarAlCarrito(p);
+                    }
+                  }}
+                >
+                  Agregar 🛒
+                </button>
               </div>
             </div>
           ))}
@@ -69,6 +95,16 @@ export default function TemplateColorful({ store, template }) {
       <footer className="colorful-footer">
         <p>© 2024 {store.name}. ¡Gracias por tu visita!</p>
       </footer>
+
+      {/* Botón flotante del carrito */}
+      {abrirCarrito && (
+        <button className="carrito-flotante carrito-flotante-colorful" onClick={abrirCarrito}>
+          🛒
+          {cantidadCarrito > 0 && (
+            <span className="carrito-badge">{cantidadCarrito}</span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

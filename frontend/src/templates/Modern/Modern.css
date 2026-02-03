@@ -45,6 +45,7 @@
 .modern-nav {
   display: flex;
   gap: 2rem;
+  align-items: center;
 }
 
 .modern-nav a {

@@ -1,5 +1,5 @@
 import "./Modern.css";
-export default function TemplateModern({ store, template }) {
+export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion }) {
   return (
     <div className="modern">
       <header className="modern-header">
@@ -17,7 +17,21 @@ export default function TemplateModern({ store, template }) {
           <a href="#">Productos</a>
           <a href="#">Categorías</a>
           <a href="#">Contacto</a>
-          <a href="#">Carrito</a>
+          {consumidor ? (
+            <>
+              <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+              <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
+            </>
+          ) : (
+            <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
+          )}
+          <button 
+            className="modern-carrito-nav" 
+            onClick={abrirCarrito}
+            title="Ver carrito"
+          >
+            🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
+          </button>
         </nav>
       </header>
 
@@ -56,7 +70,18 @@ export default function TemplateModern({ store, template }) {
                 })() : (
                   <p className="modern-sin-precio">Consultar precio</p>
                 )}
-                <button className="modern-card-btn">Agregar al carrito</button>
+                <button 
+                  className="modern-card-btn"
+                  onClick={() => {
+                    if (p.variantes && p.variantes.length > 0) {
+                      agregarAlCarrito(p, p.variantes[0]);
+                    } else {
+                      agregarAlCarrito(p);
+                    }
+                  }}
+                >
+                  Agregar al carrito 🛒
+                </button>
               </div>
             </div>
           ))}
@@ -66,6 +91,16 @@ export default function TemplateModern({ store, template }) {
       <footer className="modern-footer">
         <p>© 2024 {store.name}. Todos los derechos reservados.</p>
       </footer>
+
+      {/* Botón flotante del carrito */}
+      {abrirCarrito && (
+        <button className="carrito-flotante carrito-flotante-modern" onClick={abrirCarrito}>
+          🛒
+          {cantidadCarrito > 0 && (
+            <span className="carrito-badge">{cantidadCarrito}</span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

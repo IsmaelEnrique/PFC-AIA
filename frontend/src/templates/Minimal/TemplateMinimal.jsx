@@ -1,5 +1,5 @@
 import "./Minimal.css";
-export default function TemplateMinimal({ store, template }) {
+export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion }) {
   return (
     <div className="minimal">
       <header className="minimal-header">
@@ -18,6 +18,21 @@ export default function TemplateMinimal({ store, template }) {
             <a href="#">Productos</a>
             <a href="#">Sobre nosotros</a>
             <a href="#">Contacto</a>
+            {consumidor ? (
+              <>
+                <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+                <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
+              </>
+            ) : (
+              <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
+            )}
+            <button 
+              className="minimal-carrito-nav" 
+              onClick={abrirCarrito}
+              title="Ver carrito"
+            >
+              🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
+            </button>
           </nav>
         </div>
       </header>
@@ -53,7 +68,19 @@ export default function TemplateMinimal({ store, template }) {
               })() : (
                 <p className="minimal-sin-precio">Consultar precio</p>
               )}
-              <button className="minimal-item-btn">Conocer más</button>
+              <button 
+                className="minimal-item-btn"
+                onClick={() => {
+                  if (p.variantes && p.variantes.length > 0) {
+                    // Si tiene variantes, agrega la primera por defecto
+                    agregarAlCarrito(p, p.variantes[0]);
+                  } else {
+                    agregarAlCarrito(p);
+                  }
+                }}
+              >
+                Agregar al carrito 🛒
+              </button>
             </div>
           ))}
         </div>
@@ -62,6 +89,16 @@ export default function TemplateMinimal({ store, template }) {
       <footer className="minimal-footer">
         <p>© 2024 {store.name}. Todos los derechos reservados.</p>
       </footer>
+
+      {/* Botón flotante del carrito */}
+      {abrirCarrito && (
+        <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito}>
+          🛒
+          {cantidadCarrito > 0 && (
+            <span className="carrito-badge">{cantidadCarrito}</span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

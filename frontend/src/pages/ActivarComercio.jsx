@@ -43,7 +43,7 @@ export default function ActivarComercio() {
           setActivo(data.activo);
         }
       });
-  }, []);
+  }, [user]);
 
   // Detectar cambios en el formulario
   const cambiosRealizados = formOriginal !== null && JSON.stringify(form) !== JSON.stringify(formOriginal);
