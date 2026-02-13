@@ -41,7 +41,6 @@
 .colorful-nav {
   display: flex;
   gap: 2.5rem;
-  align-items: center;
 }
 
 .colorful-nav a {

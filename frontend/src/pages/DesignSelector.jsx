@@ -145,22 +145,8 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
           </div>
           <button
             type="button"
-            className="btn"
-            onClick={() => navigate('/admin')}
-            style={{
-              background: 'white',
-              color: '#667eea',
-              border: '2px solid #667eea',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              fontSize: '14px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.3s'
-            }}
+            className="btn btn-back"
+            onClick={() => navigate("/admin")}
           >
             ← Volver al panel
           </button>

@@ -43,7 +43,7 @@ export default function ActivarComercio() {
           setActivo(data.activo);
         }
       });
-  }, [user]);
+  }, []);
 
   // Detectar cambios en el formulario
   const cambiosRealizados = formOriginal !== null && JSON.stringify(form) !== JSON.stringify(formOriginal);
@@ -179,23 +179,12 @@ export default function ActivarComercio() {
             Gestión <span className="accent"> del comercio</span>
           </span>
           <button
-            type="button"
-            className="btn"
-            onClick={() => navigate("/admin")}
-            style={{
-              background: "white",
-              color: "#667eea",
-              border: "2px solid #667eea",
-              fontWeight: 600,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 18px",
-              fontSize: "14px",
-            }}
-          >
-            ← Volver al panel
-          </button>
+          type="button"
+          className="btn btn-back"
+          onClick={() => navigate("/admin")}
+        >
+          ← Volver al panel
+        </button>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
@@ -380,7 +369,7 @@ export default function ActivarComercio() {
               className="btn btn-dark-gray"
               onClick={handleActivarDesactivar}
             >
-              {activo ? "Desactivar comercio" : "Activar comercio"}
+              {activo ? "Desactivar comercio" : "Guardar cambios"}
             </button>
           </div>
 
