@@ -9,6 +9,7 @@ export default function GestionCategorias() {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [ordenamiento, setOrdenamiento] = useState("agregado");
   const [form, setForm] = useState({
     nombre: "",
   });
@@ -51,6 +52,21 @@ export default function GestionCategorias() {
         setLoading(false);
       });
   };
+
+
+const categoriasOrdenadas = () => {
+  let resultado = [...categorias];
+  
+  if (ordenamiento === "alfabetico") {
+    resultado.sort((a, b) => a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase()));
+  }
+  // Si es "agregado", mantener el orden original (por ID)
+  else {
+    resultado.sort((a, b) => a.id - b.id);
+  }
+  
+  return resultado;
+};
 
   const validateForm = () => {
     const newErrors = {};
@@ -136,13 +152,13 @@ export default function GestionCategorias() {
           <span>
             Gestión de <span className="accent">Categorías</span>
           </span>
-        <button
-          type="button"
-          className="btn btn-back"
-          onClick={() => navigate("/admin")}
-        >
-          ← Volver al panel
-        </button>
+          <button
+            type="button"
+            className="btn btn-back"
+            onClick={() => navigate("/admin")}
+          >
+            ← Volver al panel
+          </button>
         </div>
 
         <p className="panel-subtitle">
@@ -191,6 +207,29 @@ export default function GestionCategorias() {
           </form>
         )}
 
+        {categorias.length > 0 && (
+          <div style={{ marginBottom: "20px", marginTop: "20px" }}>
+            <label style={{ marginRight: "10px", fontWeight: 600, color: "#14213D" }}>
+              Ordenar por:
+            </label>
+            <select 
+              value={ordenamiento}
+              onChange={(e) => setOrdenamiento(e.target.value)}
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #e0e0e0",
+                borderRadius: "10px",
+                fontSize: "14px",
+                cursor: "pointer",
+                background: "white"
+              }}
+            >
+              <option value="agregado">Orden de agregado</option>
+              <option value="alfabetico">Orden alfabético (A-Z)</option>
+            </select>
+          </div>
+        )}
+
         {loading ? (
           <p>Cargando categorías...</p>
         ) : categorias.length === 0 ? (
@@ -205,7 +244,7 @@ export default function GestionCategorias() {
                 </tr>
               </thead>
               <tbody>
-                {categorias.map(categoria => (
+                {categoriasOrdenadas().map(categoria => (
                   <tr key={categoria.id}>
                     <td>{categoria.nombre}</td>
                     <td>

@@ -260,3 +260,76 @@
     flex-wrap: wrap;
   }
 }
+
+.modern-nav {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.modern-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.modern-dropdown-toggle {
+  cursor: pointer;
+}
+
+.modern-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  min-width: 200px;
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  z-index: 100;
+}
+
+.modern-dropdown:hover .modern-dropdown-menu {
+  display: block;
+}
+
+.modern-dropdown-menu a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.modern-dropdown-menu a:hover {
+  background: #f3f4f6;
+  color: #4F46E5;
+}
+
+.modern-sin-precio {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  font-style: italic;
+  margin: 0.5rem 0 1.5rem 0;
+}
+
+.modern-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 450px;
+}
+
+.modern-card-content h4 {
+  min-height: 2.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.modern-card-btn {
+  margin-top: auto;
+}

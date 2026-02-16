@@ -14,9 +14,26 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
           <div className="modern-logo">{store.name}</div>
         )}
         <nav className="modern-nav">
-          <a href="#">Productos</a>
-          <a href="#">Categorías</a>
+          <a href="#">Ver todo</a>
+          
+          <div className="modern-dropdown">
+            <a href="#" className="modern-dropdown-toggle">
+              Categorías 
+            </a>
+            {store.categorias && store.categorias.length > 0 && (
+              <div className="modern-dropdown-menu">
+                {store.categorias.map(cat => (
+                  <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>
+                    {cat.nombre_cat}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
           <a href="#">Contacto</a>
+          <a href="#">Preguntas frecuentes</a>
+          
           {consumidor ? (
             <>
               <span className="user-info">👤 {consumidor.nombre_usuario}</span>
@@ -38,15 +55,14 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
       <section className="modern-hero">
         <div className="modern-hero-content">
           <h2>{store.description}</h2>
-          <button className="modern-hero-btn">Comprar ahora</button>
         </div>
         <div className="modern-hero-image"></div>
       </section>
 
       <section className="modern-products">
-        <h3>Productos destacados</h3>
+        <h3>Nuevos productos</h3>
         <div className="modern-grid">
-          {store.products.map(p => (
+          {store.products.slice(0, 8).map(p => (
             <div key={p.id} className="modern-card">
               <div className="modern-card-image">
                 {p.foto ? (
@@ -64,11 +80,10 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
                   if (precioUnico) {
                     return <p className="modern-card-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                   } else {
-                    const precioMin = Math.min(...precios);
-                    return <p className="modern-card-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                    return <p className="modern-sin-precio">Ver precio en el detalle del producto</p>;
                   }
                 })() : (
-                  <p className="modern-sin-precio">Consultar precio</p>
+                  <p className="modern-sin-precio">Ver precio en el detalle del producto</p>
                 )}
                 <button 
                   className="modern-card-btn"
@@ -80,11 +95,20 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
                     }
                   }}
                 >
-                  Agregar al carrito 🛒
+                  Agregar al carrito 
                 </button>
               </div>
             </div>
           ))}
+        </div>
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '2rem',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          color: '#666'
+        }}>
+          Ver todo en productos
         </div>
       </section>
 

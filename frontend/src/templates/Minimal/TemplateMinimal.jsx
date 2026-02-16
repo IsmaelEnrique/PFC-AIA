@@ -15,9 +15,26 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
             <h1>{store.name}</h1>
           )}
           <nav className="minimal-menu">
-            <a href="#">Productos</a>
-            <a href="#">Sobre nosotros</a>
+            <a href="#">Ver todo</a>
+            
+            <div className="minimal-dropdown">
+              <a href="#" className="minimal-dropdown-toggle">
+                Categorías ▼
+              </a>
+              {store.categorias && store.categorias.length > 0 && (
+                <div className="minimal-dropdown-menu">
+                  {store.categorias.map(cat => (
+                    <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>
+                      {cat.nombre_cat}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <a href="#">Contacto</a>
+            <a href="#">Preguntas frecuentes</a>
+            
             {consumidor ? (
               <>
                 <span className="user-info">👤 {consumidor.nombre_usuario}</span>
@@ -39,13 +56,12 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
       <section className="minimal-hero">
         <h2>{store.description}</h2>
-        <button className="minimal-cta">Explorar</button>
       </section>
 
       <section className="minimal-list">
-        <h3 className="minimal-section-title">Nuestros productos</h3>
+        <h3 className="minimal-section-title">Nuevos productos</h3>
         <div className="minimal-products">
-          {store.products.map(p => (
+          {store.products.slice(0, 8).map(p => (
             <div key={p.id} className="minimal-item">
               <div className="minimal-item-image">
                 {p.foto ? (
@@ -62,17 +78,15 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
                 if (precioUnico) {
                   return <p className="minimal-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                 } else {
-                  const precioMin = Math.min(...precios);
-                  return <p className="minimal-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
                 }
               })() : (
-                <p className="minimal-sin-precio">Consultar precio</p>
+                <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>
               )}
               <button 
                 className="minimal-item-btn"
                 onClick={() => {
                   if (p.variantes && p.variantes.length > 0) {
-                    // Si tiene variantes, agrega la primera por defecto
                     agregarAlCarrito(p, p.variantes[0]);
                   } else {
                     agregarAlCarrito(p);
@@ -83,6 +97,15 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
               </button>
             </div>
           ))}
+        </div>
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '2rem',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          color: '#666'
+        }}>
+          Ver todo en productos
         </div>
       </section>
 

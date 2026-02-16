@@ -169,7 +169,6 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
                       className="preview-btn-live"
                       onClick={() => setPreviewing(t)}
                     >
-                      <span className="preview-icon">👁️</span>
                       Vista Previa
                     </button>
                   </div>
