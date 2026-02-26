@@ -1,5 +1,7 @@
 import "./Colorful.css";
-export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion }) {
+import { Link } from "react-router-dom";
+
+export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
   return (
     <div className="colorful">
       {/* HEADER */}
@@ -10,23 +12,21 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
       alt="Logo" 
       className="colorful-logo-img"
       style={{ maxHeight: `${store.logoSize || 50}px` }}
+      onClick={() => abrirCarrito && abrirCarrito()}
+      role="button"
     />
   ) : (
-    <div className="colorful-logo">{store.name}</div>
+    <div className="colorful-logo" onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</div>
   )}
   <nav className="colorful-nav">
     <a href="#">Ver todo</a>
-    
+
     <div className="colorful-dropdown">
-      <a href="#" className="colorful-dropdown-toggle">
-        Categorías
-      </a>
+      <a href="#" className="colorful-dropdown-toggle">Categorías</a>
       {store.categorias && store.categorias.length > 0 && (
         <div className="colorful-dropdown-menu">
           {store.categorias.map(cat => (
-            <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>
-              {cat.nombre_cat}
-            </a>
+            <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
           ))}
         </div>
       )}
@@ -34,7 +34,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
 
     <a href="#">Contacto</a>
     <a href="#">Preguntas frecuentes</a>
-    
+
     {consumidor ? (
       <>
         <span className="user-info">👤 {consumidor.nombre_usuario}</span>
@@ -43,39 +43,43 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
     ) : (
       <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
     )}
-    <button 
-      className="colorful-carrito-nav" 
-      onClick={abrirCarrito}
-      title="Ver carrito"
-    >
+    <button className="colorful-carrito-nav" onClick={abrirCarrito} title="Ver carrito">
       🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
     </button>
   </nav>
 </header>
 
       {/* HERO SECTION */}
-      <section className="colorful-hero">
-        <div className="colorful-hero-content">
-          <h1>{store.name}</h1>
-          <p className="colorful-description">{store.description}</p>
-          
-        </div>
-      </section>
+      {!compact && (
+        <section className="colorful-hero">
+          <div className="colorful-hero-content">
+            <h1>{store.name}</h1>
+            <p className="colorful-description">{store.description}</p>
+          </div>
+        </section>
+      )}
+
+      {children}
 
       {/* FEATURED PRODUCTS */}
-      <section className="colorful-featured">
+      {!compact && (
+        <section className="colorful-featured">
         <h2>Nuevos productos</h2>
         <div className="colorful-carousel">
           {store.products.slice(0, 8).map((p, idx) => (
             <div key={p.id} className={`colorful-slide slide-${idx % 3}`}>
               <div className="colorful-slide-img">
                 {p.foto ? (
-                  <img src={p.foto} alt={p.name} />
+                  <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`}>
+                    <img src={p.foto} alt={p.name} />
+                  </Link>
                 ) : (
                   <div className="colorful-placeholder">Sin imagen</div>
                 )}
               </div>
-              <h3>{p.name}</h3>
+              <h3>
+                <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="colorful-product-link">{p.name}</Link>
+              </h3>
               <div className="colorful-price-container">
                 {p.variantes && p.variantes.length > 0 ? (() => {
                   const precios = p.variantes.map(v => parseFloat(v.precio));
@@ -114,21 +118,26 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
       }}>
         Ver todo en productos
       </div>
-      </section>
+        </section>
+      )}
 
-      {/* FOOTER */}
-      <footer className="colorful-footer">
-        <p>© 2024 {store.name}. ¡Gracias por tu visita!</p>
-      </footer>
+      {!compact && (
+        <>
+          {/* FOOTER */}
+          <footer className="colorful-footer">
+            <p>© 2024 {store.name}. ¡Gracias por tu visita!</p>
+          </footer>
 
-      {/* Botón flotante del carrito */}
-      {abrirCarrito && (
-        <button className="carrito-flotante carrito-flotante-colorful" onClick={abrirCarrito}>
-          🛒
-          {cantidadCarrito > 0 && (
-            <span className="carrito-badge">{cantidadCarrito}</span>
+          {/* Botón flotante del carrito */}
+          {abrirCarrito && (
+            <button className="carrito-flotante carrito-flotante-colorful" onClick={abrirCarrito}>
+              🛒
+              {cantidadCarrito > 0 && (
+                <span className="carrito-badge">{cantidadCarrito}</span>
+              )}
+            </button>
           )}
-        </button>
+        </>
       )}
     </div>
   );

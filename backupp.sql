@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pynWJ5C0uf7tL6yT5upAUVozq0zyo888RFXsI9cKMZcjLpPXxWVMhJCOTgNXS0S
+
 
 -- Dumped from database version 18.0
 -- Dumped by pg_dump version 18.0
@@ -1457,6 +1457,4 @@ ALTER TABLE ONLY public.variante_valor
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict pynWJ5C0uf7tL6yT5upAUVozq0zyo888RFXsI9cKMZcjLpPXxWVMhJCOTgNXS0S
 

@@ -1,5 +1,7 @@
 import "./Minimal.css";
-export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion }) {
+import { Link } from "react-router-dom";
+
+export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
   return (
     <div className="minimal">
       <header className="minimal-header">
@@ -10,23 +12,22 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
               alt="Logo" 
               className="minimal-logo-img"
               style={{ maxHeight: `${store.logoSize || 40}px` }}
+              onClick={() => abrirCarrito && abrirCarrito()}
+              role="button"
             />
           ) : (
-            <h1>{store.name}</h1>
+            <h1 onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</h1>
           )}
+
           <nav className="minimal-menu">
             <a href="#">Ver todo</a>
-            
+
             <div className="minimal-dropdown">
-              <a href="#" className="minimal-dropdown-toggle">
-                Categorías ▼
-              </a>
+              <a href="#" className="minimal-dropdown-toggle">Categorías ▼</a>
               {store.categorias && store.categorias.length > 0 && (
                 <div className="minimal-dropdown-menu">
                   {store.categorias.map(cat => (
-                    <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>
-                      {cat.nombre_cat}
-                    </a>
+                    <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
                   ))}
                 </div>
               )}
@@ -34,7 +35,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
             <a href="#">Contacto</a>
             <a href="#">Preguntas frecuentes</a>
-            
+
             {consumidor ? (
               <>
                 <span className="user-info">👤 {consumidor.nombre_usuario}</span>
@@ -43,34 +44,42 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
             ) : (
               <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
             )}
-            <button 
-              className="minimal-carrito-nav" 
-              onClick={abrirCarrito}
-              title="Ver carrito"
-            >
+
+            <button className="minimal-carrito-nav" onClick={abrirCarrito} title="Ver carrito">
               🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
             </button>
           </nav>
         </div>
       </header>
 
-      <section className="minimal-hero">
-        <h2>{store.description}</h2>
-      </section>
+      {!compact && (
+        <section className="minimal-hero">
+          <h2>{store.description}</h2>
+        </section>
+      )}
 
-      <section className="minimal-list">
+      {children}
+
+      {!compact && (
+        <section className="minimal-list">
         <h3 className="minimal-section-title">Nuevos productos</h3>
         <div className="minimal-products">
           {store.products.slice(0, 8).map(p => (
             <div key={p.id} className="minimal-item">
               <div className="minimal-item-image">
                 {p.foto ? (
-                  <img src={p.foto} alt={p.name} />
+                  <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`}>
+                    <img src={p.foto} alt={p.name} />
+                  </Link>
                 ) : (
                   <div className="minimal-placeholder">Sin imagen</div>
                 )}
               </div>
-              <h4>{p.name}</h4>
+              <h4>
+                <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="minimal-product-link">
+                  {p.name}
+                </Link>
+              </h4>
               {p.variantes && p.variantes.length > 0 ? (() => {
                 const precios = p.variantes.map(v => parseFloat(v.precio));
                 const precioUnico = precios.every(precio => precio === precios[0]);
@@ -107,20 +116,25 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
         }}>
           Ver todo en productos
         </div>
-      </section>
+        </section>
+      )}
 
-      <footer className="minimal-footer">
-        <p>© 2024 {store.name}. Todos los derechos reservados.</p>
-      </footer>
+      {!compact && (
+        <>
+          <footer className="minimal-footer">
+            <p>© 2024 {store.name}. Todos los derechos reservados.</p>
+          </footer>
 
-      {/* Botón flotante del carrito */}
-      {abrirCarrito && (
-        <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito}>
-          🛒
-          {cantidadCarrito > 0 && (
-            <span className="carrito-badge">{cantidadCarrito}</span>
+          {/* Botón flotante del carrito */}
+          {abrirCarrito && (
+            <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito}>
+              🛒
+              {cantidadCarrito > 0 && (
+                <span className="carrito-badge">{cantidadCarrito}</span>
+              )}
+            </button>
           )}
-        </button>
+        </>
       )}
     </div>
   );
