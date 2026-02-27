@@ -41,6 +41,28 @@ export default function ProductDetail() {
         const prod = await resP.json();
         // Normalizar foto
         prod.foto = prod.foto ? `http://localhost:4000${prod.foto}` : null;
+
+        // Obtener variantes con sus valores (nombre de cada valor)
+        try {
+          const resV = await fetch(`http://localhost:4000/api/productos/${id}/variantes`);
+          if (resV.ok) {
+            const variantesRaw = await resV.json();
+            const variantes = variantesRaw.map(v => {
+              // 'valores' viene del backend como array de { id_valor, id_caracteristica, nombre_valor }
+              const caracteristicas = (v.valores || []).map(val => ({ id_caracteristica: val.id_caracteristica, valor: val.nombre_valor }));
+              const nombre = caracteristicas.length > 0 ? caracteristicas.map(c => c.valor).join(' - ') : (`Variante ${v.id_variante}`);
+              return {
+                ...v,
+                nombre,
+                caracteristicas
+              };
+            });
+            prod.variantes = variantes;
+          }
+        } catch (e) {
+          console.error('Error cargando variantes:', e);
+        }
+
         setProducto(prod);
       } catch (err) {
         console.error(err);
@@ -224,6 +246,10 @@ export default function ProductDetail() {
     compact: true
   };
 
+  const hasVariants = producto.variantes && producto.variantes.length > 0;
+  const multipleVariants = producto.variantes && producto.variantes.length > 1;
+  const singleVariant = producto.variantes && producto.variantes.length === 1 ? producto.variantes[0] : null;
+
   const productDetail = (
     <div className="producto-detalle">
       <div className="producto-header">
@@ -239,7 +265,7 @@ export default function ProductDetail() {
           <p className="producto-codigo">Código: {producto.codigo}</p>
           <p className="producto-descripcion">{producto.descripcion}</p>
 
-          {producto.variantes && producto.variantes.length > 0 ? (
+          {multipleVariants ? (
             <div className="producto-variantes">
               <h4>Variantes</h4>
               {producto.variantes.map(v => (
@@ -252,8 +278,8 @@ export default function ProductDetail() {
             </div>
           ) : (
             <div className="producto-precio">
-              <h3>${(producto.precio || 0).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</h3>
-              <button onClick={() => agregarAlCarrito(producto)}>Agregar al carrito</button>
+              <h3>${(singleVariant ? parseFloat(singleVariant.precio) : (producto.precio || 0)).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</h3>
+              <button onClick={() => agregarAlCarrito(producto, singleVariant)}>{singleVariant ? 'Agregar al carrito' : 'Agregar al carrito'}</button>
             </div>
           )}
         </div>
@@ -477,7 +503,7 @@ export default function ProductDetail() {
           <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
             <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
               <div className="carrito-header">
-                <h2>🛒 Mi Carrito</h2>
+                <h2>Mi Carrito</h2>
                 <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
               </div>
 

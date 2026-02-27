@@ -12,8 +12,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #ffffff; /* fondo blanco para mantener el estilo general */
+  color: #2d3748; /* texto oscuro */
   gap: 20px;
 }
 
@@ -21,13 +21,14 @@
   font-size: 18px;
   font-weight: 500;
   margin: 0;
+  color: inherit;
 }
 
 .loader {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 5px solid rgba(0, 0, 0, 0.08);
+  border-top-color: #2d3748;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

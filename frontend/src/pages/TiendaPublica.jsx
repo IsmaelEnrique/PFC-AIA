@@ -424,7 +424,7 @@ export default function TiendaPublica() {
         <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
           <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
             <div className="carrito-header">
-              <h2>🛒 Mi Carrito</h2>
+              <h2>Mi Carrito</h2>
               <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
             </div>
 
