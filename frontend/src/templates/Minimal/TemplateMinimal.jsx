@@ -1,10 +1,7 @@
 import "./Minimal.css";
-import React, { useState } from "react";
-import CartMinimal from "../../components/CartMinimal";
+import { Link } from "react-router-dom";
 
-export default function TemplateMinimal({ store, template }) {
-  const [cartOpen, setCartOpen] = useState(false);
-  const { addItem } = require("../../context/CartContext").useCart();
+export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
   return (
     <div className="minimal">
       <header className="minimal-header">
@@ -15,76 +12,129 @@ export default function TemplateMinimal({ store, template }) {
               alt="Logo" 
               className="minimal-logo-img"
               style={{ maxHeight: `${store.logoSize || 40}px` }}
+              onClick={() => abrirCarrito && abrirCarrito()}
+              role="button"
             />
           ) : (
-            <h1>{store.name}</h1>
+            <h1 onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</h1>
           )}
+
           <nav className="minimal-menu">
-            <a href="#">Productos</a>
-            <a href="#">Sobre nosotros</a>
+            <a href="#">Ver todo</a>
+
+            <div className="minimal-dropdown">
+              <a href="#" className="minimal-dropdown-toggle">Categorías ▼</a>
+              {store.categorias && store.categorias.length > 0 && (
+                <div className="minimal-dropdown-menu">
+                  {store.categorias.map(cat => (
+                    <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <a href="#">Contacto</a>
-            <button type="button" style={{marginLeft: 16, background: "#222", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 600, cursor: "pointer"}} onClick={() => setCartOpen(open => !open)}>
-              🛒 Carrito
+            <a href="#">Preguntas frecuentes</a>
+
+            {consumidor ? (
+              <>
+                <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+                <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
+              </>
+            ) : (
+              <button className="auth-btn" onClick={abrirAuth}>Iniciar Sesión</button>
+            )}
+
+            <button className="minimal-carrito-nav" onClick={abrirCarrito} title="Ver carrito">
+              🛒 {cantidadCarrito > 0 && <span className="nav-badge">{cantidadCarrito}</span>}
             </button>
           </nav>
         </div>
       </header>
 
-      <section className="minimal-hero">
-        <h2>{store.description}</h2>
-        <button className="minimal-cta">Explorar</button>
-      </section>
+      {!compact && (
+        <section className="minimal-hero">
+          <h2>{store.description}</h2>
+        </section>
+      )}
 
-      <section className="minimal-list">
-        <h3 className="minimal-section-title">Nuestros productos</h3>
+      {children}
+
+      {!compact && (
+        <section className="minimal-list">
+        <h3 className="minimal-section-title">Nuevos productos</h3>
         <div className="minimal-products">
-          {store.products.map(p => (
+          {store.products.slice(0, 8).map(p => (
             <div key={p.id} className="minimal-item">
               <div className="minimal-item-image">
                 {p.foto ? (
-                  <img src={p.foto} alt={p.name} />
+                  <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`}>
+                    <img src={p.foto} alt={p.name} />
+                  </Link>
                 ) : (
                   <div className="minimal-placeholder">Sin imagen</div>
                 )}
               </div>
-              <h4>{p.name}</h4>
+              <h4>
+                <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="minimal-product-link">
+                  {p.name}
+                </Link>
+              </h4>
               {p.variantes && p.variantes.length > 0 ? (() => {
                 const precios = p.variantes.map(v => parseFloat(v.precio));
                 const precioUnico = precios.every(precio => precio === precios[0]);
                 if (precioUnico) {
                   return <p className="minimal-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                 } else {
-                  const precioMin = Math.min(...precios);
-                  return <p className="minimal-price">Desde ${precioMin.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
                 }
               })() : (
-                <p className="minimal-sin-precio">Consultar precio</p>
+                <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>
               )}
-              <button className="minimal-item-btn" onClick={() => {
-                const precio = p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].precio) : 0;
-                addItem({
-                  id: p.id,
-                  nombre: p.name || p.nombre,
-                  precio: precio,
-                  cantidad: 1,
-                  imagen: p.foto || p.imagen || ""
-                });
-              }}>Agregar al carrito</button>
+              <button 
+                className="minimal-item-btn"
+                onClick={() => {
+                  if (p.variantes && p.variantes.length > 0) {
+                    agregarAlCarrito(p, p.variantes[0]);
+                  } else {
+                    agregarAlCarrito(p);
+                  }
+                }}
+              >
+                Agregar al carrito 🛒
+              </button>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Carrito modal minimalista */}
-      {cartOpen && (
-        <div style={{ position: "fixed", top: 80, right: 32, zIndex: 2000 }}>
-          <CartMinimal />
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '2rem',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          color: '#666'
+        }}>
+          Ver todo en productos
         </div>
+        </section>
       )}
 
-      <footer className="minimal-footer">
-        <p>© 2024 {store.name}. Todos los derechos reservados.</p>
-      </footer>
+      {!compact && (
+        <>
+          <footer className="minimal-footer">
+            <p>© 2024 {store.name}. Todos los derechos reservados.</p>
+          </footer>
+
+          {/* Botón flotante del carrito */}
+          {abrirCarrito && (
+            <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito}>
+              🛒
+              {cantidadCarrito > 0 && (
+                <span className="carrito-badge">{cantidadCarrito}</span>
+              )}
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }

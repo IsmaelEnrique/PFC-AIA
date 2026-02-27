@@ -9,6 +9,8 @@ import categoriaRoutes from "./routes/categoria.routes.js";
 import productoRoutes from "./routes/producto.routes.js";
 import caracteristicaRoutes from "./routes/caracteristica.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
+import carritoRoutes from "./routes/carrito.routes.js";
+import consumidorRoutes from "./routes/consumidor.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +33,8 @@ app.use("/api/categorias", categoriaRoutes);
 app.use("/api/productos", productoRoutes);
 app.use("/api/caracteristicas", caracteristicaRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/carrito", carritoRoutes);
+app.use("/api/consumidor", consumidorRoutes);
 
 // 🔴 SERVER
 const PORT = process.env.PORT || 4000;

@@ -8,8 +8,8 @@ export default function GestionProductos() {
   const [comercio, setComercio] = useState(null);
   
   // Estados para filtros y ordenamiento
-  const [filtroEstado, setFiltroEstado] = useState("todos"); // todos, activos, inactivos
-  const [ordenamiento, setOrdenamiento] = useState("nombre"); // nombre, codigo, recientes
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [ordenamiento, setOrdenamiento] = useState("nombre");
   const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
@@ -70,11 +70,9 @@ export default function GestionProductos() {
     }
   };
 
-  // Función para filtrar y ordenar productos
   const productosFiltrados = () => {
     let resultado = [...productos];
 
-    // Filtrar por búsqueda
     if (busqueda.trim()) {
       resultado = resultado.filter(p => 
         p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -82,14 +80,12 @@ export default function GestionProductos() {
       );
     }
 
-    // Filtrar por estado
     if (filtroEstado === "activos") {
       resultado = resultado.filter(p => p.activo);
     } else if (filtroEstado === "inactivos") {
       resultado = resultado.filter(p => !p.activo);
     }
 
-    // Ordenar
     if (ordenamiento === "nombre") {
       resultado.sort((a, b) => a.nombre.localeCompare(b.nombre));
     } else if (ordenamiento === "codigo") {
@@ -105,18 +101,14 @@ export default function GestionProductos() {
     <>
       <style>{`
         .panel-page {
-          min-height: 100vh;
-          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-          padding: 20px;
+          min-height: calc(100vh - 70px);
+          background: #FFFFFF;
+          padding: 3rem 2rem;
         }
 
         .panel-container {
-          max-width: 1400px;
+          max-width: 1100px;
           margin: 0 auto;
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
         }
 
         .panel-header {
@@ -124,27 +116,28 @@ export default function GestionProductos() {
           align-items: center;
           justify-content: space-between;
           gap: 12px;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
         }
 
         .panel-title {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 30px;
+          font-size: 2.8rem;
+          color: #14213D;
+          font-weight: 700;
+          letter-spacing: 0.5px;
           margin: 0;
-          font-size: 28px;
-          font-weight: 600;
         }
 
         .panel-title .accent {
-          color: #ffd700;
+          color: #FCA311;
         }
 
         .panel-content {
-          padding: 30px;
+          margin-top: 2rem;
         }
 
         .actions-bar {
-          margin-bottom: 30px;
+          margin-bottom: 2rem;
         }
 
         .filtros-container {
@@ -152,10 +145,11 @@ export default function GestionProductos() {
           flex-wrap: wrap;
           gap: 15px;
           padding: 20px;
-          background: #f8f9fa;
-          border-bottom: 1px solid #e0e0e0;
+          background: #f5f5f5;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
           align-items: flex-end;
-          margin-bottom: 20px;
+          margin-bottom: 2rem;
         }
 
         .filtro-grupo {
@@ -166,135 +160,124 @@ export default function GestionProductos() {
         }
 
         .filtro-grupo label {
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
-          color: #555;
+          color: #14213D;
         }
 
         .input-busqueda,
         .select-filtro {
-          padding: 8px 12px;
-          border: 2px solid #e0e0e0;
-          border-radius: 6px;
+          padding: 10px 14px;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
           font-size: 14px;
           transition: all 0.3s;
+          background: white;
+          color: #14213D;
         }
 
         .input-busqueda:focus,
         .select-filtro:focus {
           outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          border-color: #FCA311;
+          box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.1);
         }
 
         .filtro-resultados {
           display: flex;
           align-items: center;
           margin-left: auto;
-          padding: 8px 16px;
+          padding: 10px 16px;
           background: white;
-          border: 2px solid #667eea;
-          border-radius: 6px;
-          font-size: 13px;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
+          font-size: 14px;
           font-weight: 600;
-          color: #667eea;
+          color: #14213D;
         }
 
-        .btn {
+        .panel-page .btn {
           padding: 12px 24px;
           border: none;
-          border-radius: 6px;
+          border-radius: 10px;
           cursor: pointer;
-          font-weight: 500;
+          font-weight: 600;
           transition: all 0.3s;
           font-size: 14px;
         }
 
-        .btn-back {
-          background: white;
-          color: #667eea;
-          border: 2px solid #667eea;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 18px;
-          font-size: 14px;
-        }
-
-        .btn-back:hover {
-          background: #667eea;
+        .panel-page .btn-primary {
+          background: #FCA311;
           color: white;
-          transform: translateX(-3px);
+          border: none;
         }
 
-        .btn-primary {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-        }
-
-        .btn-primary:hover {
+        .panel-page .btn-primary:hover {
+          background: #e69310;
           transform: translateY(-2px);
-          box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 4px 12px rgba(252, 163, 17, 0.3);
         }
 
         .btn-small {
-          padding: 6px 12px;
-          font-size: 12px;
+          padding: 8px 16px;
+          font-size: 13px;
         }
 
-        .btn-secondary {
+        .panel-page .btn-secondary {
+          background: #f5f5f5;
+          color: #14213D;
+          border: 1px solid #e0e0e0;
+        }
+
+        .panel-page .btn-secondary:hover {
           background: #e0e0e0;
-          color: #333;
-        }
-
-        .btn-secondary:hover {
-          background: #d0d0d0;
         }
 
         .btn-danger {
-          background: #ff6b6b;
+          background: #dc3545;
           color: white;
         }
 
         .btn-danger:hover {
-          background: #ff5252;
+          background: #c82333;
         }
 
         .empty-state {
           text-align: center;
           padding: 60px 20px;
-          color: #666;
+          color: #6B6B6B;
         }
 
         .empty-state p {
           font-size: 18px;
           margin-bottom: 20px;
+          color: #14213D;
         }
 
         .warning-message {
-          color: #ff6b6b;
-          font-size: 18px;
+          color: #dc3545;
+          font-size: 16px;
           margin: 0 0 20px;
         }
 
         .productos-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 24px;
         }
 
         .producto-card {
-          border: 2px solid #e0e0e0;
-          border-radius: 8px;
+          border: 1px solid #e0e0e0;
+          border-radius: 10px;
           overflow: hidden;
           background: white;
           transition: all 0.3s;
         }
 
         .producto-card:hover {
-          border-color: #667eea;
-          box-shadow: 0 5px 20px rgba(102, 126, 234, 0.15);
+          border-color: #FCA311;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+          transform: translateY(-2px);
         }
 
         .producto-imagen {
@@ -314,9 +297,8 @@ export default function GestionProductos() {
         }
 
         .producto-imagen .placeholder {
-          color: #b0b0b0;
+          color: #6B6B6B;
           font-size: 14px;
-          letter-spacing: 0.3px;
         }
 
         .producto-info {
@@ -326,26 +308,20 @@ export default function GestionProductos() {
         .producto-info h3 {
           margin: 0 0 8px;
           font-size: 18px;
-          color: #333;
+          color: #14213D;
+          font-weight: 600;
         }
 
         .codigo {
-          color: #666;
+          color: #6B6B6B;
           font-size: 13px;
-          margin: 0 0 8px;
-        }
-
-        .descripcion {
-          color: #888;
-          font-size: 14px;
           margin: 0 0 12px;
-          line-height: 1.4;
         }
 
         .estado-badge {
           display: inline-block;
-          padding: 4px 12px;
-          border-radius: 12px;
+          padding: 5px 12px;
+          border-radius: 20px;
           font-size: 12px;
           font-weight: 600;
         }
@@ -361,10 +337,10 @@ export default function GestionProductos() {
         }
 
         .producto-acciones {
-          padding: 15px;
-          background: #f9f9f9;
+          padding: 15px 20px;
+          background: #f5f5f5;
           display: flex;
-          gap: 8px;
+          gap: 10px;
           border-top: 1px solid #e0e0e0;
         }
 
@@ -373,25 +349,36 @@ export default function GestionProductos() {
         }
 
         @media (max-width: 768px) {
+          .panel-title {
+            font-size: 2rem;
+          }
+          
           .productos-grid {
             grid-template-columns: 1fr;
           }
+
+          .panel-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
         }
       `}</style>
 
       {!comercio ? (
         <section className="panel-page">
           <div className="panel-container">
-            <div className="panel-title panel-header">
-              <span>
-                Gestión de <span className="accent">Productos</span>
-              </span>
+            <div className="panel-header">
+              <h1 className="panel-title">
+                Gestión de Productos
+              </h1>
               <button
-                className="btn btn-back"
-                onClick={() => navigate("/admin")}
-              >
-                ← Volver al panel
-              </button>
+              type="button"
+              className="btn btn-back"
+              onClick={() => navigate("/admin")}
+            >
+              ← Volver al panel
+            </button>
             </div>
 
             <div className="panel-content">
@@ -407,10 +394,10 @@ export default function GestionProductos() {
       ) : (
         <section className="panel-page">
           <div className="panel-container">
-            <div className="panel-title panel-header">
-              <span>
-                Gestión de <span className="accent">Productos</span>
-              </span>
+            <div className="panel-header">
+              <h1 className="panel-title">
+                Gestión de Productos
+              </h1>
               <button
                 className="btn btn-back"
                 onClick={() => navigate("/admin")}
@@ -429,11 +416,10 @@ export default function GestionProductos() {
                 </button>
               </div>
 
-              {/* Filtros y Ordenamiento */}
               {productos.length > 0 && (
                 <div className="filtros-container">
                   <div className="filtro-grupo">
-                    <label>🔍 Buscar:</label>
+                    <label>Buscar:</label>
                     <input
                       type="text"
                       placeholder="Nombre o código..."
@@ -444,7 +430,7 @@ export default function GestionProductos() {
                   </div>
 
                   <div className="filtro-grupo">
-                    <label>📊 Estado:</label>
+                    <label>Estado:</label>
                     <select 
                       value={filtroEstado} 
                       onChange={(e) => setFiltroEstado(e.target.value)}
@@ -457,7 +443,7 @@ export default function GestionProductos() {
                   </div>
 
                   <div className="filtro-grupo">
-                    <label>⬇️ Ordenar por:</label>
+                    <label> Ordenar por:</label>
                     <select 
                       value={ordenamiento} 
                       onChange={(e) => setOrdenamiento(e.target.value)}

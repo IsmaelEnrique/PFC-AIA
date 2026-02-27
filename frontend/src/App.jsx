@@ -17,6 +17,7 @@ import GestionProductos from "./pages/GestionProductos";
 import AgregarProducto from "./pages/AgregarProducto";
 import GestionCategorias from "./pages/GestionCategorias";
 import TiendaPublica from "./pages/TiendaPublica";
+import ProductDetail from "./pages/ProductDetail";
 
 
 // Componente para proteger rutas
@@ -45,9 +46,10 @@ export default function App() {
   return (
     <>
       {esTiendaPublica ? (
-        // Ruta pública SIN navbar/footer
+        // Rutas públicas SIN navbar/footer (tienda y detalle)
         <Routes>
           <Route path="/tienda/:slug" element={<TiendaPublica />} />
+          <Route path="/tienda/:slug/producto/:id" element={<ProductDetail />} />
         </Routes>
       ) : (
         // TODAS las rutas (incluyendo demo-template-colorful) bajo CartProvider

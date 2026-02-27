@@ -14,7 +14,7 @@ const LogoUpload = ({ onLogoUpload }) => {
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user'));
-    } catch (err) {
+    } catch {
       return null;
     }
   }, []);

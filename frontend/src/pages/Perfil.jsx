@@ -133,161 +133,153 @@ export default function Perfil() {
   };
 
   return (
-    <section className="panel-page">
-      <div className="panel-container">
-        <div
-          className="panel-title"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
-        >
-          <span>
-            Mi <span className="accent">Perfil</span>
-          </span>
-          <button
+    <>
+
+      <section className="panel-page">
+        <div className="panel-container">
+          <div
+            className="panel-title"
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}
+          >
+            <span>
+              Mi <span className="accent">Perfil</span>
+            </span>
+           <button
             type="button"
-            className="btn"
+            className="btn btn-back"
             onClick={() => navigate("/admin")}
-            style={{
-              background: "white",
-              color: "#667eea",
-              border: "2px solid #667eea",
-              fontWeight: 600,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 18px",
-              fontSize: "14px",
-            }}
           >
             ← Volver al panel
           </button>
+          </div>
+
+          <p className="panel-subtitle">
+            Editá tus datos personales y de cobro
+          </p>
+
+          <form className="panel-form" noValidate>
+
+            {errors.general && (
+              <p className="error-text">{errors.general}</p>
+            )}
+
+            {/* Nombre */}
+            <div className="form-group">
+              <label>Nombre *</label>
+              <input
+                type="text"
+                value={form.nombre}
+                onChange={e =>
+                  setForm({ ...form, nombre: e.target.value })
+                }
+              />
+              {errors.nombre && <p className="error-text">{errors.nombre}</p>}
+            </div>
+
+            {/* Email */}
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={form.mail}
+                disabled
+              />
+            </div>
+
+            {/* Contraseña Anterior */}
+            <div className="form-group">
+              <label>Contraseña actual</label>
+              <input
+                type="password"
+                placeholder="Requerida si querés cambiar la contraseña"
+                value={form.contrasena_anterior}
+                onChange={e =>
+                  setForm({ ...form, contrasena_anterior: e.target.value })
+                }
+              />
+              {errors.contrasena_anterior && <p className="error-text">{errors.contrasena_anterior}</p>}
+            </div>
+
+            {/* Contraseña Nueva */}
+            <div className="form-group">
+              <label>Nueva contraseña</label>
+              <input
+                type="password"
+                placeholder="Dejar vacío para no cambiar"
+                value={form.contrasena_nueva}
+                onChange={e =>
+                  setForm({ ...form, contrasena_nueva: e.target.value })
+                }
+              />
+              {errors.contrasena_nueva && <p className="error-text">{errors.contrasena_nueva}</p>}
+            </div>
+
+            {/* DNI */}
+            <div className="form-group">
+              <label>DNI</label>
+              <input
+                type="text"
+                value={form.dni}
+                onChange={e =>
+                  setForm({ ...form, dni: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Cuenta Bancaria */}
+            <div className="form-group">
+              <label>Cuenta Bancaria / CBU / Alias</label>
+              <input
+                type="text"
+                value={form.cta_bancaria}
+                onChange={e =>
+                  setForm({ ...form, cta_bancaria: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Nombre del Banco */}
+            <div className="form-group">
+              <label>Nombre del Banco</label>
+              <input
+                type="text"
+                value={form.nombre_banco}
+                onChange={e =>
+                  setForm({ ...form, nombre_banco: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Titular de la Cuenta */}
+            <div className="form-group">
+              <label>Titular de la Cuenta</label>
+              <input
+                type="text"
+                value={form.nombre_titular}
+                onChange={e =>
+                  setForm({ ...form, nombre_titular: e.target.value })
+                }
+              />
+            </div>
+
+            {cambiosRealizados && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGuardarCambios}
+              >
+                Guardar cambios
+              </button>
+            )}
+
+            {success && (
+              <p className="success-text">
+                Perfil actualizado correctamente ✔
+              </p>
+            )}
+          </form>
         </div>
-
-        <p className="panel-subtitle">
-          Editá tus datos personales y de cobro
-        </p>
-
-        <form className="panel-form" noValidate>
-
-          {errors.general && (
-            <p className="error-text">{errors.general}</p>
-          )}
-
-          {/* Nombre */}
-          <div className="form-group">
-            <label>Nombre *</label>
-            <input
-              type="text"
-              value={form.nombre}
-              onChange={e =>
-                setForm({ ...form, nombre: e.target.value })
-              }
-            />
-            {errors.nombre && <p className="error-text">{errors.nombre}</p>}
-          </div>
-
-          {/* Email */}
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={form.mail}
-              disabled
-            />
-          </div>
-
-          {/* Contraseña Anterior */}
-          <div className="form-group">
-            <label>Contraseña actual</label>
-            <input
-              type="password"
-              placeholder="Requerida si querés cambiar la contraseña"
-              value={form.contrasena_anterior}
-              onChange={e =>
-                setForm({ ...form, contrasena_anterior: e.target.value })
-              }
-            />
-            {errors.contrasena_anterior && <p className="error-text">{errors.contrasena_anterior}</p>}
-          </div>
-
-          {/* Contraseña Nueva */}
-          <div className="form-group">
-            <label>Nueva contraseña</label>
-            <input
-              type="password"
-              placeholder="Dejar vacío para no cambiar"
-              value={form.contrasena_nueva}
-              onChange={e =>
-                setForm({ ...form, contrasena_nueva: e.target.value })
-              }
-            />
-            {errors.contrasena_nueva && <p className="error-text">{errors.contrasena_nueva}</p>}
-          </div>
-
-          {/* DNI */}
-          <div className="form-group">
-            <label>DNI</label>
-            <input
-              type="text"
-              value={form.dni}
-              onChange={e =>
-                setForm({ ...form, dni: e.target.value })
-              }
-            />
-          </div>
-
-          {/* Cuenta Bancaria */}
-          <div className="form-group">
-            <label>Cuenta Bancaria / CBU / Alias</label>
-            <input
-              type="text"
-              value={form.cta_bancaria}
-              onChange={e =>
-                setForm({ ...form, cta_bancaria: e.target.value })
-              }
-            />
-          </div>
-
-          {/* Nombre del Banco */}
-          <div className="form-group">
-            <label>Nombre del Banco</label>
-            <input
-              type="text"
-              value={form.nombre_banco}
-              onChange={e =>
-                setForm({ ...form, nombre_banco: e.target.value })
-              }
-            />
-          </div>
-
-          {/* Titular de la Cuenta */}
-          <div className="form-group">
-            <label>Titular de la Cuenta</label>
-            <input
-              type="text"
-              value={form.nombre_titular}
-              onChange={e =>
-                setForm({ ...form, nombre_titular: e.target.value })
-              }
-            />
-          </div>
-
-          {cambiosRealizados && (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleGuardarCambios}
-            >
-              Guardar cambios
-            </button>
-          )}
-
-          {success && (
-            <p className="success-text">
-              Perfil actualizado correctamente ✔
-            </p>
-          )}
-        </form>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
