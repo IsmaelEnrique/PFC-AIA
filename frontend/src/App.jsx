@@ -16,6 +16,7 @@ import GestionProductos from "./pages/GestionProductos";
 import AgregarProducto from "./pages/AgregarProducto";
 import GestionCategorias from "./pages/GestionCategorias";
 import TiendaPublica from "./pages/TiendaPublica";
+import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
 
 // Componente para proteger rutas
@@ -47,6 +48,7 @@ export default function App() {
         // Rutas públicas SIN navbar/footer (tienda y detalle)
         <Routes>
           <Route path="/tienda/:slug" element={<TiendaPublica />} />
+          <Route path="/tienda/:slug/productos" element={<AllProducts />} />
           <Route path="/tienda/:slug/producto/:id" element={<ProductDetail />} />
         </Routes>
       ) : (

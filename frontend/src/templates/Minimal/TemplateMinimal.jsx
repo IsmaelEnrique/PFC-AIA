@@ -1,7 +1,22 @@
 import "./Minimal.css";
 import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
-export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
+export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
   return (
     <div className="minimal">
       <header className="minimal-header">
@@ -20,14 +35,30 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
           )}
 
           <nav className="minimal-menu">
-            <a href="#">Ver todo</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); onShowAll ? onShowAll() : (onSelectCategory && onSelectCategory(null)); }}>Ver todo</a>
 
-            <div className="minimal-dropdown">
-              <a href="#" className="minimal-dropdown-toggle">Categorías ▼</a>
+            <div
+              className="minimal-dropdown"
+              ref={dropdownRef}
+            >
+              <a
+                href="#"
+                className="minimal-dropdown-toggle"
+                onClick={(e) => { e.preventDefault(); setMenuOpen(open => !open); }}
+              >
+                Categorías ▼
+              </a>
               {store.categorias && store.categorias.length > 0 && (
-                <div className="minimal-dropdown-menu">
+                <div className="minimal-dropdown-menu" style={{ display: menuOpen ? 'block' : undefined }}>
                   {store.categorias.map(cat => (
-                    <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
+                    <a
+                      key={cat.id_categoria}
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); onSelectCategory && onSelectCategory(cat.id_categoria); setMenuOpen(false); }}
+                      className={selectedCategory === cat.id_categoria ? 'active-cat' : ''}
+                    >
+                      {cat.nombre_cat}
+                    </a>
                   ))}
                 </div>
               )}
@@ -52,7 +83,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
         </div>
       </header>
 
-      {!compact && (
+      {!hideHero && (
         <section className="minimal-hero">
           <h2>{store.description}</h2>
         </section>
@@ -60,11 +91,11 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
       {children}
 
-      {!compact && (
+      {!hideProducts && (
         <section className="minimal-list">
-        <h3 className="minimal-section-title">Nuevos productos</h3>
-        <div className="minimal-products">
-          {store.products.slice(0, 8).map(p => (
+          {!selectedCategory && !showAll && <h3 className="minimal-section-title">Nuevos productos</h3>}
+          <div className="minimal-products">
+            {(showAll ? store.products : store.products.slice(0, 8)).map(p => (
             <div key={p.id} className="minimal-item">
               <div className="minimal-item-image">
                 {p.foto ? (
@@ -80,18 +111,24 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
                   {p.name}
                 </Link>
               </h4>
-              {p.variantes && p.variantes.length > 0 ? (() => {
-                const precios = p.variantes.map(v => parseFloat(v.precio));
-                const precioUnico = precios.every(precio => precio === precios[0]);
-                
-                if (precioUnico) {
-                  return <p className="minimal-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
-                } else {
-                  return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
+              {(() => {
+                if (p.variantes && p.variantes.length > 0) {
+                  const precios = p.variantes.map(v => parseFloat(v.precio)).filter(n => !isNaN(n));
+                  if (precios.length === 0) return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
+                  const unique = Array.from(new Set(precios.map(n => Number(n))));
+                  if (unique.length === 1) {
+                    return <p className="minimal-price">${unique[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  }
+                  const min = Math.min(...precios);
+                  return <p className="minimal-price">Desde ${min.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                 }
-              })() : (
-                <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>
-              )}
+
+                if (p.price && Number(p.price) > 0) {
+                  return <p className="minimal-price">${Number(p.price).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                }
+
+                return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
+              })()}
               <button 
                 className="minimal-item-btn"
                 onClick={() => {
@@ -106,20 +143,22 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
               </button>
             </div>
           ))}
-        </div>
-        <div style={{ 
-          textAlign: 'center', 
-          marginTop: '2rem',
-          fontSize: '1.1rem',
-          fontWeight: '600',
-          color: '#666'
-        }}>
-          Ver todo en productos
-        </div>
+          </div>
+          {!hideHero && !showAll && onShowAll && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '2rem',
+            fontSize: '1.1rem',
+            fontWeight: '600',
+            color: '#666'
+          }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onShowAll && onShowAll(); }} style={{ color: 'inherit', textDecoration: 'none' }}>Ver todo en productos</a>
+          </div>
+          )}
         </section>
       )}
 
-      {!compact && (
+      {!hideFooter && (
         <>
           <footer className="minimal-footer">
             <p>© 2024 {store.name}. Todos los derechos reservados.</p>

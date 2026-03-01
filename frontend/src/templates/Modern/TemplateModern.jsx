@@ -1,7 +1,22 @@
 import "./Modern.css";
 import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
-export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
+export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
   return (
     <div className="modern">
       <header className="modern-header">
@@ -18,14 +33,30 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
           <div className="modern-logo" onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</div>
         )}
         <nav className="modern-nav">
-          <a href="#">Ver todo</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); onShowAll ? onShowAll() : (onSelectCategory && onSelectCategory(null)); }}>Ver todo</a>
           
-          <div className="modern-dropdown">
-            <a href="#" className="modern-dropdown-toggle">Categorías</a>
+          <div
+            className="modern-dropdown"
+            ref={dropdownRef}
+          >
+            <a
+              href="#"
+              className="modern-dropdown-toggle"
+              onClick={(e) => { e.preventDefault(); setMenuOpen(open => !open); }}
+            >
+              Categorías
+            </a>
             {store.categorias && store.categorias.length > 0 && (
-              <div className="modern-dropdown-menu">
+              <div className="modern-dropdown-menu" style={{ display: menuOpen ? 'block' : undefined }}>
                 {store.categorias.map(cat => (
-                  <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
+                  <a
+                    key={cat.id_categoria}
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); onSelectCategory && onSelectCategory(cat.id_categoria); setMenuOpen(false); }}
+                    className={selectedCategory === cat.id_categoria ? 'active-cat' : ''}
+                  >
+                    {cat.nombre_cat}
+                  </a>
                 ))}
               </div>
             )}
@@ -48,7 +79,7 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
         </nav>
       </header>
 
-      {!compact && (
+      {!hideHero && (
         <section className="modern-hero">
           <div className="modern-hero-content">
             <h2>{store.description}</h2>
@@ -59,11 +90,11 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
 
       {children}
 
-      {!compact && (
+      {!hideProducts && (
         <section className="modern-products">
-        <h3>Nuevos productos</h3>
-        <div className="modern-grid">
-          {store.products.slice(0, 8).map(p => (
+          {!selectedCategory && !showAll && <h3>Nuevos productos</h3>}
+          <div className="modern-grid">
+            {(showAll ? store.products : store.products.slice(0, 8)).map(p => (
             <div key={p.id} className="modern-card">
               <div className="modern-card-image">
                 {p.foto ? (
@@ -78,18 +109,22 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
                 <h4>
                   <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="modern-product-link">{p.name}</Link>
                 </h4>
-                {p.variantes && p.variantes.length > 0 ? (() => {
-                  const precios = p.variantes.map(v => parseFloat(v.precio));
-                  const precioUnico = precios.every(precio => precio === precios[0]);
-                  
-                  if (precioUnico) {
-                    return <p className="modern-card-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
-                  } else {
-                    return <p className="modern-sin-precio">Ver precio en el detalle del producto</p>;
+                {(() => {
+                  if (p.variantes && p.variantes.length > 0) {
+                    const precios = p.variantes.map(v => parseFloat(v.precio)).filter(n => !isNaN(n));
+                    if (precios.length === 0) return <p className="modern-sin-precio">Ver precio en el detalle del producto</p>;
+                    const unique = Array.from(new Set(precios.map(n => Number(n))));
+                    if (unique.length === 1) return <p className="modern-card-price">${unique[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                    const min = Math.min(...precios);
+                    return <p className="modern-card-price">Desde ${min.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
                   }
-                })() : (
-                  <p className="modern-sin-precio">Ver precio en el detalle del producto</p>
-                )}
+
+                  if (p.price && Number(p.price) > 0) {
+                    return <p className="modern-card-price">${Number(p.price).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>;
+                  }
+
+                  return <p className="modern-sin-precio">Ver precio en el detalle del producto</p>;
+                })()}
                 <button 
                   className="modern-card-btn"
                   onClick={() => {
@@ -105,20 +140,22 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
               </div>
             </div>
           ))}
-        </div>
-        <div style={{ 
-          textAlign: 'center', 
-          marginTop: '2rem',
-          fontSize: '1.1rem',
-          fontWeight: '600',
-          color: '#666'
-        }}>
-          Ver todo en productos
-        </div>
-      </section>
+          </div>
+          {(!hideHero && !showAll && onShowAll) && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '2rem',
+            fontSize: '1.1rem',
+            fontWeight: '600',
+            color: '#666'
+          }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); onShowAll && onShowAll(); }} style={{ color: 'inherit', textDecoration: 'none' }}>Ver todo en productos</a>
+          </div>
+          )}
+        </section>
       )}
 
-      {!compact && (
+      {!hideFooter && (
         <>
           <footer className="modern-footer">
             <p>© 2024 {store.name}. Todos los derechos reservados.</p>

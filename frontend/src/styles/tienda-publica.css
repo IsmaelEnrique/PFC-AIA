@@ -401,6 +401,71 @@
   transition: all 0.2s ease;
 }
 
+/* Controls (search + sort) used in AllProducts */
+.controls-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 18px 16px;
+  background: #fff;
+}
+.controls-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  max-width: 1100px;
+  width: 100%;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.control-input {
+  padding: 10px 12px;
+  min-width: 260px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(16,24,40,0.04);
+  font-size: 14px;
+}
+.control-select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 14px;
+}
+.pagination-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+}
+.btn-pager {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(16,24,40,0.08);
+  background: linear-gradient(180deg, #ffffff, #f7fafc);
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+  font-weight: 600;
+  color: #1f2937;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-pager:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(16,24,40,0.08); }
+.btn-pager:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
+
+/* Make the bottom footer span full width */
+.minimal-footer, .colorful-footer, .modern-footer {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 0;
+  background: #ffffff;
+  border-top: 1px solid #edf2f7;
+}
+.minimal-footer p, .colorful-footer p, .modern-footer p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 14px;
+}
 .carrito-btn-vaciar:hover {
   background: #e53e3e;
   color: white;

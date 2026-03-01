@@ -216,6 +216,27 @@
   box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
 }
 
+/* Smaller add-to-cart button for product detail page */
+.modern-add-btn {
+  display: inline-block;
+  width: auto;
+  background: linear-gradient(135deg, #10B981, #14B8A6);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.modern-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
 /* FOOTER */
 .modern-footer {
   background: #1f2937;

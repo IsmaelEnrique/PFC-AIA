@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import TemplateMinimal from "../templates/Minimal/TemplateMinimal";
 import TemplateColorful from "../templates/Colorful/TemplateColorful";
 import TemplateModern from "../templates/Modern/TemplateModern";
@@ -8,6 +8,7 @@ import "../styles/tienda-publica.css";
 
 export default function TiendaPublica() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tiendaData, setTiendaData] = useState(null);
@@ -16,6 +17,16 @@ export default function TiendaPublica() {
   const [idCarrito, setIdCarrito] = useState(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [consumidor, setConsumidor] = useState(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+  const location = useLocation();
+
+  // Initialize category from URL query `?cat=` when visiting main store
+  useEffect(() => {
+    if (!location) return;
+    const params = new URLSearchParams(location.search);
+    const cat = params.get('cat');
+    if (cat) setCategoriaSeleccionada(cat);
+  }, [location.search]);
 
   // Cargar consumidor del localStorage al montar
   useEffect(() => {
@@ -150,6 +161,10 @@ export default function TiendaPublica() {
 
   const { comercio, categorias, productos } = tiendaData;
 
+  const filteredProducts = categoriaSeleccionada
+    ? productos.filter(p => Array.isArray(p.categorias) && p.categorias.some(c => c.id_categoria === categoriaSeleccionada))
+    : productos;
+
   const logoUrl = comercio.logo 
     ? comercio.logo.startsWith('http') 
       ? comercio.logo 
@@ -161,16 +176,30 @@ export default function TiendaPublica() {
     description: comercio.descripcion || "Bienvenido a nuestra tienda",
     logo: logoUrl,
     logoSize: 60,
-    products: productos.map(p => ({
-      id: p.id_producto,
-      name: p.nombre,
-      price: p.precio || 0,
-      code: p.codigo,
-      description: p.descripcion,
-      foto: p.foto ? `http://localhost:4000${p.foto}` : null,
-      categorias: p.categorias,
-      variantes: p.variantes
-    })),
+    products: filteredProducts.map(p => {
+      const variantPrices = Array.isArray(p.variantes)
+        ? p.variantes.map(v => {
+            const n = parseFloat(v.precio);
+            return Number.isFinite(n) ? n : null;
+          }).filter(x => x != null)
+        : [];
+
+      const minVariantPrice = variantPrices.length ? Math.min(...variantPrices) : null;
+      const effectivePrice = (p.precio || 0) > 0 ? Number(p.precio) : (minVariantPrice != null ? minVariantPrice : 0);
+
+      return {
+        id: p.id_producto,
+        name: p.nombre,
+        price: p.precio || 0,
+        effectivePrice,
+        minVariantPrice,
+        code: p.codigo,
+        description: p.descripcion,
+        foto: p.foto ? `http://localhost:4000${p.foto}` : null,
+        categorias: p.categorias,
+        variantes: p.variantes
+      };
+    }),
     categorias: categorias,
     comercio: comercio
   };
@@ -390,7 +419,20 @@ export default function TiendaPublica() {
       abrirCarrito: () => setCarritoAbierto(true),
       consumidor,
       abrirAuth: () => setAuthModalOpen(true),
-      cerrarSesion: handleLogout
+      cerrarSesion: handleLogout,
+      onSelectCategory: (id) => { 
+        setCategoriaSeleccionada(id);
+        // update URL query param so selection is shareable
+        const base = `/tienda/${slug}`;
+        if (id == null) {
+          navigate(base, { replace: true });
+        } else {
+          navigate(`${base}?cat=${encodeURIComponent(id)}`, { replace: true });
+        }
+      },
+      selectedCategory: categoriaSeleccionada,
+      onShowAll: () => navigate(`/tienda/${slug}/productos`),
+      showAll: false
     };
 
     switch (tipoDiseño) {

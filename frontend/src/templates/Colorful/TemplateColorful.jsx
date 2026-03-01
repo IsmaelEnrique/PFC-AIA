@@ -1,7 +1,22 @@
 import "./Colorful.css";
 import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
 
-export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, children, compact = false }) {
+export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
   return (
     <div className="colorful">
       {/* HEADER */}
@@ -19,14 +34,30 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
     <div className="colorful-logo" onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</div>
   )}
   <nav className="colorful-nav">
-    <a href="#">Ver todo</a>
+    <a href="#" onClick={(e) => { e.preventDefault(); onShowAll ? onShowAll() : (onSelectCategory && onSelectCategory(null)); }}>Ver todo</a>
 
-    <div className="colorful-dropdown">
-      <a href="#" className="colorful-dropdown-toggle">Categorías</a>
+    <div
+      className="colorful-dropdown"
+      ref={dropdownRef}
+    >
+      <a
+        href="#"
+        className="colorful-dropdown-toggle"
+        onClick={(e) => { e.preventDefault(); setMenuOpen(open => !open); }}
+      >
+        Categorías
+      </a>
       {store.categorias && store.categorias.length > 0 && (
-        <div className="colorful-dropdown-menu">
+        <div className="colorful-dropdown-menu" style={{ display: menuOpen ? 'block' : undefined }}>
           {store.categorias.map(cat => (
-            <a key={cat.id_categoria} href={`#cat-${cat.id_categoria}`}>{cat.nombre_cat}</a>
+            <a
+              key={cat.id_categoria}
+              href="#"
+              onClick={(e) => { e.preventDefault(); onSelectCategory && onSelectCategory(cat.id_categoria); setMenuOpen(false); }}
+              className={selectedCategory === cat.id_categoria ? 'active-cat' : ''}
+            >
+              {cat.nombre_cat}
+            </a>
           ))}
         </div>
       )}
@@ -50,7 +81,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
 </header>
 
       {/* HERO SECTION */}
-      {!compact && (
+      {!hideHero && (
         <section className="colorful-hero">
           <div className="colorful-hero-content">
             <h1>{store.name}</h1>
@@ -62,11 +93,11 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
       {children}
 
       {/* FEATURED PRODUCTS */}
-      {!compact && (
+      {!hideProducts && (
         <section className="colorful-featured">
-        <h2>Nuevos productos</h2>
-        <div className="colorful-carousel">
-          {store.products.slice(0, 8).map((p, idx) => (
+          {!selectedCategory && !showAll && <h2>Nuevos productos</h2>}
+          <div className="colorful-carousel">
+            {(showAll ? store.products : store.products.slice(0, 8)).map((p, idx) => (
             <div key={p.id} className={`colorful-slide slide-${idx % 3}`}>
               <div className="colorful-slide-img">
                 {p.foto ? (
@@ -81,18 +112,22 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
                 <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="colorful-product-link">{p.name}</Link>
               </h3>
               <div className="colorful-price-container">
-                {p.variantes && p.variantes.length > 0 ? (() => {
-                  const precios = p.variantes.map(v => parseFloat(v.precio));
-                  const precioUnico = precios.every(precio => precio === precios[0]);
-                  
-                  if (precioUnico) {
-                    return <span className="colorful-price">${precios[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
-                  } else {
-                    return <span className="colorful-sin-precio">Ver precio en el detalle del producto</span>;
+                {(() => {
+                  if (p.variantes && p.variantes.length > 0) {
+                    const precios = p.variantes.map(v => parseFloat(v.precio)).filter(n => !isNaN(n));
+                    if (precios.length === 0) return <span className="colorful-sin-precio">Ver precio en el detalle del producto</span>;
+                    const unique = Array.from(new Set(precios.map(n => Number(n))));
+                    if (unique.length === 1) return <span className="colorful-price">${unique[0].toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
+                    const min = Math.min(...precios);
+                    return <span className="colorful-price">Desde ${min.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
                   }
-                })() : (
-                  <span className="colorful-sin-precio">Ver precio en el detalle del producto</span>
-                )}
+
+                  if (p.price && Number(p.price) > 0) {
+                    return <span className="colorful-price">${Number(p.price).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>;
+                  }
+
+                  return <span className="colorful-sin-precio">Ver precio en el detalle del producto</span>;
+                })()}
                 <button 
                   className="colorful-slide-btn"
                   onClick={() => {
@@ -108,20 +143,22 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
               </div>
             </div>
           ))}
+          </div>
+          {(!hideHero && !showAll && onShowAll) && (
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '2rem',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          opacity: '0.9'
+        }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); onShowAll && onShowAll(); }} style={{ color: 'inherit', textDecoration: 'none' }}>Ver todo en productos</a>
         </div>
-      <div style={{ 
-        textAlign: 'center', 
-        marginTop: '2rem',
-        fontSize: '1.1rem',
-        fontWeight: '600',
-        opacity: '0.9'
-      }}>
-        Ver todo en productos
-      </div>
+          )}
         </section>
       )}
 
-      {!compact && (
+      {!hideFooter && (
         <>
           {/* FOOTER */}
           <footer className="colorful-footer">

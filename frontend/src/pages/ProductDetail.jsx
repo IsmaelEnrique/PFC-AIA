@@ -246,6 +246,8 @@ export default function ProductDetail() {
     compact: true
   };
 
+  const addBtnClass = tipoDiseño === 1 ? 'minimal-item-btn' : (tipoDiseño === 2 ? 'colorful-slide-btn' : 'modern-add-btn');
+
   const hasVariants = producto.variantes && producto.variantes.length > 0;
   const multipleVariants = producto.variantes && producto.variantes.length > 1;
   const singleVariant = producto.variantes && producto.variantes.length === 1 ? producto.variantes[0] : null;
@@ -272,14 +274,14 @@ export default function ProductDetail() {
                 <div key={v.id_variante} className="variante-item">
                   <div>{v.nombre || `Variante ${v.id_variante}`}</div>
                   <div className="variante-precio">${parseFloat(v.precio).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
-                  <button onClick={() => agregarAlCarrito(producto, v)}>Agregar</button>
+                  <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, v)}>Agregar</button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="producto-precio">
               <h3>${(singleVariant ? parseFloat(singleVariant.precio) : (producto.precio || 0)).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</h3>
-              <button onClick={() => agregarAlCarrito(producto, singleVariant)}>{singleVariant ? 'Agregar al carrito' : 'Agregar al carrito'}</button>
+              <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, singleVariant)}>{singleVariant ? 'Agregar al carrito' : 'Agregar al carrito'}</button>
             </div>
           )}
         </div>
@@ -290,111 +292,7 @@ export default function ProductDetail() {
   switch (tipoDiseño) {
     case 1:
       return <>
-        <TemplateMinimal {...templateProps}>{productDetail}</TemplateMinimal>
-        {carritoAbierto && (
-          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
-            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
-              <div className="carrito-header">
-                <h2>🛒 Mi Carrito</h2>
-                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
-              </div>
-
-              <div className="carrito-contenido">
-                {carrito.length === 0 ? (
-                  <div className="carrito-vacio">
-                    <p>Tu carrito está vacío</p>
-                    <span style={{ fontSize: '3rem' }}></span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="carrito-items">
-                      {carrito.map(item => (
-                        <div key={item.key} className="carrito-item">
-                          <div className="carrito-item-imagen">
-                            {item.producto.foto ? (
-                              <img src={item.producto.foto} alt={item.producto.name} />
-                            ) : (
-                              <div className="carrito-item-sin-imagen">📦</div>
-                            )}
-                          </div>
-
-                          <div className="carrito-item-info">
-                            <h4>{item.producto.name}</h4>
-                            {item.variante && (
-                              <p className="carrito-item-variante">
-                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
-                              </p>
-                            )}
-                            <p className="carrito-item-precio">
-                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                          </div>
-
-                          <div className="carrito-item-acciones">
-                            <div className="carrito-cantidad-control">
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="carrito-cantidad">{item.cantidad}</span>
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button 
-                              onClick={() => quitarDelCarrito(item.key)}
-                              className="carrito-btn-eliminar"
-                              title="Eliminar del carrito"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-
-                          <div className="carrito-item-subtotal">
-                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="carrito-resumen">
-                      <div className="carrito-resumen-linea">
-                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
-                        <span className="carrito-precio-subtotal">
-                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                      <div className="carrito-resumen-linea carrito-total">
-                        <span>Total</span>
-                        <span className="carrito-precio-total">
-                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="carrito-acciones-footer">
-                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                        Vaciar Carrito
-                      </button>
-                      <button className="carrito-btn-finalizar">
-                        Finalizar Compra
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </>;
-    case 2:
-      return <>
-        <TemplateColorful {...templateProps}>{productDetail}</TemplateColorful>
+        <TemplateMinimal {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateMinimal>
         {carritoAbierto && (
           <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
             <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
@@ -498,7 +396,7 @@ export default function ProductDetail() {
       </>;
     case 3:
       return <>
-        <TemplateModern {...templateProps}>{productDetail}</TemplateModern>
+        <TemplateModern {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateModern>
         {carritoAbierto && (
           <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
             <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
@@ -601,6 +499,108 @@ export default function ProductDetail() {
         )}
       </>;
     default:
-      return <TemplateMinimal {...templateProps}>{productDetail}</TemplateMinimal>;
+      return <>
+        <TemplateMinimal {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateMinimal>
+        {carritoAbierto && (
+          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
+            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
+              <div className="carrito-header">
+                <h2>🛒 Mi Carrito</h2>
+                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
+              </div>
+
+              <div className="carrito-contenido">
+                {carrito.length === 0 ? (
+                  <div className="carrito-vacio">
+                    <p>Tu carrito está vacío</p>
+                    <span style={{ fontSize: '3rem' }}></span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="carrito-items">
+                      {carrito.map(item => (
+                        <div key={item.key} className="carrito-item">
+                          <div className="carrito-item-imagen">
+                            {item.producto.foto ? (
+                              <img src={item.producto.foto} alt={item.producto.name} />
+                            ) : (
+                              <div className="carrito-item-sin-imagen">📦</div>
+                            )}
+                          </div>
+
+                          <div className="carrito-item-info">
+                            <h4>{item.producto.name}</h4>
+                            {item.variante && (
+                              <p className="carrito-item-variante">
+                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
+                              </p>
+                            )}
+                            <p className="carrito-item-precio">
+                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </p>
+                          </div>
+
+                          <div className="carrito-item-acciones">
+                            <div className="carrito-cantidad-control">
+                              <button 
+                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
+                                className="carrito-btn-cantidad"
+                              >
+                                -
+                              </button>
+                              <span className="carrito-cantidad">{item.cantidad}</span>
+                              <button 
+                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
+                                className="carrito-btn-cantidad"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <button 
+                              onClick={() => quitarDelCarrito(item.key)}
+                              className="carrito-btn-eliminar"
+                              title="Eliminar del carrito"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+
+                          <div className="carrito-item-subtotal">
+                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="carrito-resumen">
+                      <div className="carrito-resumen-linea">
+                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
+                        <span className="carrito-precio-subtotal">
+                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </span>
+                      </div>
+                      <div className="carrito-resumen-linea carrito-total">
+                        <span>Total</span>
+                        <span className="carrito-precio-total">
+                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="carrito-acciones-footer">
+                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
+                        Vaciar Carrito
+                      </button>
+                      <button className="carrito-btn-finalizar">
+                        Finalizar Compra
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>;
   }
 }
