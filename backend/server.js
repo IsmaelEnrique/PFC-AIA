@@ -15,6 +15,7 @@ import uploadRoutes from "./routes/upload.routes.js";
 import carritoRoutes from "./routes/carrito.routes.js";
 import consumidorRoutes from "./routes/consumidor.routes.js";
 import mercadoPagoRoutes from "./routes/mercadoPago.routes.js";
+import pedidoRoutes from "./routes/pedido.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +42,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/carrito", carritoRoutes);
 app.use("/api/consumidor", consumidorRoutes);
 app.use("/api/pagos", mercadoPagoRoutes);
+app.use("/api/pedidos", pedidoRoutes);
 
 const PORT = process.env.PORT || 4000;
 

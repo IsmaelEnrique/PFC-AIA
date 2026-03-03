@@ -7,6 +7,7 @@ import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
 import LogoUpload from "./pages/LogoUpload";
 import Perfil from "./pages/Perfil";
+import MetodosPagoEnvio from "./pages/MetodosPagoEnvio";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
 import StorePreview from "./pages/StorePreview";
@@ -18,6 +19,7 @@ import GestionCategorias from "./pages/GestionCategorias";
 import TiendaPublica from "./pages/TiendaPublica";
 import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
+import Checkout from "./pages/Checkout";
 
 // Componente para proteger rutas
 function ProtectedRoute({ element }) {
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="/tienda/:slug" element={<TiendaPublica />} />
           <Route path="/tienda/:slug/productos" element={<AllProducts />} />
           <Route path="/tienda/:slug/producto/:id" element={<ProductDetail />} />
+          <Route path="/tienda/:slug/checkout" element={<Checkout />} />
+          <Route path="/tienda/:slug/pedido/:id" element={<ProductDetail />} />
         </Routes>
       ) : (
         // Rutas CON navbar/footer
@@ -69,6 +73,7 @@ export default function App() {
               <Route path="/gestion-productos" element={<ProtectedRoute element={<GestionProductos />} />} />
               <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
               <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
+              <Route path="/metodos-pago-envio" element={<ProtectedRoute element={<MetodosPagoEnvio />} />} />
               <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             </Routes>
           </main>

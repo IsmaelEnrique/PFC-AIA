@@ -291,3 +291,78 @@ export const getTiendaPublica = async (req, res) => {
     res.status(500).json({ error: "Error al cargar la tienda" });
   }
 };
+
+// Obtener métodos (ids) activos para un comercio dado el id_usuario
+export const getMetodosComercio = async (req, res) => {
+  try {
+    const { id_usuario } = req.query;
+    if (!id_usuario) return res.status(400).json({ error: "id_usuario es requerido" });
+
+    const comercioRes = await pool.query("SELECT id_comercio FROM comercio WHERE id_usuario = $1", [Number(id_usuario)]);
+    if (comercioRes.rows.length === 0) return res.status(404).json({ error: "No se encontró comercio" });
+    const id_comercio = comercioRes.rows[0].id_comercio;
+
+    const pagosRes = await pool.query(
+      `SELECT id_pago FROM comercio_metodo_pago WHERE id_comercio = $1`,
+      [id_comercio]
+    );
+
+    const enviosRes = await pool.query(
+      `SELECT id_envio FROM comercio_metodo_envio WHERE id_comercio = $1`,
+      [id_comercio]
+    );
+
+    res.json({ payments: pagosRes.rows.map(r => r.id_pago), shipping: enviosRes.rows.map(r => r.id_envio) });
+  } catch (error) {
+    console.error("Error getMetodosComercio:", error);
+    res.status(500).json({ error: "Error al leer métodos del comercio" });
+  }
+};
+
+// Actualizar los métodos seleccionados para un comercio (recibe id_usuario y arrays de ids)
+export const setMetodosComercio = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { id_usuario, payments = [], shipping = [] } = req.body;
+    console.log('setMetodosComercio called with:', { id_usuario, payments, shipping });
+    if (!id_usuario) return res.status(400).json({ error: "id_usuario es requerido" });
+
+    await client.query('BEGIN');
+
+    const comercioRes = await client.query("SELECT id_comercio FROM comercio WHERE id_usuario = $1", [Number(id_usuario)]);
+    if (comercioRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: "No se encontró comercio para el usuario" });
+    }
+    const id_comercio = comercioRes.rows[0].id_comercio;
+    console.log('Found id_comercio=', id_comercio);
+
+    // Borrar antiguos y agregar nuevos
+    await client.query("DELETE FROM comercio_metodo_pago WHERE id_comercio = $1", [id_comercio]);
+    let insertedPayments = 0;
+    for (const id_pago of payments) {
+      const r = await client.query("INSERT INTO comercio_metodo_pago (id_comercio, id_pago) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *", [id_comercio, id_pago]);
+      if (r.rowCount) insertedPayments += r.rowCount;
+    }
+
+    console.log(`Inserted ${insertedPayments} payment rows for comercio ${id_comercio}`);
+
+    let insertedShipping = 0;
+    await client.query("DELETE FROM comercio_metodo_envio WHERE id_comercio = $1", [id_comercio]);
+    for (const id_envio of shipping) {
+      const r = await client.query("INSERT INTO comercio_metodo_envio (id_comercio, id_envio) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *", [id_comercio, id_envio]);
+      if (r.rowCount) insertedShipping += r.rowCount;
+    }
+
+    console.log(`Inserted ${insertedShipping} shipping rows for comercio ${id_comercio}`);
+
+    await client.query('COMMIT');
+    res.json({ success: true });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Error setMetodosComercio:", error);
+    res.status(500).json({ error: "Error al guardar métodos del comercio" });
+  } finally {
+    client.release();
+  }
+};

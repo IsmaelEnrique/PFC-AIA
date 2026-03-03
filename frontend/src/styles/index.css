@@ -247,6 +247,40 @@ a {
 }
 
 /* ================================
+   ✅ CHECKOUT PAGE STYLES
+   ================================ */
+.checkout-page { padding: 2rem 0; }
+.checkout-container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 1.25rem; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.04);} 
+.checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.25rem; align-items: start; }
+.checkout-summary h3, .checkout-options h3 { margin-top: 0; color: var(--accent-2); }
+.checkout-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+.checkout-item { display: flex; gap: 0.75rem; align-items: center; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+.checkout-thumb { width: 84px; height: 64px; display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:8px;flex:0 0 auto}
+.checkout-thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-placeholder{font-size:1.35rem}
+.checkout-item-info{flex:1}
+.checkout-item-name{font-weight:700}
+.checkout-item-meta{color:var(--muted);font-size:0.95rem}
+.checkout-total{margin-top:1rem;font-size:1.15rem}
+.checkout-option{display:flex;align-items:center;gap:10px;padding:.45rem 0}
+
+/* Theme tweaks */
+.checkout-page.minimal .checkout-container{background:linear-gradient(180deg,#fff,#fbfbff)}
+.checkout-page.minimal .checkout-thumb{border-radius:8px;box-shadow:0 6px 18px rgba(10,10,10,0.04)}
+
+.checkout-page.colorful .checkout-container{background:linear-gradient(135deg,#fff8f0,#fff)}
+.checkout-page.colorful .checkout-thumb{border-radius:10px;box-shadow:0 8px 26px rgba(255,107,107,0.09)}
+
+.checkout-page.modern .checkout-container{background:linear-gradient(180deg,rgba(255,255,255,0.8),rgba(255,255,255,0.6));backdrop-filter: blur(6px)}
+.checkout-page.modern .checkout-thumb{border-radius:6px;box-shadow:0 10px 36px rgba(22,22,70,0.06)}
+
+@media (max-width: 900px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+  .checkout-container { padding: 1rem; }
+  .checkout-thumb { width: 72px; height:56px }
+}
+
+/* ================================
    ⭐ FEATURES
    ================================ */
 .features {
@@ -467,6 +501,19 @@ textarea {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+/* Checkbox row larger text used in métodos de pago/envío */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.15rem;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
 }
 
 /* ================================

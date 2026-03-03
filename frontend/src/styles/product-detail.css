@@ -2,8 +2,30 @@
 .producto-header{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid #eee;background:linear-gradient(90deg,rgba(0,0,0,0.02),transparent)}
 .btn-volver{background:#f3f4f6;border:0;padding:.5rem .75rem;border-radius:6px;cursor:pointer}
 .producto-body{display:flex;flex-wrap:wrap;padding:1.5rem}
-.producto-imagen{flex:1 1 360px;display:flex;align-items:center;justify-content:center;padding:1rem}
-.producto-imagen img{max-width:100%;max-height:420px;border-radius:8px}
+.producto-imagen{flex:1 1 360px;display:flex;align-items:center;justify-content:center;padding:1rem;min-width:280px;aspect-ratio:4/3}
+.producto-imagen img{width:100%;height:100%;object-fit:contain;border-radius:8px;display:block}
+
+/* Theme-specific image treatments */
+.producto-imagen.minimal{background:linear-gradient(180deg, #fafafa, #fff);padding:1.25rem;border-radius:10px}
+.producto-imagen.minimal img{box-shadow:0 6px 18px rgba(10,10,10,0.06);transition:transform .35s ease,filter .35s ease;object-fit:contain}
+.producto-imagen.minimal img:hover{transform:scale(1.02)}
+
+.producto-imagen.colorful{background:linear-gradient(135deg, #ffefba 0%, #ffffff 40%);padding:1.5rem;border-radius:14px}
+.producto-imagen.colorful img{border-radius:12px;box-shadow:0 10px 30px rgba(255,107,107,0.12);transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .35s;object-fit:cover}
+.producto-imagen.colorful img.loaded{transform:translateY(0);filter:brightness(1)}
+.producto-imagen.colorful img.loading{transform:translateY(10px);filter:blur(6px) saturate(.9);opacity:.9}
+
+.producto-imagen.modern{background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));backdrop-filter: blur(6px);padding:1rem;border-radius:6px}
+.producto-imagen.modern img{width:100%;height:100%;object-fit:cover;border-radius:6px;box-shadow:0 12px 40px rgba(22,22,70,0.08);transition:transform .45s ease,filter .45s ease}
+.producto-imagen.modern img:hover{transform:scale(1.03)}
+
+/* Skeleton / placeholder */
+.imagen-skeleton{width:100%;height:100%;border-radius:10px;background:linear-gradient(90deg,#eee,#f6f6f6,#eee);animation:shimmer 1.2s infinite}
+.imagen-skeleton.minimal{border-radius:8px}
+.imagen-skeleton.colorful{border-radius:12px;background:linear-gradient(90deg,#ffe7d6,#fff6f2,#ffe7d6)}
+.imagen-skeleton.modern{border-radius:6px;background:linear-gradient(90deg,#f3f6ff,#eef4ff,#f3f6ff)}
+
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 .producto-info{flex:2 1 520px;padding:1rem 1.5rem}
 .producto-nombre{font-size:1.6rem;margin:0 0 .5rem;color:#111}
 .producto-codigo{color:#777;margin-bottom:.5rem}

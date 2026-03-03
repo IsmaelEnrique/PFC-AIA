@@ -15,6 +15,7 @@ export default function ProductDetail() {
   const [error, setError] = useState(null);
   const [tiendaData, setTiendaData] = useState(null);
   const [producto, setProducto] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [consumidor, setConsumidor] = useState(null);
   const { carrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
@@ -79,6 +80,10 @@ export default function ProductDetail() {
 
     if (slug && id) fetchData();
   }, [slug, id]);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [producto?.foto]);
 
   // cart load handled by useCart
 
@@ -173,6 +178,8 @@ export default function ProductDetail() {
   const multipleVariants = producto.variantes && producto.variantes.length > 1;
   const singleVariant = producto.variantes && producto.variantes.length === 1 ? producto.variantes[0] : null;
 
+  const imageThemeClass = tipoDiseño === 1 ? 'minimal' : (tipoDiseño === 2 ? 'colorful' : 'modern');
+
   const productDetail = (
     <div className="producto-detalle">
       <div className="producto-header">
@@ -180,8 +187,13 @@ export default function ProductDetail() {
           </div>
 
       <div className="producto-body">
-        <div className="producto-imagen">
-          {producto.foto ? <img src={producto.foto} alt={producto.nombre} /> : <div className="sin-imagen">Sin imagen</div>}
+        <div className={`producto-imagen ${imageThemeClass}`}>
+          {producto.foto ? (
+            <>
+              {!imageLoaded && <div className={`imagen-skeleton ${imageThemeClass}`}></div>}
+              <img src={producto.foto} alt={producto.nombre} onLoad={() => setImageLoaded(true)} className={imageLoaded ? 'loaded' : 'loading'} />
+            </>
+          ) : <div className="sin-imagen">Sin imagen</div>}
         </div>
         <div className="producto-info">
           <h2 className="producto-nombre">{producto.nombre}</h2>
@@ -269,6 +281,14 @@ export default function ProductDetail() {
                                 +
                               </button>
                             </div>
+                              <div className="carrito-acciones-footer">
+                                <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
+                                  Vaciar Carrito
+                                </button>
+                                <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
+                                  Finalizar Compra
+                                </button>
+                              </div>
                             <button 
                               onClick={() => quitarDelCarrito(item.key)}
                               className="carrito-btn-eliminar"
@@ -277,6 +297,14 @@ export default function ProductDetail() {
                               🗑️
                             </button>
                           </div>
+                            <div className="carrito-acciones-footer">
+                              <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
+                                Vaciar Carrito
+                              </button>
+                              <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
+                                Finalizar Compra
+                              </button>
+                            </div>
 
                           <div className="carrito-item-subtotal">
                             ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -308,6 +336,14 @@ export default function ProductDetail() {
                         Finalizar Compra
                       </button>
                     </div>
+                      <div className="carrito-acciones-footer">
+                        <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
+                          Vaciar Carrito
+                        </button>
+                        <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
+                          Finalizar Compra
+                        </button>
+                      </div>
                   </>
                 )}
               </div>

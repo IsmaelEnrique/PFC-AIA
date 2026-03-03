@@ -1,6 +1,6 @@
 import express from "express";
 import pool from "../db/db.js";
-import { activarComercio, getComercioByUsuario, actualizarLogo, actualizarDiseno, getTiendaPublica } from "../controllers/comercioController.js";
+import { activarComercio, getComercioByUsuario, actualizarLogo, actualizarDiseno, getTiendaPublica, getMetodosComercio, setMetodosComercio } from "../controllers/comercioController.js";
 const router = express.Router();
 
 // Obtener comercio por usuario (usando query string)
@@ -8,6 +8,9 @@ router.get("/", getComercioByUsuario);
 
 // Endpoint público para tienda (ANTES de /:id_usuario para evitar conflicto)
 router.get("/tienda/:slug", getTiendaPublica);
+// Métodos de pago / envío: leer y actualizar
+router.get("/metodos", getMetodosComercio);
+router.post("/metodos", setMetodosComercio);
 
 // Obtener comercio por usuario (usando params - compatibilidad)
 router.get("/:id_usuario", async (req, res) => {
@@ -38,5 +41,9 @@ router.post("/logo", actualizarLogo);
 
 // Actualizar tipo de diseño
 router.post("/diseno", actualizarDiseno);
+
+// Métodos de pago / envío: leer y actualizar
+router.get("/metodos", getMetodosComercio);
+router.post("/metodos", setMetodosComercio);
 
 export default router;

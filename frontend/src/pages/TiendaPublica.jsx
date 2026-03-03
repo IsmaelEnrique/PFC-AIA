@@ -331,7 +331,7 @@ export default function TiendaPublica() {
                     <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
                       Vaciar Carrito
                     </button>
-                    <button className="carrito-btn-finalizar">
+                    <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
                       Finalizar Compra
                     </button>
                   </div>
