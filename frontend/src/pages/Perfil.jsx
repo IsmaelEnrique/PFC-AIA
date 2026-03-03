@@ -61,7 +61,7 @@ export default function Perfil() {
     
     // 💳 CORRECCIÓN: Usar API_BASE_URL para que Mercado Pago sepa a dónde volver
     // Esta URL debe coincidir EXACTAMENTE con la del panel de MP
-    const redirectUri = encodeURIComponent(`${API_BASE_URL}/api/pagos/callback`);
+    const redirectUri = encodeURIComponent("https://pfc-aia.onrender.com/api/pagos/callback");
     const state = user.id_usuario;
 
     const authUrl = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;

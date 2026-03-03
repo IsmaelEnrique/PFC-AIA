@@ -21,7 +21,7 @@ dotenv.config(); //Lee el archivo .env y carga las variables en process.env.
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: ["http://localhost:5173", "https://tu-frontend.onrender.com"]
 }));
 app.use(express.json());
 
@@ -40,6 +40,6 @@ app.use("/api/pagos", mercadoPagoRoutes);
 
 // 🔴 SERVER
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
