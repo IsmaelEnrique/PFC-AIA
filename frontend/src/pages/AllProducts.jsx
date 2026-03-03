@@ -40,6 +40,51 @@ export default function AllProducts() {
     }
   }, []);
 
+  // Manejar login/registro de consumidor (similar a TiendaPublica)
+  const handleLogin = async (consumidorData) => {
+    console.log('handleLogin (AllProducts) invoked with', consumidorData);
+    setConsumidor(consumidorData);
+
+    if (tiendaData) {
+      try {
+        if (carrito.length > 0) {
+          const items = carrito.map(item => ({ id_producto: item.producto.id, id_variante: item.variante?.id_variante || null, cantidad: item.cantidad }));
+          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items })
+          }).catch(err => console.error('Error migrando carrito:', err));
+          try { localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
+        }
+
+        console.log('AllProducts: fetching backend cart for', consumidorData.id_consumidor, tiendaData.comercio.id_comercio);
+        // fetch backend cart
+        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+        console.log('AllProducts: carrito response status', r.status);
+        if (r.ok) {
+          const data = await r.json();
+          console.log('AllProducts: carrito data', data);
+          setIdCarrito(data.carrito?.id_carrito || null);
+          const itemsFormateados = (data.items || []).map(item => {
+            const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
+            const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
+            return {
+              key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
+              producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
+              variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
+              cantidad: item.cantidad,
+              precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
+            };
+          });
+          setCarrito(itemsFormateados);
+        }
+      } catch (err) { console.error('Error al sincronizar carrito tras login', err); }
+    }
+  };
+
   // When user (consumidor) logs in, migrate local cart to backend and fetch backend cart
   useEffect(() => {
     if (!consumidor || !tiendaData) return;
@@ -77,7 +122,9 @@ export default function AllProducts() {
             const variante = item.id_variante ? producto?.variantes.find(v => v.id_variante === item.id_variante) : null;
             return {
               key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_prod_carrito: item.id_prod_carrito,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
               producto: {
                 id: producto?.id_producto,
                 name: producto?.nombre,
@@ -249,18 +296,20 @@ export default function AllProducts() {
               if (r.ok) {
                 const data = await r.json();
                 setIdCarrito(data.carrito?.id_carrito || null);
-                const itemsFormateados = (data.items || []).map(item => {
-                  const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-                  const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-                  return {
-                    key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-                    id_prod_carrito: item.id_prod_carrito,
-                    producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-                    variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-                    cantidad: item.cantidad,
-                    precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-                  };
-                });
+                    const itemsFormateados = (data.items || []).map(item => {
+                    const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
+                    const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
+                    return {
+                      key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
+                      id_carrito: item.id_carrito,
+                      id_producto: item.id_producto,
+                      id_variante: item.id_variante,
+                      producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
+                      variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
+                      cantidad: item.cantidad,
+                      precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
+                    };
+                  });
                 setCarrito(itemsFormateados);
                 try { localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
               }
@@ -272,10 +321,15 @@ export default function AllProducts() {
        });
      },
      cantidadCarrito: carrito.reduce((t, i) => t + i.cantidad, 0),
-     abrirCarrito: () => setCarritoAbierto(true),
-    consumidor,
+    abrirCarrito: () => setCarritoAbierto(true),
+   consumidor,
     abrirAuth: () => setAuthModalOpen(true),
-    cerrarSesion: () => {},
+    cerrarSesion: () => {
+      try { localStorage.removeItem('consumidor'); } catch {}
+      setConsumidor(null);
+      setCarrito([]);
+      window.location.reload();
+    },
     onSelectCategory: (id) => {
       setSelectedCategory(id);
       setPage(1);
@@ -302,12 +356,14 @@ export default function AllProducts() {
     });
   };
 
-  // If logged in, remove from backend when item has id_prod_carrito
+  // If logged in, remove from backend using composite key
   const quitarDelCarritoBackend = async (itemKey) => {
     const item = carrito.find(i => i.key === itemKey);
-    if (consumidor && item && item.id_prod_carrito) {
+    if (consumidor && item && item.id_carrito && item.id_producto) {
       try {
-        await fetch(`http://localhost:4000/api/carrito/eliminar/${item.id_prod_carrito}`, { method: 'DELETE' });
+        const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
+        if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
+        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
         // refresh backend cart
         const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
         if (r.ok) {
@@ -318,7 +374,9 @@ export default function AllProducts() {
             const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
             return {
               key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_prod_carrito: item.id_prod_carrito,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
               producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
               variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
               cantidad: item.cantidad,
@@ -347,12 +405,12 @@ export default function AllProducts() {
   const actualizarCantidadBackend = async (itemKey, nuevaCantidad) => {
     const item = carrito.find(i => i.key === itemKey);
     if (!item) return;
-    if (consumidor && item.id_prod_carrito) {
+    if (consumidor && item.id_carrito && item.id_producto) {
       try {
         await fetch('http://localhost:4000/api/carrito/actualizar', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_prod_carrito: item.id_prod_carrito, cantidad: nuevaCantidad })
+          body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad })
         });
         // refresh backend cart
         const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
@@ -364,7 +422,9 @@ export default function AllProducts() {
             const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
             return {
               key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_prod_carrito: item.id_prod_carrito,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
               producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
               variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
               cantidad: item.cantidad,
@@ -420,12 +480,23 @@ export default function AllProducts() {
         </div>
       </div>
 
-      {/* Full-width footer */}
+      {/* Render footer after pagination so it's at the bottom of the page */}
       <footer className={tipoDiseño === 1 ? 'minimal-footer' : tipoDiseño === 2 ? 'colorful-footer' : 'modern-footer'} style={{ marginTop: 20 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '12px 16px', textAlign: 'center' }}>
           <p>© 2024 {storeData.name}. Todos los derechos reservados.</p>
         </div>
       </footer>
+
+      {/* Floating cart bubble for products page (show even when hideFooter=true) */}
+      {(tipoDiseño === 2 || tipoDiseño === 1) && (
+        <button
+          className={`carrito-flotante ${tipoDiseño === 1 ? 'carrito-flotante-minimal' : 'carrito-flotante-colorful'}`}
+          onClick={() => setCarritoAbierto(true)}
+        >
+          🛒
+          {cantidadTotalItems > 0 && <span className="carrito-badge">{cantidadTotalItems}</span>}
+        </button>
+      )}
 
       {/* Carrito modal (similar to TiendaPublica) */}
       {carritoAbierto && (
@@ -470,21 +541,21 @@ export default function AllProducts() {
                         <div className="carrito-item-acciones">
                           <div className="carrito-cantidad-control">
                             <button 
-                              onClick={() => { actualizarCantidad(item.key, item.cantidad - 1); if (consumidor && item.id_prod_carrito) actualizarCantidadBackend(item.key, item.cantidad - 1); }}
-                              className="carrito-btn-cantidad"
-                            >
+                                onClick={() => { actualizarCantidad(item.key, item.cantidad - 1); if (consumidor && item.id_carrito && item.id_producto) actualizarCantidadBackend(item.key, item.cantidad - 1); }}
+                                className="carrito-btn-cantidad"
+                              >
                               -
                             </button>
                             <span className="carrito-cantidad">{item.cantidad}</span>
                             <button 
-                              onClick={() => { actualizarCantidad(item.key, item.cantidad + 1); if (consumidor && item.id_prod_carrito) actualizarCantidadBackend(item.key, item.cantidad + 1); }}
+                              onClick={() => { actualizarCantidad(item.key, item.cantidad + 1); if (consumidor && item.id_carrito && item.id_producto) actualizarCantidadBackend(item.key, item.cantidad + 1); }}
                               className="carrito-btn-cantidad"
                             >
                               +
                             </button>
                           </div>
                           <button 
-                            onClick={() => { quitarDelCarrito(item.key); if (consumidor && item.id_prod_carrito) quitarDelCarritoBackend(item.key); }}
+                            onClick={() => { quitarDelCarrito(item.key); if (consumidor && item.id_carrito && item.id_producto) quitarDelCarritoBackend(item.key); }}
                             className="carrito-btn-eliminar"
                             title="Eliminar del carrito"
                           >
@@ -529,7 +600,7 @@ export default function AllProducts() {
         </div>
       )}
 
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={() => {}} id_comercio={comercio?.id_comercio} />
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={handleLogin} id_comercio={comercio?.id_comercio} />
     </div>
   );
 }

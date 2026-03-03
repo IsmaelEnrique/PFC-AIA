@@ -36,14 +36,12 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         if (formData.contrasena !== formData.confirmarContrasena) {
           console.log('❌ Las contraseñas no coinciden');
           setError('Las contraseñas no coinciden');
-          setLoading(false);
           return;
         }
 
         if (formData.contrasena.length < 6) {
           console.log('❌ Contraseña muy corta');
           setError('La contraseña debe tener al menos 6 caracteres');
-          setLoading(false);
           return;
         }
 
@@ -70,7 +68,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         if (!response.ok) {
           console.error('❌ Error del servidor:', data);
           setError(data.error || data.detalle || 'Error al registrarse');
-          setLoading(false);
           return;
         }
 
@@ -100,7 +97,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         if (!response.ok) {
           console.error('❌ Error login:', data);
           setError(data.error || 'Error al iniciar sesión');
-          setLoading(false);
           return;
         }
 
@@ -113,6 +109,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
     } catch (error) {
       console.error('💥 Error de conexión:', error);
       setError('Error de conexión con el servidor. ¿Está corriendo el backend?');
+    } finally {
       setLoading(false);
     }
   };

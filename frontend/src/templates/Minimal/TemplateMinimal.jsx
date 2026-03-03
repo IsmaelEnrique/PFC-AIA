@@ -69,7 +69,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
             {consumidor ? (
               <>
-                <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+                <span className="user-info">👤 {consumidor.mail || (consumidor.nombre ? `${consumidor.nombre} ${consumidor.apellido || ''}` : '')}</span>
                 <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
               </>
             ) : (

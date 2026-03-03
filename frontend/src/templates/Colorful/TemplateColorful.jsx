@@ -17,6 +17,12 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
+  useEffect(() => {
+    // mark body with theme class so global parts of the page can adapt
+    document.body.classList.add('theme-colorful');
+    return () => { document.body.classList.remove('theme-colorful'); };
+  }, []);
+
   return (
     <div className="colorful">
       {/* HEADER */}
@@ -68,7 +74,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
 
     {consumidor ? (
       <>
-        <span className="user-info">👤 {consumidor.nombre_usuario}</span>
+        <span className="user-info">👤 {consumidor.mail || (consumidor.nombre ? `${consumidor.nombre} ${consumidor.apellido || ''}` : '')}</span>
         <button className="auth-btn" onClick={cerrarSesion}>Cerrar Sesión</button>
       </>
     ) : (
@@ -138,7 +144,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
                     }
                   }}
                 >
-                  Agregar 🛒
+                  Agregar al carrito
                 </button>
               </div>
             </div>

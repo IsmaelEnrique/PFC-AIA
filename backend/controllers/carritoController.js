@@ -26,10 +26,36 @@ export const obtenerCarrito = async (req, res) => {
 
     const id_carrito = carrito.rows[0].id_carrito;
 
+    // Obtener precio unitario correspondiente (variante o producto)
+    let precioUnitario = null;
+    if (id_variante) {
+      // Intentar obtener precio de la variante asegurando que pertenezca al producto
+      const pv = await pool.query('SELECT precio FROM variante WHERE id_variante = $1 AND id_producto = $2', [id_variante, id_producto]);
+      precioUnitario = pv.rows[0]?.precio ?? null;
+    }
+    if (precioUnitario === null) {
+      // Intentar obtener precio desde el producto (si la columna existe)
+      try {
+        const pp = await pool.query('SELECT precio FROM producto WHERE id_producto = $1', [id_producto]);
+        precioUnitario = pp.rows[0]?.precio ?? null;
+      } catch (e) {
+        precioUnitario = null;
+      }
+    }
+
+    // Asegurar valor no nulo para cumplir constraint
+    if (precioUnitario === null || precioUnitario === undefined) {
+      precioUnitario = 0.00;
+    }
+
+    // Si no se encontró precio, usar 0.00 para no violar NOT NULL
+    if (precioUnitario === null || precioUnitario === undefined) {
+      precioUnitario = 0.00;
+    }
     // Obtener items del carrito con información completa
     const items = await pool.query(
       `SELECT 
-        mpc.id_prod_carrito,
+        mpc.id_carrito,
         mpc.id_producto,
         mpc.id_variante,
         mpc.cantidad,
@@ -92,16 +118,18 @@ export const agregarProducto = async (req, res) => {
     );
 
     if (itemExistente.rows.length > 0) {
-      // Actualizar cantidad
+      // Actualizar cantidad usando la clave compuesta
       await pool.query(
-        'UPDATE m_n_prod_carrito SET cantidad = cantidad + $1 WHERE id_prod_carrito = $2',
-        [cantidad, itemExistente.rows[0].id_prod_carrito]
+        `UPDATE m_n_prod_carrito SET cantidad = cantidad + $1 
+         WHERE id_carrito = $2 AND id_producto = $3 AND 
+         (($4::INT IS NULL AND id_variante IS NULL) OR id_variante = $4)`,
+        [cantidad, id_carrito, id_producto, id_variante || null]
       );
     } else {
       // Agregar nuevo item
       await pool.query(
-        'INSERT INTO m_n_prod_carrito (id_carrito, id_producto, id_variante, cantidad) VALUES ($1, $2, $3, $4)',
-        [id_carrito, id_producto, id_variante || null, cantidad]
+        'INSERT INTO m_n_prod_carrito (id_carrito, id_producto, id_variante, cantidad, precio_unitario) VALUES ($1, $2, $3, $4, $5)',
+        [id_carrito, id_producto, id_variante || null, cantidad, precioUnitario]
       );
     }
 
@@ -117,30 +145,36 @@ export const agregarProducto = async (req, res) => {
 
 // Actualizar cantidad de un producto
 export const actualizarCantidad = async (req, res) => {
-  const { id_prod_carrito, cantidad } = req.body;
+  const { id_carrito, id_producto, id_variante, cantidad } = req.body;
 
-  if (!id_prod_carrito || cantidad === undefined) {
+  if (!id_carrito || !id_producto || cantidad === undefined) {
     return res.status(400).json({ error: 'Faltan datos requeridos' });
   }
 
   try {
     if (cantidad <= 0) {
-      // Eliminar el item
+      // Eliminar el item por clave compuesta
       const item = await pool.query(
-        'DELETE FROM m_n_prod_carrito WHERE id_prod_carrito = $1 RETURNING id_carrito',
-        [id_prod_carrito]
+        `DELETE FROM m_n_prod_carrito 
+         WHERE id_carrito = $1 AND id_producto = $2 AND 
+         (($3::INT IS NULL AND id_variante IS NULL) OR id_variante = $3) 
+         RETURNING id_carrito`,
+        [id_carrito, id_producto, id_variante || null]
       );
-      
+
       if (item.rows.length > 0) {
         await actualizarSubtotal(item.rows[0].id_carrito);
       }
     } else {
-      // Actualizar cantidad
+      // Actualizar cantidad por clave compuesta
       const item = await pool.query(
-        'UPDATE m_n_prod_carrito SET cantidad = $1 WHERE id_prod_carrito = $2 RETURNING id_carrito',
-        [cantidad, id_prod_carrito]
+        `UPDATE m_n_prod_carrito SET cantidad = $1 
+         WHERE id_carrito = $2 AND id_producto = $3 AND 
+         (($4::INT IS NULL AND id_variante IS NULL) OR id_variante = $4) 
+         RETURNING id_carrito`,
+        [cantidad, id_carrito, id_producto, id_variante || null]
       );
-      
+
       if (item.rows.length > 0) {
         await actualizarSubtotal(item.rows[0].id_carrito);
       }
@@ -155,12 +189,20 @@ export const actualizarCantidad = async (req, res) => {
 
 // Eliminar producto del carrito
 export const eliminarProducto = async (req, res) => {
-  const { id_prod_carrito } = req.params;
+  // Espera id_carrito, id_producto y opcional id_variante en query string
+  const { id_carrito, id_producto, id_variante } = req.query;
+
+  if (!id_carrito || !id_producto) {
+    return res.status(400).json({ error: 'Faltan datos requeridos para eliminar el item' });
+  }
 
   try {
     const item = await pool.query(
-      'DELETE FROM m_n_prod_carrito WHERE id_prod_carrito = $1 RETURNING id_carrito',
-      [id_prod_carrito]
+      `DELETE FROM m_n_prod_carrito 
+       WHERE id_carrito = $1 AND id_producto = $2 AND 
+       (($3::INT IS NULL AND id_variante IS NULL) OR id_variante = $3) 
+       RETURNING id_carrito`,
+      [id_carrito, id_producto, id_variante || null]
     );
 
     if (item.rows.length > 0) {
@@ -209,4 +251,24 @@ const actualizarSubtotal = async (id_carrito) => {
     'UPDATE carrito SET subtotal = $1 WHERE id_carrito = $2',
     [subtotal, id_carrito]
   );
+};
+
+// DEBUG: devolver carritos e items para un consumidor (temporal)
+export const debugCarrito = async (req, res) => {
+  const id_consumidor = Number(req.params.id_consumidor);
+  if (!id_consumidor) return res.status(400).json({ error: 'id_consumidor inválido' });
+
+  try {
+    const carritos = await pool.query('SELECT * FROM carrito WHERE id_consumidor = $1', [id_consumidor]);
+    const result = [];
+    for (const c of carritos.rows) {
+      const items = await pool.query('SELECT * FROM m_n_prod_carrito WHERE id_carrito = $1', [c.id_carrito]);
+      result.push({ carrito: c, items: items.rows });
+    }
+
+    res.json({ carritos: carritos.rows, detalle: result });
+  } catch (error) {
+    console.error('Error debugCarrito:', error);
+    res.status(500).json({ error: 'Error en debugCarrito' });
+  }
 };

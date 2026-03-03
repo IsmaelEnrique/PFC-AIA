@@ -1,10 +1,10 @@
-.producto-detalle{max-width:1024px;margin:2.5rem auto;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.08);overflow:hidden}
+.producto-detalle{max-width:1200px;margin:2.5rem auto;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.08);overflow:hidden}
 .producto-header{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid #eee;background:linear-gradient(90deg,rgba(0,0,0,0.02),transparent)}
 .btn-volver{background:#f3f4f6;border:0;padding:.5rem .75rem;border-radius:6px;cursor:pointer}
 .producto-body{display:flex;flex-wrap:wrap;padding:1.5rem}
-.producto-imagen{flex:1 1 380px;display:flex;align-items:center;justify-content:center;padding:1rem}
+.producto-imagen{flex:1 1 360px;display:flex;align-items:center;justify-content:center;padding:1rem}
 .producto-imagen img{max-width:100%;max-height:420px;border-radius:8px}
-.producto-info{flex:1 1 320px;padding:1rem 1.5rem}
+.producto-info{flex:2 1 520px;padding:1rem 1.5rem}
 .producto-nombre{font-size:1.6rem;margin:0 0 .5rem;color:#111}
 .producto-codigo{color:#777;margin-bottom:.5rem}
 .producto-descripcion{color:#333;line-height:1.5;margin-bottom:1rem}

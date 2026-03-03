@@ -1,10 +1,13 @@
 /* =====================
-   TEMPLATE COLORFUL
+   TEMPLATE COLORFUL - Consolidated
+   Clean, ordered, scoped rules for the Colorful template.
+   Keep selectors scoped under `.colorful` and use `body.theme-colorful`
+   for global overrides so other templates aren't affected.
 ===================== */
 
 .colorful {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 25%, #a855f7 75%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 75%, #8b5cf6 100%);
   color: white;
   font-family: "Montserrat", -apple-system, sans-serif;
   display: flex;
@@ -12,363 +15,182 @@
   overflow-x: hidden;
 }
 
-/* HEADER */
+/* ---------- Header / Nav ---------- */
 .colorful-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0,0,0,0.12);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   height: 80px;
 }
 
-.colorful-logo {
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
+.colorful-logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; }
+.colorful-logo-img { max-height: 70px; max-width: 250px; object-fit: contain; }
 
-.colorful-logo-img {
-  max-height: 70px;
-  max-width: 250px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-}
+.colorful-nav { display: flex; gap: 2.5rem; align-items: center; }
+.colorful-nav a, .colorful-nav button { display: flex; align-items: center; }
 
-.colorful-nav {
-  display: flex;
-  gap: 2.5rem;
-  align-items: center;
-}
+.colorful-dropdown { position: relative; display: inline-block; }
+.colorful-dropdown-toggle { cursor: pointer; }
 
-.colorful-nav a,
-.colorful-nav button {
-  display: flex;
-  align-items: center;
-}
-
-.colorful-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.colorful-dropdown-toggle {
-  cursor: pointer;
-}
-
+/* Categories dropdown - translucent, compact and readable */
 .colorful-dropdown-menu {
   display: none;
   position: absolute;
   top: 100%;
   left: 0;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
   min-width: 200px;
   border-radius: 8px;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
   margin-top: 0.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.25);
   z-index: 100;
 }
+.colorful-dropdown:hover .colorful-dropdown-menu { display: block; }
+.colorful-dropdown-menu a { display:block; padding:0.6rem 1.2rem; color: white; text-decoration:none; transition: background .18s; }
+.colorful-dropdown-menu a:hover { background: rgba(250,204,21,0.14); color: #facc15; }
 
-.colorful-dropdown:hover .colorful-dropdown-menu {
-  display: block;
-}
+/* ---------- Hero ---------- */
+.colorful-hero { padding: 5rem 2rem; text-align: center; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 100%); }
+.colorful-hero-content { max-width:700px; margin:0 auto; animation: slideUp .8s ease-out; }
+.colorful-hero h1 { font-size:3.5rem; margin-bottom:1.5rem; font-weight:800; line-height:1.05; }
+.colorful-description { font-size:1.1rem; opacity:.95; font-weight:300; }
 
-.colorful-dropdown-menu a {
-  display: block;
-  padding: 0.75rem 1.5rem;
-  color: white;
-  text-decoration: none;
-  transition: all 0.2s;
-}
+/* CTA */
+.colorful-cta { background: linear-gradient(135deg,#facc15,#fbbf24); color:#1f2937; border:none; padding:12px 36px; border-radius:50px; font-weight:800; cursor:pointer; box-shadow:0 10px 30px rgba(250,204,21,0.3); }
+.colorful-cta:hover { transform: translateY(-3px); }
 
-.colorful-dropdown-menu a:hover {
-  background: rgba(250, 204, 21, 0.2);
-  color: #facc15;
-}
-
-.colorful-dropdown-menu a::after {
-  display: none;
-}
-
-/* HERO SECTION */
-.colorful-hero {
-  padding: 5rem 2rem;
-  text-align: center;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
-}
-
-.colorful-hero-content {
-  max-width: 700px;
-  margin: 0 auto;
-  animation: slideUp 0.8s ease-out;
-}
-
-.colorful-hero h1 {
-  font-size: 3.5rem;
-  margin-bottom: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  line-height: 1.1;
-}
-
-.colorful-description {
-  font-size: 1.2rem;
-  margin-bottom: 2.5rem;
-  line-height: 1.6;
-  opacity: 0.95;
-  font-weight: 300;
-}
-
-.colorful-cta {
-  background: linear-gradient(135deg, #facc15, #fbbf24);
-  color: #1f2937;
-  border: none;
-  padding: 16px 48px;
-  border-radius: 50px;
-  font-weight: 800;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 12px 32px rgba(250, 204, 21, 0.4);
-  letter-spacing: 1px;
-}
-
-.colorful-cta:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 16px 48px rgba(250, 204, 21, 0.6);
-}
-
-.colorful-cta:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
-/* FEATURED SECTION */
-.colorful-featured {
-  padding: 4rem 2rem;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.colorful-featured h2 {
-  text-align: center;
-  font-size: 2.2rem;
-  margin-bottom: 3rem;
-  font-weight: 800;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* CAROUSEL */
-.colorful-carousel {
-  display: flex;
-  gap: 2rem;
-  padding: 2rem;
-  overflow-x: auto;
-  max-width: 100%;
-  scroll-behavior: smooth;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.colorful-carousel::-webkit-scrollbar {
-  height: 8px;
-}
-
-.colorful-carousel::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-.colorful-carousel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-}
-
-.colorful-carousel::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* SLIDE CARD */
+/* ---------- Featured / Carousel / Slides ---------- */
+.colorful-featured { padding: 4rem 2rem; background: rgba(0,0,0,0.06); }
+.colorful-carousel { display:flex; gap:2rem; padding:2rem; overflow-x:auto; flex-wrap:wrap; justify-content:center; }
 .colorful-slide {
   min-width: 260px;
   max-width: 260px;
   min-height: 380px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.12);
   padding: 1.5rem;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  animation: fadeInUp 0.6s ease-out;
-  cursor: pointer;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
   display: flex;
   flex-direction: column;
+  gap: 0.85rem; /* consistent vertical spacing between children */
+  align-items: stretch;
 }
-
-.colorful-slide:nth-child(1) {
-  animation-delay: 0.1s;
-}
-
-.colorful-slide:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.colorful-slide:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.colorful-slide:hover {
-  transform: translateY(-16px);
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
-}
-
-.colorful-slide-img {
+.colorful-slide:hover { transform: translateY(-12px); background: rgba(255,255,255,0.18); }
+.colorful-slide-img { height: 160px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.colorful-slide-img img { width:100%; height:100%; object-fit:cover; display:block; }
+.colorful-placeholder { color: rgba(255,255,255,0.7); }
+.colorful-slide-btn {
+  background: linear-gradient(90deg, #facc15, #fbbf24);
+  color: #1f2937;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
   width: 100%;
-  height: 160px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
-  border-radius: 16px;
-  margin-bottom: 1.5rem;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  display: flex;
+  max-width: 260px;
+  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow: 0 8px 20px rgba(250,204,21,0.18);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
 }
+.colorful-slide-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(250,204,21,0.22); }
 
-.colorful-slide-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* ---------- Footer ---------- */
+.colorful-footer { background: rgba(0,0,0,0.22); padding:2rem; text-align:center; border-top:1px solid rgba(255,255,255,0.08); margin-top:auto; font-size:0.95rem; color: white; }
+.colorful-footer p { margin:0; }
+
+/* ---------- Small utilities / animations / responsive ---------- */
+@keyframes slideUp { from { opacity:0; transform:translateY(30px);} to { opacity:1; transform:translateY(0);} }
+@keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
+@media (max-width:768px){ .colorful-hero h1{ font-size:2.4rem;} .colorful-nav{ flex-direction:column; gap:1rem;} .colorful-slide{ min-width:220px; } }
+
+/* ---------- Scoped overrides for global controls when inside the Colorful template ---------- */
+.colorful .controls-wrap { background: transparent; padding: 14px 12px; }
+.colorful .controls-bar { justify-content:flex-end; gap:12px; }
+.colorful .control-input, .colorful .control-select { background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.12); box-shadow:none; }
+.colorful .control-input::placeholder { color: rgba(255,255,255,0.75); }
+.colorful .control-select { -webkit-appearance:none; appearance:none; }
+.colorful .control-select option { color:#111; }
+
+/* Pagination styling inside template */
+.colorful .pagination-bar { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); padding:12px 16px; border-radius:12px; display:flex; gap:12px; justify-content:center; align-items:center; max-width:1100px; margin:0 auto; }
+.colorful .btn-pager { padding:8px 14px; border-radius:999px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.12); color:white; font-weight:600; }
+
+/* Product detail scoped overrides to respect Colorful visuals */
+.colorful .producto-detalle { background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.06)); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.32); color:white; }
+.colorful .producto-header { border-bottom-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
+.colorful .producto-body { padding:1.25rem; }
+.colorful .producto-imagen { background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border-radius:8px; }
+.colorful .producto-info { color: white; }
+.colorful .producto-descripcion, .colorful .producto-codigo { color: rgba(255,255,255,0.9); }
+.colorful .variante-item { border-top-color: rgba(255,255,255,0.06); }
+.colorful .producto-precio button,
+.colorful .variante-item button {
+  background: linear-gradient(90deg, #facc15, #fbbf24);
+  color: #1f2937;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(250,204,21,0.14);
+  min-width: 84px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-
-.colorful-placeholder {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.9rem;
-}
-
-.colorful-slide h3 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  min-height: 2.4rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* PRICE CONTAINER */
 .colorful-price-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: auto;
+  gap: 0.6rem;
+  margin: 0; /* ensure no auto margin pushes content */
 }
 
-.colorful-price {
-  font-size: 1.3rem;
+.colorful-slide h3 { margin: 0; font-size: 1.05rem; line-height: 1.2; }
+
+.colorful-slide .colorful-price-container .colorful-price { font-size: 1.05rem; font-weight: 700; text-align: center; }
+.colorful .producto-precio button:hover,
+.colorful .variante-item button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(250,204,21,0.2); }
+
+/* ---------- Global theme variables applied when TemplateColorful mounts (body.theme-colorful) ---------- */
+body.theme-colorful {
+  --bg: linear-gradient(135deg,#ec4899 0%,#a855f7 75%,#8b5cf6 100%);
+  --accent: #facc15;
+  --accent-2: #ffffff;
+  --bg-secondary: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --muted: rgba(255,255,255,0.85);
+  --container: 1100px;
+  --radius: 12px;
+  --gap: 1.25rem;
+}
+
+body.theme-colorful .colorful-footer { background: linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.12)); border-top:1px solid rgba(255,255,255,0.08); }
+body.theme-colorful .colorful-footer p { color: rgba(255,255,255,0.95); }
+body.theme-colorful .pagination-bar { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); }
+body.theme-colorful .btn-pager { background: rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.16); }
+
+/* Back button used on product detail inside Colorful template */
+.colorful-back-btn {
+  background: rgba(255,255,255,0.06);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 8px 12px;
+  border-radius: 10px;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  text-align: center;
-}
-
-.colorful-sin-precio {
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: center;
-  opacity: 0.9;
-  font-style: italic;
-}
-
-.colorful-slide-btn {
-  background: #facc15;
-  color: #1f2937;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
-  width: 100%;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
 }
-
-.colorful-slide-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(250, 204, 21, 0.5);
-}
-
-/* FOOTER */
-.colorful-footer {
-  background: rgba(0, 0, 0, 0.25);
-  padding: 2rem;
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: auto;
-  font-size: 0.95rem;
-  opacity: 0.9;
-}
-
-.colorful-footer p {
-  margin: 0;
-}
-
-/* ANIMACIONES */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .colorful-hero h1 {
-    font-size: 2.5rem;
-  }
-
-  .colorful-nav {
-    flex-direction: column;
-    gap: 1rem;
-    font-size: 0.85rem;
-  }
-
-  .colorful-slide {
-    min-width: 220px;
-    max-width: 220px;
-  }
-
-  .colorful-featured h2 {
-    font-size: 1.8rem;
-  }
-
-  .colorful-carousel {
-    gap: 1rem;
-    padding: 1rem;
-  }
-}
+.colorful-back-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.22); }

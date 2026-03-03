@@ -6,6 +6,9 @@ const router = express.Router();
 // Registrar consumidor
 router.post('/registro', consumidorController.registrarConsumidor);
 
+// Listar consumidores por comercio (debug)
+router.get('/', consumidorController.listarConsumidores);
+
 // Login de consumidor
 router.post('/login', consumidorController.loginConsumidor);
 

@@ -22,7 +22,7 @@ export default function AdminPanel() {
           </Link>
 
           <Link to="/disenar-pagina" className="btn btn-secondary">
-            Diseñar página
+            Diseño página
           </Link>
 
           <Link to="/gestion-productos" className="btn btn-secondary">

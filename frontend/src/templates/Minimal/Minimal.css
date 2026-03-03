@@ -173,21 +173,22 @@
 }
 
 .minimal-item-btn {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid #0891b2;
-  background: transparent;
+  display: inline-block;
+  width: auto;
+  padding: 8px 16px;
+  border: none;
+  background: #1f2937; /* solid, minimal-friendly color */
+  color: #ffffff;
   border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #0891b2;
+  transition: all 0.2s ease;
+  align-self: flex-start;
 }
 
 .minimal-item-btn:hover {
-  background: #0891b2;
-  color: white;
+  background: #111827;
   transform: translateY(-2px);
 }
 
@@ -275,4 +276,23 @@
 
 .minimal-item-btn {
   margin-top: auto;
+}
+
+/* Botón volver en vista detalle para estilo Minimal */
+.minimal-back-btn {
+  display: inline-block;
+  padding: 8px 14px;
+  background: transparent;
+  color: #0891b2;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.minimal-back-btn:hover {
+  background: #0891b2;
+  color: #fff;
+  transform: translateY(-2px);
 }

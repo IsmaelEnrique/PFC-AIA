@@ -145,10 +145,12 @@ export const migrarCarrito = async (req, res) => {
       );
 
       if (existente.rows.length > 0) {
-        // Actualizar cantidad sumando las cantidades
+        // Actualizar cantidad sumando las cantidades usando clave compuesta
         await pool.query(
-          'UPDATE m_n_prod_carrito SET cantidad = cantidad + $1 WHERE id_prod_carrito = $2',
-          [cantidad, existente.rows[0].id_prod_carrito]
+          `UPDATE m_n_prod_carrito SET cantidad = cantidad + $1 
+           WHERE id_carrito = $2 AND id_producto = $3 AND 
+           (($4::INT IS NULL AND id_variante IS NULL) OR id_variante = $4)`,
+          [cantidad, id_carrito, id_producto, id_variante || null]
         );
       } else {
         // Agregar nuevo item
@@ -184,5 +186,18 @@ export const migrarCarrito = async (req, res) => {
   } catch (error) {
     console.error('Error al migrar carrito:', error);
     res.status(500).json({ error: 'Error al migrar el carrito' });
+  }
+};
+
+// Listar consumidores por comercio (útil para debugging)
+export const listarConsumidores = async (req, res) => {
+  const id_comercio = req.query.comercio || req.query.id_comercio;
+  if (!id_comercio) return res.status(400).json({ error: 'Falta id_comercio en query' });
+  try {
+    const result = await pool.query('SELECT id_consumidor, id_comercio, nombre, apellido, mail FROM consumidor WHERE id_comercio = $1', [id_comercio]);
+    return res.json({ consumidores: result.rows });
+  } catch (error) {
+    console.error('Error listando consumidores:', error);
+    return res.status(500).json({ error: 'Error listando consumidores' });
   }
 };

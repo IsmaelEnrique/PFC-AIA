@@ -110,7 +110,9 @@ export default function TiendaPublica() {
 
             return {
               key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_prod_carrito: item.id_prod_carrito,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
               producto: {
                 id: producto?.id_producto,
                 name: producto?.nombre,
@@ -208,38 +210,61 @@ export default function TiendaPublica() {
 
   // Manejar login/registro de consumidor
   const handleLogin = async (consumidorData) => {
+    console.log('handleLogin (TiendaPublica) invoked with', consumidorData);
     setConsumidor(consumidorData);
     
     // Migrar carrito de localStorage a BD
-    if (carrito.length > 0 && tiendaData) {
+    if (tiendaData) {
       try {
-        const items = carrito.map(item => ({
-          id_producto: item.producto.id,
-          id_variante: item.variante?.id_variante || null,
-          cantidad: item.cantidad
-        }));
+        // If there are local items, try to migrate them first
+        if (carrito.length > 0) {
+          const items = carrito.map(item => ({
+            id_producto: item.producto.id,
+            id_variante: item.variante?.id_variante || null,
+            cantidad: item.cantidad
+          }));
 
-        const response = await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_consumidor: consumidorData.id_consumidor,
-            id_comercio: comercio.id_comercio,
-            items
-          })
-        });
+          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: comercio.id_comercio, items })
+          }).catch(err => console.error('Error migrando carrito:', err));
 
-        if (response.ok) {
-          console.log('✅ Carrito migrado exitosamente');
-          // Limpiar localStorage
-          const carritoKey = `carrito_${comercio.id_comercio}`;
-          localStorage.removeItem(carritoKey);
-          
-          // Recargar carrito desde BD
-          window.location.reload();
+          // clear local copy after attempting migration
+          try { localStorage.removeItem(`carrito_${comercio.id_comercio}`); } catch {}
+        }
+
+        console.log('TiendaPublica: fetching backend cart for', consumidorData.id_consumidor, comercio.id_comercio);
+        // fetch backend cart and set local state
+        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${comercio.id_comercio}`);
+        console.log('TiendaPublica: carrito response status', r.status);
+        if (r.ok) {
+          const data = await r.json();
+          console.log('TiendaPublica: carrito data', data);
+          setIdCarrito(data.carrito?.id_carrito || null);
+            const itemsFormateados = (data.items || []).map(item => {
+            const producto = tiendaData.productos.find(p => p.id_producto === item.id_producto);
+            const variante = item.id_variante ? producto?.variantes.find(v => v.id_variante === item.id_variante) : null;
+            return {
+              key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
+              id_carrito: item.id_carrito,
+              id_producto: item.id_producto,
+              id_variante: item.id_variante,
+              producto: {
+                id: producto?.id_producto,
+                name: producto?.nombre,
+                foto: producto?.foto ? `http://localhost:4000${producto.foto}` : null,
+                price: producto?.precio || 0
+              },
+              variante: variante ? { ...variante, caracteristicas: variante.caracteristicas || [] } : null,
+              cantidad: item.cantidad,
+              precio: parseFloat(item.precio_actual || item.precio || producto?.precio || 0)
+            };
+          });
+          setCarrito(itemsFormateados);
         }
       } catch (error) {
-        console.error('Error al migrar carrito:', error);
+        console.error('Error al sincronizar carrito tras login:', error);
       }
     }
   };
@@ -322,13 +347,12 @@ export default function TiendaPublica() {
       return nuevoCarrito;
     });
 
-    // Si hay consumidor y el item tiene id, sincronizar con backend
-    if (consumidor && item?.id_prod_carrito) {
+    // Si hay consumidor y el item tiene id de carrito, sincronizar con backend usando clave compuesta
+    if (consumidor && item?.id_carrito && item?.id_producto) {
       try {
-        await fetch(
-          `http://localhost:4000/api/carrito/eliminar/${item.id_prod_carrito}`,
-          { method: 'DELETE' }
-        );
+        const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
+        if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
+        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
       } catch (error) {
         console.error('Error al sincronizar con backend:', error);
       }
@@ -360,16 +384,13 @@ export default function TiendaPublica() {
       return nuevoCarrito;
     });
 
-    // Si hay consumidor y el item tiene id, sincronizar con backend
-    if (consumidor && item?.id_prod_carrito) {
+    // Si hay consumidor y el item tiene id de carrito, sincronizar con backend usando clave compuesta
+    if (consumidor && item?.id_carrito && item?.id_producto) {
       try {
         await fetch('http://localhost:4000/api/carrito/actualizar', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_prod_carrito: item.id_prod_carrito,
-            cantidad: nuevaCantidad
-          })
+          body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad })
         });
       } catch (error) {
         console.error('Error al sincronizar con backend:', error);
