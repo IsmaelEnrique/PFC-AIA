@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useCart from '../hooks/useCart';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import TemplateMinimal from '../templates/Minimal/TemplateMinimal';
 import TemplateColorful from '../templates/Colorful/TemplateColorful';
@@ -12,9 +13,8 @@ export default function AllProducts() {
   const [tiendaData, setTiendaData] = useState(null);
   const [consumidor, setConsumidor] = useState(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [carrito, setCarrito] = useState([]);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
-  const [idCarrito, setIdCarrito] = useState(null);
+  const { carrito, setCarrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
 
   // pagination
   const [page, setPage] = useState(1);
@@ -42,109 +42,11 @@ export default function AllProducts() {
 
   // Manejar login/registro de consumidor (similar a TiendaPublica)
   const handleLogin = async (consumidorData) => {
-    console.log('handleLogin (AllProducts) invoked with', consumidorData);
     setConsumidor(consumidorData);
-
-    if (tiendaData) {
-      try {
-        if (carrito.length > 0) {
-          const items = carrito.map(item => ({ id_producto: item.producto.id, id_variante: item.variante?.id_variante || null, cantidad: item.cantidad }));
-          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items })
-          }).catch(err => console.error('Error migrando carrito:', err));
-          try { localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
-        }
-
-        console.log('AllProducts: fetching backend cart for', consumidorData.id_consumidor, tiendaData.comercio.id_comercio);
-        // fetch backend cart
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-        console.log('AllProducts: carrito response status', r.status);
-        if (r.ok) {
-          const data = await r.json();
-          console.log('AllProducts: carrito data', data);
-          setIdCarrito(data.carrito?.id_carrito || null);
-          const itemsFormateados = (data.items || []).map(item => {
-            const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-              variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (err) { console.error('Error al sincronizar carrito tras login', err); }
-    }
+    if (tiendaData) await syncOnLogin(consumidorData);
   };
 
-  // When user (consumidor) logs in, migrate local cart to backend and fetch backend cart
-  useEffect(() => {
-    if (!consumidor || !tiendaData) return;
-
-    const migrateAndFetch = async () => {
-      try {
-        // If there is a local cart, migrate it
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        const local = localStorage.getItem(carritoKey);
-        if (local) {
-          const items = JSON.parse(local).map(item => ({
-            id_producto: item.producto.id,
-            id_variante: item.variante?.id_variante || null,
-            cantidad: item.cantidad
-          }));
-
-          if (items.length) {
-            await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id_consumidor: consumidor.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items })
-            });
-            // clear local copy after migration
-            localStorage.removeItem(carritoKey);
-          }
-        }
-
-        // Fetch backend cart and set local state
-        const res = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-        if (res.ok) {
-          const data = await res.json();
-          setIdCarrito(data.carrito?.id_carrito || null);
-          const itemsFormateados = (data.items || []).map(item => {
-            const producto = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const variante = item.id_variante ? producto?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: {
-                id: producto?.id_producto,
-                name: producto?.nombre,
-                foto: producto?.foto ? `http://localhost:4000${producto.foto}` : null,
-                price: producto?.precio || 0
-              },
-              variante: variante ? { ...variante, caracteristicas: variante.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || producto?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (err) {
-        console.error('Error migrando/obteniendo carrito:', err);
-      }
-    };
-
-    migrateAndFetch();
-  }, [consumidor, tiendaData]);
+  // backend/login sync handled by useCart.syncOnLogin
 
   // Cross-tab sync: listen to storage events for carrito changes
   useEffect(() => {
@@ -181,15 +83,7 @@ export default function AllProducts() {
     if (slug) fetchTienda();
   }, [slug]);
 
-  // Load carrito from localStorage for this store (guest mode)
-  useEffect(() => {
-    if (!tiendaData) return;
-    const key = `carrito_${tiendaData.comercio.id_comercio}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      try { setCarrito(JSON.parse(saved)); } catch (e) { /* ignore */ }
-    }
-  }, [tiendaData]);
+  // initial cart load handled by useCart
 
   if (loading) return <div className="tienda-loading"><div className="loader"></div><p>Cargando tienda...</p></div>;
   if (error) return <div className="tienda-error"><h2>😕 {error}</h2></div>;
@@ -204,15 +98,25 @@ export default function AllProducts() {
     description: comercio.descripcion || 'Productos',
     logo: logoUrl,
     logoSize: 60,
-    products: productos.map(p => ({
+    products: productos.map(p => {
+      const variantesNorm = Array.isArray(p.variantes) ? p.variantes.map(v => {
+        const caracteristicas = v.caracteristicas && Array.isArray(v.caracteristicas)
+          ? v.caracteristicas.map(c => ({ id_caracteristica: c.id_caracteristica || c.id, valor: c.valor || c.nombre_valor || c.nombre || '' }))
+          : (v.valores && Array.isArray(v.valores) ? v.valores.map(val => ({ id_caracteristica: val.id_caracteristica || val.id, valor: val.nombre_valor || val.valor || val.nombre || '' })) : []);
+        const nombre = v.nombre || v.nombre_variante || (caracteristicas.length ? caracteristicas.map(c => c.valor).join(' - ') : (`Variante ${v.id_variante || v.id || ''}`));
+        return { ...v, nombre, caracteristicas };
+      }) : [];
+
+      return {
       id: p.id_producto,
       name: p.nombre,
       price: p.precio || 0,
       description: p.descripcion,
       foto: p.foto ? `http://localhost:4000${p.foto}` : null,
       categorias: p.categorias,
-      variantes: p.variantes
-    })),
+      variantes: variantesNorm
+    };
+    }),
     categorias,
     comercio
   };
@@ -269,58 +173,8 @@ export default function AllProducts() {
   const templateProps = {
     store: { ...storeData, products: pagedProducts },
      carrito,
-     agregarAlCarrito: (producto, variante = null) => {
-       const itemKey = variante ? `${producto.id}-${variante.id_variante || variante.id}` : `${producto.id}`;
-       setCarrito(prev => {
-         const existente = prev.find(item => item.key === itemKey);
-         let nuevoCarrito;
-         const precio = variante ? (parseFloat(variante.precio) || 0) : (producto.effectivePrice || producto.price || 0);
-         if (existente) {
-           nuevoCarrito = prev.map(item => item.key === itemKey ? { ...item, cantidad: item.cantidad + 1 } : item);
-         } else {
-           nuevoCarrito = [...prev, { key: itemKey, producto: { id: producto.id, name: producto.name, foto: producto.foto, price: producto.price || 0 }, variante: variante ? variante : null, cantidad: 1, precio }];
-         }
-        try { if (tiendaData) localStorage.setItem(`carrito_${tiendaData.comercio.id_comercio}`, JSON.stringify(nuevoCarrito)); } catch {}
-
-        // If user is logged, sync the add to backend and refresh backend cart
-        (async () => {
-          try {
-            if (consumidor && tiendaData) {
-              await fetch('http://localhost:4000/api/carrito/agregar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_consumidor: consumidor.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, id_producto: producto.id, id_variante: variante?.id_variante || null, cantidad: 1 })
-              });
-              // refresh backend cart
-              const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-              if (r.ok) {
-                const data = await r.json();
-                setIdCarrito(data.carrito?.id_carrito || null);
-                    const itemsFormateados = (data.items || []).map(item => {
-                    const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-                    const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-                    return {
-                      key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-                      id_carrito: item.id_carrito,
-                      id_producto: item.id_producto,
-                      id_variante: item.id_variante,
-                      producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-                      variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-                      cantidad: item.cantidad,
-                      precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-                    };
-                  });
-                setCarrito(itemsFormateados);
-                try { localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
-              }
-            }
-          } catch (err) { console.error('Error sincronizando add al backend', err); }
-        })();
-
-        return nuevoCarrito;
-       });
-     },
-     cantidadCarrito: carrito.reduce((t, i) => t + i.cantidad, 0),
+     agregarAlCarrito,
+     cantidadCarrito: cantidadTotalItems,
     abrirCarrito: () => setCarritoAbierto(true),
    consumidor,
     abrirAuth: () => setAuthModalOpen(true),
@@ -348,103 +202,28 @@ export default function AllProducts() {
     hideFooter: true
   };
 
-  const quitarDelCarrito = (itemKey) => {
-    setCarrito(prev => {
-      const nuevo = prev.filter(i => i.key !== itemKey);
-      try { if (tiendaData) localStorage.setItem(`carrito_${tiendaData.comercio.id_comercio}`, JSON.stringify(nuevo)); } catch {}
-      return nuevo;
-    });
+  
+
+  const variantLabel = (variante) => {
+    if (!variante) return '';
+    if (variante.caracteristicas && variante.caracteristicas.length) return variante.caracteristicas.map(c => c.valor).join(' - ');
+    if (variante.nombre) return variante.nombre;
+    if (variante.nombre_variante) return variante.nombre_variante;
+    if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
+    return `Variante ${variante.id_variante || variante.id || ''}`;
   };
 
-  // If logged in, remove from backend using composite key
-  const quitarDelCarritoBackend = async (itemKey) => {
-    const item = carrito.find(i => i.key === itemKey);
-    if (consumidor && item && item.id_carrito && item.id_producto) {
-      try {
-        const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
-        if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
-        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
-        // refresh backend cart
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-        if (r.ok) {
-          const data = await r.json();
-          setIdCarrito(data.carrito?.id_carrito || null);
-          const itemsFormateados = (data.items || []).map(item => {
-            const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-              variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (err) { console.error('Error eliminando item backend', err); }
+  const displayProductName = (item) => {
+    const vtext = item.variante ? variantLabel(item.variante) : '';
+    let name = item.producto?.name || '';
+    const suffix = vtext ? ` — ${vtext}` : '';
+    if (suffix && name.endsWith(suffix)) {
+      return name.slice(0, -suffix.length);
     }
+    return name;
   };
 
-  const actualizarCantidad = (itemKey, nuevaCantidad) => {
-    if (nuevaCantidad <= 0) {
-      quitarDelCarrito(itemKey);
-      return;
-    }
-    setCarrito(prev => {
-      const nuevo = prev.map(item => item.key === itemKey ? { ...item, cantidad: nuevaCantidad } : item);
-      try { if (tiendaData) localStorage.setItem(`carrito_${tiendaData.comercio.id_comercio}`, JSON.stringify(nuevo)); } catch {}
-      return nuevo;
-    });
-  };
-
-  // If logged in and item has backend id, update backend quantity
-  const actualizarCantidadBackend = async (itemKey, nuevaCantidad) => {
-    const item = carrito.find(i => i.key === itemKey);
-    if (!item) return;
-    if (consumidor && item.id_carrito && item.id_producto) {
-      try {
-        await fetch('http://localhost:4000/api/carrito/actualizar', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad })
-        });
-        // refresh backend cart
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-        if (r.ok) {
-          const data = await r.json();
-          setIdCarrito(data.carrito?.id_carrito || null);
-          const itemsFormateados = (data.items || []).map(item => {
-            const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-              variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (err) { console.error('Error actualizando cantidad backend', err); }
-    }
-  };
-
-  const calcularSubtotal = () => carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-  const calcularTotal = () => calcularSubtotal();
-  const cantidadTotalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
-
-  const vaciarCarrito = () => {
-    setCarrito([]);
-    try { if (tiendaData) localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
-  };
+  
 
   const controlsNode = (
     <div className="controls-wrap">
@@ -527,10 +306,10 @@ export default function AllProducts() {
                         </div>
                         
                         <div className="carrito-item-info">
-                          <h4>{item.producto.name}</h4>
+                          <h4>{displayProductName(item)}</h4>
                           {item.variante && (
                             <p className="carrito-item-variante">
-                              {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : ''}
+                              {variantLabel(item.variante)}
                             </p>
                           )}
                           <p className="carrito-item-precio">
@@ -541,21 +320,21 @@ export default function AllProducts() {
                         <div className="carrito-item-acciones">
                           <div className="carrito-cantidad-control">
                             <button 
-                                onClick={() => { actualizarCantidad(item.key, item.cantidad - 1); if (consumidor && item.id_carrito && item.id_producto) actualizarCantidadBackend(item.key, item.cantidad - 1); }}
+                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
                                 className="carrito-btn-cantidad"
                               >
                               -
                             </button>
                             <span className="carrito-cantidad">{item.cantidad}</span>
                             <button 
-                              onClick={() => { actualizarCantidad(item.key, item.cantidad + 1); if (consumidor && item.id_carrito && item.id_producto) actualizarCantidadBackend(item.key, item.cantidad + 1); }}
+                              onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
                               className="carrito-btn-cantidad"
                             >
                               +
                             </button>
                           </div>
                           <button 
-                            onClick={() => { quitarDelCarrito(item.key); if (consumidor && item.id_carrito && item.id_producto) quitarDelCarritoBackend(item.key); }}
+                            onClick={() => quitarDelCarrito(item.key)}
                             className="carrito-btn-eliminar"
                             title="Eliminar del carrito"
                           >

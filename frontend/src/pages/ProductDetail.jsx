@@ -6,6 +6,7 @@ import TemplateColorful from "../templates/Colorful/TemplateColorful";
 import TemplateModern from "../templates/Modern/TemplateModern";
 import "../styles/tienda-publica.css";
 import "../styles/product-detail.css";
+import useCart from "../hooks/useCart";
 
 export default function ProductDetail() {
   const { slug, id } = useParams();
@@ -14,10 +15,9 @@ export default function ProductDetail() {
   const [error, setError] = useState(null);
   const [tiendaData, setTiendaData] = useState(null);
   const [producto, setProducto] = useState(null);
-  const [carrito, setCarrito] = useState([]);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
-  const [idCarrito, setIdCarrito] = useState(null);
   const [consumidor, setConsumidor] = useState(null);
+  const { carrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
@@ -27,50 +27,9 @@ export default function ProductDetail() {
     }
   }, []);
 
-  // Manejar login/registro de consumidor (mismo comportamiento que TiendaPublica)
   const handleLogin = async (consumidorData) => {
-    console.log('handleLogin (ProductDetail) invoked with', consumidorData);
     setConsumidor(consumidorData);
-
-    if (tiendaData) {
-      try {
-        if (carrito.length > 0) {
-          const items = carrito.map(item => ({ id_producto: item.producto.id, id_variante: item.variante?.id_variante || null, cantidad: item.cantidad }));
-          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items })
-          }).catch(err => console.error('Error migrando carrito:', err));
-          try { localStorage.removeItem(`carrito_${tiendaData.comercio.id_comercio}`); } catch {}
-        }
-
-        console.log('ProductDetail: fetching backend cart for', consumidorData.id_consumidor, tiendaData.comercio.id_comercio);
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
-        console.log('ProductDetail: carrito response status', r.status);
-        if (r.ok) {
-          const data = await r.json();
-          console.log('ProductDetail: carrito data', data);
-          setIdCarrito(data.carrito?.id_carrito || null);
-          const itemsFormateados = (data.items || []).map(item => {
-            const prod = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const varnt = item.id_variante ? prod?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: varnt ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: { id: prod?.id_producto, name: prod?.nombre, foto: prod?.foto ? `http://localhost:4000${prod.foto}` : null, price: prod?.precio || 0 },
-              variante: varnt ? { ...varnt, caracteristicas: varnt.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || prod?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (error) {
-        console.error('Error al sincronizar carrito tras login:', error);
-      }
-    }
+    if (tiendaData) await syncOnLogin(consumidorData);
   };
 
   useEffect(() => {
@@ -121,122 +80,9 @@ export default function ProductDetail() {
     if (slug && id) fetchData();
   }, [slug, id]);
 
-  useEffect(() => {
-    if (!tiendaData) return;
-    const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-    const carritoLocal = localStorage.getItem(carritoKey);
-    if (carritoLocal) {
-      try { setCarrito(JSON.parse(carritoLocal)); } catch (e) { console.error(e); }
-    }
-  }, [tiendaData]);
+  // cart load handled by useCart
 
-  const agregarAlCarrito = async (producto, variante = null) => {
-    const itemKey = variante ? `${producto.id_producto}-${variante.id_variante}` : `${producto.id_producto}`;
-
-    setCarrito(prev => {
-      const existente = prev.find(i => i.key === itemKey);
-      let nuevo;
-      if (existente) {
-        nuevo = prev.map(i => i.key === itemKey ? { ...i, cantidad: i.cantidad + 1 } : i);
-      } else {
-        nuevo = [...prev, {
-          key: itemKey,
-          producto: { id: producto.id_producto, name: producto.nombre, foto: producto.foto, price: producto.precio || 0 },
-          variante,
-          cantidad: 1,
-          precio: variante ? parseFloat(variante.precio) : (producto.precio || 0)
-        }];
-      }
-
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevo));
-      }
-
-      return nuevo;
-    });
-
-    if (consumidor && tiendaData) {
-      try {
-        await fetch('http://localhost:4000/api/carrito/agregar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_consumidor: consumidor.id_consumidor,
-            id_comercio: tiendaData.comercio.id_comercio,
-            id_producto: producto.id_producto,
-            id_variante: variante?.id_variante || null,
-            cantidad: 1
-          })
-        });
-      } catch (err) { console.error(err); }
-    }
-  };
-
-  const quitarDelCarrito = async (itemKey) => {
-    const item = carrito.find(i => i.key === itemKey);
-
-    setCarrito(prev => {
-      const nuevoCarrito = prev.filter(i => i.key !== itemKey);
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevoCarrito));
-      }
-      return nuevoCarrito;
-    });
-
-    if (consumidor && item?.id_carrito && item?.id_producto) {
-      try {
-        const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
-        if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
-        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
-      } catch (err) { console.error(err); }
-    }
-  };
-
-  const actualizarCantidad = async (itemKey, nuevaCantidad) => {
-    if (nuevaCantidad <= 0) {
-      quitarDelCarrito(itemKey);
-      return;
-    }
-
-    const item = carrito.find(i => i.key === itemKey);
-
-    setCarrito(prev => {
-      const nuevoCarrito = prev.map(i => i.key === itemKey ? { ...i, cantidad: nuevaCantidad } : i);
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevoCarrito));
-      }
-      return nuevoCarrito;
-    });
-
-    if (consumidor && item?.id_carrito && item?.id_producto) {
-      try {
-        await fetch('http://localhost:4000/api/carrito/actualizar', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad })
-        });
-      } catch (err) { console.error(err); }
-    }
-  };
-
-  const vaciarCarrito = async () => {
-    setCarrito([]);
-    if (!consumidor && tiendaData) {
-      const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-      localStorage.removeItem(carritoKey);
-    }
-    if (consumidor && idCarrito) {
-      try {
-        await fetch(`http://localhost:4000/api/carrito/vaciar/${idCarrito}`, { method: 'DELETE' });
-      } catch (err) { console.error(err); }
-    }
-  };
-
-  const calcularSubtotal = () => carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-  const calcularTotal = () => calcularSubtotal();
+  
   if (loading) return (<div className="tienda-loading"><div className="loader"></div><p>Cargando...</p></div>);
   if (error) return (<div className="tienda-error"><h2>😕 {error}</h2><button onClick={() => navigate(-1)}>Volver</button></div>);
   if (!producto || !tiendaData) return null;
@@ -264,6 +110,25 @@ export default function ProductDetail() {
 
   const tipoDiseño = Number(comercio.tipo_diseño);
 
+  const variantLabel = (variante) => {
+    if (!variante) return '';
+    if (variante.caracteristicas && variante.caracteristicas.length) return variante.caracteristicas.map(c => c.valor).join(' - ');
+    if (variante.nombre) return variante.nombre;
+    if (variante.nombre_variante) return variante.nombre_variante;
+    if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
+    return `Variante ${variante.id_variante || variante.id || ''}`;
+  };
+
+  const displayProductName = (item) => {
+    const vtext = item.variante ? variantLabel(item.variante) : '';
+    let name = item.producto?.name || '';
+    const suffix = vtext ? ` — ${vtext}` : '';
+    if (suffix && name.endsWith(suffix)) {
+      return name.slice(0, -suffix.length);
+    }
+    return name;
+  };
+
   const getCarritoTema = () => {
     switch (tipoDiseño) {
       case 1: return 'carrito-minimal';
@@ -273,7 +138,7 @@ export default function ProductDetail() {
     }
   };
 
-  const cantidadTotalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
+  
 
   const handleLogout = () => {
     localStorage.removeItem('consumidor');
@@ -291,6 +156,12 @@ export default function ProductDetail() {
     consumidor,
     abrirAuth: () => setAuthModalOpen(true),
     cerrarSesion: handleLogout,
+    onShowAll: () => navigate(`/tienda/${slug}/productos`),
+    onSelectCategory: (id) => {
+      const base = `/tienda/${slug}`;
+      if (id == null) navigate(base, { replace: true });
+      else navigate(`${base}?cat=${encodeURIComponent(id)}`, { replace: true });
+    },
     compact: true
   };
 
@@ -371,7 +242,7 @@ export default function ProductDetail() {
                           </div>
 
                           <div className="carrito-item-info">
-                            <h4>{item.producto.name}</h4>
+                            <h4>{displayProductName(item)}</h4>
                             {item.variante && (
                               <p className="carrito-item-variante">
                                 {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}

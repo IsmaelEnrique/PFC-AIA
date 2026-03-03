@@ -1,10 +1,13 @@
 import "./Colorful.css";
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import VariantPicker from '../../components/VariantPicker';
 
 export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [variantProduct, setVariantProduct] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -138,7 +141,8 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
                   className="colorful-slide-btn"
                   onClick={() => {
                     if (p.variantes && p.variantes.length > 0) {
-                      agregarAlCarrito(p, p.variantes[0]);
+                      setVariantProduct(p);
+                      setVariantModalOpen(true);
                     } else {
                       agregarAlCarrito(p);
                     }
@@ -150,6 +154,13 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
             </div>
           ))}
           </div>
+          <VariantPicker
+            isOpen={variantModalOpen}
+            onClose={() => setVariantModalOpen(false)}
+            product={variantProduct}
+            onSelectVariant={(prod, variante) => { agregarAlCarrito(prod, variante); }}
+            addButtonClass="colorful-slide-btn"
+          />
           {(!hideHero && !showAll && onShowAll) && (
         <div style={{ 
           textAlign: 'center', 

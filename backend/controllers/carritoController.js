@@ -25,33 +25,9 @@ export const obtenerCarrito = async (req, res) => {
     }
 
     const id_carrito = carrito.rows[0].id_carrito;
-
-    // Obtener precio unitario correspondiente (variante o producto)
-    let precioUnitario = null;
-    if (id_variante) {
-      // Intentar obtener precio de la variante asegurando que pertenezca al producto
-      const pv = await pool.query('SELECT precio FROM variante WHERE id_variante = $1 AND id_producto = $2', [id_variante, id_producto]);
-      precioUnitario = pv.rows[0]?.precio ?? null;
-    }
-    if (precioUnitario === null) {
-      // Intentar obtener precio desde el producto (si la columna existe)
-      try {
-        const pp = await pool.query('SELECT precio FROM producto WHERE id_producto = $1', [id_producto]);
-        precioUnitario = pp.rows[0]?.precio ?? null;
-      } catch (e) {
-        precioUnitario = null;
-      }
-    }
-
-    // Asegurar valor no nulo para cumplir constraint
-    if (precioUnitario === null || precioUnitario === undefined) {
-      precioUnitario = 0.00;
-    }
-
-    // Si no se encontró precio, usar 0.00 para no violar NOT NULL
-    if (precioUnitario === null || precioUnitario === undefined) {
-      precioUnitario = 0.00;
-    }
+    // Note: don't attempt to use id_variante/id_producto here (they are not provided
+    // when requesting the whole cart). Prices for items are computed when items
+    // are stored; here we just fetch items joined with product/variant info.
     // Obtener items del carrito con información completa
     const items = await pool.query(
       `SELECT 
@@ -61,9 +37,10 @@ export const obtenerCarrito = async (req, res) => {
         mpc.cantidad,
         p.nombre,
         p.foto,
-        v.precio as precio_variante,
-        v.stock,
-        v.precio as precio_actual
+          v.precio as precio_variante,
+          v.stock,
+          mpc.precio_unitario,
+          COALESCE(NULLIF(mpc.precio_unitario, 0), v.precio, 0) as precio_actual
       FROM m_n_prod_carrito mpc
       INNER JOIN producto p ON mpc.id_producto = p.id_producto
       LEFT JOIN variante v ON mpc.id_variante = v.id_variante
@@ -127,6 +104,19 @@ export const agregarProducto = async (req, res) => {
       );
     } else {
       // Agregar nuevo item
+      // determinar precio unitario: preferir precio de variante; si no hay variante dejar NULL
+      let precioUnitario = null;
+      try {
+        if (id_variante) {
+          const varRes = await pool.query('SELECT precio FROM variante WHERE id_variante = $1', [id_variante]);
+          const varPrecio = varRes.rows[0]?.precio;
+          if (varPrecio != null) precioUnitario = varPrecio;
+        }
+      } catch (e) {
+        console.error('Error determinando precio unitario:', e);
+        precioUnitario = null;
+      }
+
       await pool.query(
         'INSERT INTO m_n_prod_carrito (id_carrito, id_producto, id_variante, cantidad, precio_unitario) VALUES ($1, $2, $3, $4, $5)',
         [id_carrito, id_producto, id_variante || null, cantidad, precioUnitario]
@@ -236,7 +226,7 @@ export const vaciarCarrito = async (req, res) => {
 const actualizarSubtotal = async (id_carrito) => {
   const resultado = await pool.query(
     `SELECT COALESCE(SUM(
-      mpc.cantidad * v.precio
+      mpc.cantidad * COALESCE(NULLIF(mpc.precio_unitario, 0), v.precio, 0)
     ), 0) as subtotal
     FROM m_n_prod_carrito mpc
     INNER JOIN producto p ON mpc.id_producto = p.id_producto
