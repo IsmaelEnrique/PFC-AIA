@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useCart from "../hooks/useCart";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import TemplateMinimal from "../templates/Minimal/TemplateMinimal";
 import TemplateColorful from "../templates/Colorful/TemplateColorful";
@@ -12,11 +13,10 @@ export default function TiendaPublica() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tiendaData, setTiendaData] = useState(null);
-  const [carrito, setCarrito] = useState([]);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
-  const [idCarrito, setIdCarrito] = useState(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [consumidor, setConsumidor] = useState(null);
+  const { carrito, setCarrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const location = useLocation();
 
@@ -70,73 +70,7 @@ export default function TiendaPublica() {
     }
   }, [slug]);
 
-  // Cargar carrito desde localStorage (modo invitado) o backend (si hay consumidor)
-  useEffect(() => {
-    const cargarCarrito = async () => {
-      if (!tiendaData) return;
-
-      const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-
-      // Si NO hay consumidor logueado, usar localStorage
-      if (!consumidor) {
-        const carritoLocal = localStorage.getItem(carritoKey);
-        if (carritoLocal) {
-          try {
-            const carritoGuardado = JSON.parse(carritoLocal);
-            setCarrito(carritoGuardado);
-          } catch (error) {
-            console.error('Error al cargar carrito local:', error);
-          }
-        }
-        return;
-      }
-
-      // Si HAY consumidor, cargar desde backend
-      try {
-        const response = await fetch(
-          `http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          setIdCarrito(data.carrito.id_carrito);
-          
-          // Convertir items del backend al formato del frontend
-          const itemsFormateados = data.items.map(item => {
-            const producto = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const variante = item.id_variante 
-              ? producto?.variantes.find(v => v.id_variante === item.id_variante)
-              : null;
-
-            return {
-              key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: {
-                id: producto?.id_producto,
-                name: producto?.nombre,
-                foto: producto?.foto ? `http://localhost:4000${producto.foto}` : null,
-                price: item.precio_variante
-              },
-              variante: variante ? {
-                ...variante,
-                caracteristicas: variante.caracteristicas || []
-              } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual)
-            };
-          });
-
-          setCarrito(itemsFormateados);
-        }
-      } catch (error) {
-        console.error('Error al cargar carrito:', error);
-      }
-    };
-
-    cargarCarrito();
-  }, [consumidor, tiendaData]);
+  // Cart initialization and sync handled by `useCart`
 
   if (loading) {
     return (
@@ -179,6 +113,15 @@ export default function TiendaPublica() {
     logo: logoUrl,
     logoSize: 60,
     products: filteredProducts.map(p => {
+      // Normalizar variantes para asegurar `nombre` y `caracteristicas`
+      const variantesNorm = Array.isArray(p.variantes) ? p.variantes.map(v => {
+        const caracteristicas = v.caracteristicas && Array.isArray(v.caracteristicas)
+          ? v.caracteristicas.map(c => ({ id_caracteristica: c.id_caracteristica || c.id, valor: c.valor || c.nombre_valor || c.nombre || '' }))
+          : (v.valores && Array.isArray(v.valores) ? v.valores.map(val => ({ id_caracteristica: val.id_caracteristica || val.id, valor: val.nombre_valor || val.valor || val.nombre || '' })) : []);
+        const nombre = v.nombre || v.nombre_variante || (caracteristicas.length ? caracteristicas.map(c => c.valor).join(' - ') : (`Variante ${v.id_variante || v.id || ''}`));
+        return { ...v, nombre, caracteristicas };
+      }) : [];
+
       const variantPrices = Array.isArray(p.variantes)
         ? p.variantes.map(v => {
             const n = parseFloat(v.precio);
@@ -199,7 +142,7 @@ export default function TiendaPublica() {
         description: p.descripcion,
         foto: p.foto ? `http://localhost:4000${p.foto}` : null,
         categorias: p.categorias,
-        variantes: p.variantes
+        variantes: variantesNorm
       };
     }),
     categorias: categorias,
@@ -212,61 +155,8 @@ export default function TiendaPublica() {
   const handleLogin = async (consumidorData) => {
     console.log('handleLogin (TiendaPublica) invoked with', consumidorData);
     setConsumidor(consumidorData);
-    
-    // Migrar carrito de localStorage a BD
-    if (tiendaData) {
-      try {
-        // If there are local items, try to migrate them first
-        if (carrito.length > 0) {
-          const items = carrito.map(item => ({
-            id_producto: item.producto.id,
-            id_variante: item.variante?.id_variante || null,
-            cantidad: item.cantidad
-          }));
-
-          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: comercio.id_comercio, items })
-          }).catch(err => console.error('Error migrando carrito:', err));
-
-          // clear local copy after attempting migration
-          try { localStorage.removeItem(`carrito_${comercio.id_comercio}`); } catch {}
-        }
-
-        console.log('TiendaPublica: fetching backend cart for', consumidorData.id_consumidor, comercio.id_comercio);
-        // fetch backend cart and set local state
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${comercio.id_comercio}`);
-        console.log('TiendaPublica: carrito response status', r.status);
-        if (r.ok) {
-          const data = await r.json();
-          console.log('TiendaPublica: carrito data', data);
-          setIdCarrito(data.carrito?.id_carrito || null);
-            const itemsFormateados = (data.items || []).map(item => {
-            const producto = tiendaData.productos.find(p => p.id_producto === item.id_producto);
-            const variante = item.id_variante ? producto?.variantes.find(v => v.id_variante === item.id_variante) : null;
-            return {
-              key: variante ? `${item.id_producto}-${item.id_variante}` : `${item.id_producto}`,
-              id_carrito: item.id_carrito,
-              id_producto: item.id_producto,
-              id_variante: item.id_variante,
-              producto: {
-                id: producto?.id_producto,
-                name: producto?.nombre,
-                foto: producto?.foto ? `http://localhost:4000${producto.foto}` : null,
-                price: producto?.precio || 0
-              },
-              variante: variante ? { ...variante, caracteristicas: variante.caracteristicas || [] } : null,
-              cantidad: item.cantidad,
-              precio: parseFloat(item.precio_actual || item.precio || producto?.precio || 0)
-            };
-          });
-          setCarrito(itemsFormateados);
-        }
-      } catch (error) {
-        console.error('Error al sincronizar carrito tras login:', error);
-      }
-    }
+    // Use hook to migrate local cart and fetch backend cart
+    if (tiendaData) await syncOnLogin(consumidorData);
   };
 
   // Cerrar sesión
@@ -277,159 +167,27 @@ export default function TiendaPublica() {
     window.location.reload();
   };
 
-  // Funciones del carrito
-  const agregarAlCarrito = async (producto, variante = null) => {
-    const itemKey = variante ? `${producto.id}-${variante.id_variante}` : `${producto.id}`;
-    
-    // Actualizar estado local
-    setCarrito(prev => {
-      const existente = prev.find(item => item.key === itemKey);
-      
-      let nuevoCarrito;
-      if (existente) {
-        nuevoCarrito = prev.map(item =>
-          item.key === itemKey
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item
-        );
-      } else {
-        nuevoCarrito = [...prev, {
-          key: itemKey,
-          producto,
-          variante,
-          cantidad: 1,
-          precio: variante ? parseFloat(variante.precio) : (producto.price || 0)
-        }];
-      }
+  
+  // useCart proporciona las funciones y cálculos del carrito
 
-      // Guardar en localStorage si no hay consumidor
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevoCarrito));
-      }
-
-      return nuevoCarrito;
-    });
-
-    // Si hay consumidor, sincronizar con backend
-    if (consumidor && tiendaData) {
-      try {
-        await fetch('http://localhost:4000/api/carrito/agregar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_consumidor: consumidor.id_consumidor,
-            id_comercio: comercio.id_comercio,
-            id_producto: producto.id,
-            id_variante: variante?.id_variante || null,
-            cantidad: 1
-          })
-        });
-      } catch (error) {
-        console.error('Error al sincronizar con backend:', error);
-      }
-    }
+  const variantLabel = (variante) => {
+    if (!variante) return '';
+    if (variante.caracteristicas && variante.caracteristicas.length) return variante.caracteristicas.map(c => c.valor).join(' - ');
+    if (variante.nombre) return variante.nombre;
+    if (variante.nombre_variante) return variante.nombre_variante;
+    if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
+    return `Variante ${variante.id_variante || variante.id || ''}`;
   };
 
-  const quitarDelCarrito = async (itemKey) => {
-    const item = carrito.find(i => i.key === itemKey);
-    
-    // Actualizar estado local
-    setCarrito(prev => {
-      const nuevoCarrito = prev.filter(item => item.key !== itemKey);
-      
-      // Guardar en localStorage si no hay consumidor
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevoCarrito));
-      }
-      
-      return nuevoCarrito;
-    });
-
-    // Si hay consumidor y el item tiene id de carrito, sincronizar con backend usando clave compuesta
-    if (consumidor && item?.id_carrito && item?.id_producto) {
-      try {
-        const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
-        if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
-        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
-      } catch (error) {
-        console.error('Error al sincronizar con backend:', error);
-      }
+  const displayProductName = (item) => {
+    const vtext = item.variante ? variantLabel(item.variante) : '';
+    let name = item.producto?.name || '';
+    const suffix = vtext ? ` — ${vtext}` : '';
+    if (suffix && name.endsWith(suffix)) {
+      return name.slice(0, -suffix.length);
     }
+    return name;
   };
-
-  const actualizarCantidad = async (itemKey, nuevaCantidad) => {
-    if (nuevaCantidad <= 0) {
-      quitarDelCarrito(itemKey);
-      return;
-    }
-
-    const item = carrito.find(i => i.key === itemKey);
-    
-    // Actualizar estado local
-    setCarrito(prev => {
-      const nuevoCarrito = prev.map(item =>
-        item.key === itemKey
-          ? { ...item, cantidad: nuevaCantidad }
-          : item
-      );
-
-      // Guardar en localStorage si no hay consumidor
-      if (!consumidor && tiendaData) {
-        const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-        localStorage.setItem(carritoKey, JSON.stringify(nuevoCarrito));
-      }
-
-      return nuevoCarrito;
-    });
-
-    // Si hay consumidor y el item tiene id de carrito, sincronizar con backend usando clave compuesta
-    if (consumidor && item?.id_carrito && item?.id_producto) {
-      try {
-        await fetch('http://localhost:4000/api/carrito/actualizar', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad })
-        });
-      } catch (error) {
-        console.error('Error al sincronizar con backend:', error);
-      }
-    }
-  };
-
-  const vaciarCarrito = async () => {
-    // Actualizar estado local
-    setCarrito([]);
-
-    // Limpiar localStorage si no hay consumidor
-    if (!consumidor && tiendaData) {
-      const carritoKey = `carrito_${tiendaData.comercio.id_comercio}`;
-      localStorage.removeItem(carritoKey);
-    }
-
-    // Si hay consumidor, sincronizar con backend
-    if (consumidor && idCarrito) {
-      try {
-        await fetch(
-          `http://localhost:4000/api/carrito/vaciar/${idCarrito}`,
-          { method: 'DELETE' }
-        );
-      } catch (error) {
-        console.error('Error al sincronizar con backend:', error);
-      }
-    }
-  };
-
-  const calcularSubtotal = () => {
-    return carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-  };
-
-  const calcularTotal = () => {
-    return calcularSubtotal(); // Por ahora igual al subtotal, luego se pueden agregar impuestos/descuentos
-  };
-
-  const cantidadTotalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
 
   const renderTemplate = () => {
     const templateProps = {
@@ -511,10 +269,10 @@ export default function TiendaPublica() {
                         </div>
                         
                         <div className="carrito-item-info">
-                          <h4>{item.producto.name}</h4>
+                          <h4>{displayProductName(item)}</h4>
                           {item.variante && (
                             <p className="carrito-item-variante">
-                              {item.variante.caracteristicas.map(c => c.valor).join(' - ')}
+                              {variantLabel(item.variante)}
                             </p>
                           )}
                           <p className="carrito-item-precio">
