@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom"; // 👈 Agregamos useSearchParams
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // 👈 Para capturar el estado de la vinculación
+  const [searchParams] = useSearchParams();
   const user = JSON.parse(localStorage.getItem("user"));
+
+  // 🌐 TU URL DEFINITIVA DE RENDER
+  const API_BASE_URL = "https://pfc-aia.onrender.com";
 
   const [form, setForm] = useState({
     nombre: "",
@@ -15,24 +18,23 @@ export default function Perfil() {
     dni: "",
     nombre_banco: "",
     nombre_titular: "",
-    mp_vinculado: false, // 👈 Nuevo estado para saber si ya está vinculado
+    mp_vinculado: false,
   });
 
   const [formOriginal, setFormOriginal] = useState(null);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
-  const [mpStatus, setMpStatus] = useState(null); // 👈 Para mensajes de Mercado Pago
+  const [mpStatus, setMpStatus] = useState(null);
 
-  // 🔄 Cargar datos del usuario
   useEffect(() => {
     if (!user) return;
 
-    // Chequeamos si venimos de una redirección de Mercado Pago
     const status = searchParams.get("status");
     if (status === "success") setMpStatus("¡Cuenta de Mercado Pago vinculada con éxito!");
     if (status === "error") setMpStatus("Hubo un error al vincular Mercado Pago.");
 
-    fetch(`http://localhost:4000/api/usuarios/${user.id_usuario}`)
+    // 🔄 CORRECCIÓN: Usar API_BASE_URL y backticks (``)
+    fetch(`${API_BASE_URL}/api/usuarios/${user.id_usuario}`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -45,26 +47,28 @@ export default function Perfil() {
             dni: data.dni || "",
             nombre_banco: data.nombre_banco || "",
             nombre_titular: data.nombre_titular || "",
-            mp_vinculado: !!data.mp_user_id, // 👈 Si existe mp_user_id en la DB, está vinculado
+            mp_vinculado: !!data.mp_user_id,
           };
           setForm(datosUsuario);
           setFormOriginal(datosUsuario);
         }
-      });
-  }, [searchParams]);
+      })
+      .catch(() => setErrors({ general: "Error al conectar con el servidor en Render" }));
+  }, [searchParams, user?.id_usuario]); // Agregado user.id_usuario como dependencia segura
 
-  // 💳 Función para iniciar vinculación con Mercado Pago
   const handleVincularMP = () => {
-    const clientId = "7848395303150296"; // Tu ID real
-    const redirectUri = encodeURIComponent("http://localhost:4000/api/pagos/callback");
-    const state = user.id_usuario; // Pasamos el ID para que el backend sepa a quién guardar el token
+    const clientId = "7848395303150296"; //
+    
+    // 💳 CORRECCIÓN: Usar API_BASE_URL para que Mercado Pago sepa a dónde volver
+    // Esta URL debe coincidir EXACTAMENTE con la del panel de MP
+    const redirectUri = encodeURIComponent(`${API_BASE_URL}/api/pagos/callback`);
+    const state = user.id_usuario;
 
     const authUrl = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;
 
     window.location.href = authUrl;
   };
 
-  // Detectar cambios en el formulario
   const cambiosRealizados = 
     formOriginal !== null && 
     (JSON.stringify({ ...form, contrasena_nueva: "", contrasena_anterior: "", mp_vinculado: false }) !== 
@@ -77,8 +81,7 @@ export default function Perfil() {
     
     if (form.contrasena_nueva) {
       if (!form.contrasena_anterior) newErrors.contrasena_anterior = "Debés ingresar tu contraseña actual";
-      if (form.contrasena_nueva.length < 6) newErrors.contrasena_nueva = "La nueva contraseña debe tener al menos 6 caracteres";
-      if (form.contrasena_nueva === form.contrasena_anterior) newErrors.contrasena_nueva = "La nueva contraseña debe ser diferente";
+      if (form.contrasena_nueva.length < 6) newErrors.contrasena_nueva = "Mínimo 6 caracteres";
     }
     
     setErrors(newErrors);
@@ -92,7 +95,8 @@ export default function Perfil() {
     if (!window.confirm("¿Estás seguro que querés guardar los cambios?")) return;
 
     try {
-      const response = await fetch("http://localhost:4000/api/usuarios/perfil", {
+      // 🔄 CORRECCIÓN: Cambiado de localhost a API_BASE_URL
+      const response = await fetch(`${API_BASE_URL}/api/usuarios/perfil`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,10 +123,11 @@ export default function Perfil() {
       setSuccess(true);
       setErrors({});
     } catch (error) {
-      setErrors({ general: "No se pudo conectar al servidor" });
+      setErrors({ general: "No se pudo conectar al servidor de Render" });
     }
   };
 
+  // ... El resto del return (JSX) se mantiene igual
   return (
     <section className="panel-page">
       <div className="panel-container">
@@ -133,9 +138,8 @@ export default function Perfil() {
           </button>
         </div>
 
-        {/* 📢 Mensajes de Mercado Pago */}
         {mpStatus && (
-          <p className={searchParams.get("status") === "success" ? "success-text" : "error-text"}>
+          <p className={searchParams.get("status") === "success" ? "success-text" : "error-text"} style={{ fontWeight: "bold", textAlign: "center", padding: "10px" }}>
             {mpStatus}
           </p>
         )}
@@ -171,7 +175,6 @@ export default function Perfil() {
             <input type="text" value={form.dni} onChange={e => setForm({ ...form, dni: e.target.value })} />
           </div>
 
-          {/* 🔵 SECCIÓN MERCADO PAGO */}
           <div className="mp-container" style={{ margin: "20px 0", padding: "20px", border: "1px solid #009EE3", borderRadius: "8px", backgroundColor: "#f0f9ff" }}>
             <h3 style={{ color: "#009EE3", marginTop: 0 }}>Mercado Pago</h3>
             <p style={{ fontSize: "14px", color: "#666" }}>
