@@ -120,6 +120,9 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
               <h3>
                 <Link to={`/tienda/${store.comercio?.slug || ''}/producto/${p.id}`} className="colorful-product-link">{p.name}</Link>
               </h3>
+              {p.variantes && p.variantes.length === 1 && (
+                <p className="product-unico-badge">Producto único</p>
+              )}
               <div className="colorful-price-container">
                 {(() => {
                   if (p.variantes && p.variantes.length > 0) {
@@ -137,19 +140,27 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
 
                   return <span className="colorful-sin-precio">Ver precio en el detalle del producto</span>;
                 })()}
-                <button 
-                  className="colorful-slide-btn"
-                  onClick={() => {
-                    if (p.variantes && p.variantes.length > 0) {
-                      setVariantProduct(p);
-                      setVariantModalOpen(true);
-                    } else {
-                      agregarAlCarrito(p);
-                    }
-                  }}
-                >
-                  Agregar al carrito
-                </button>
+                {(() => {
+                  const hasStock = p.variantes && p.variantes.length > 0
+                    ? p.variantes.some(v => Number(v.stock) > 0)
+                    : Number(p.stock) > 0;
+                  if (!hasStock) return <button className="colorful-slide-btn disabled" disabled>No hay stock disponible</button>;
+                  return (
+                    <button 
+                      className="colorful-slide-btn"
+                      onClick={() => {
+                        if (p.variantes && p.variantes.length > 0) {
+                          setVariantProduct(p);
+                          setVariantModalOpen(true);
+                        } else {
+                          agregarAlCarrito(p);
+                        }
+                      }}
+                    >
+                      Agregar al carrito
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           ))}

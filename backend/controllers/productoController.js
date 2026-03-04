@@ -227,8 +227,10 @@ export const getCaracteristicasProducto = async (req, res) => {
     }
 
     // Obtener todas las variantes del producto con sus características
+    // GROUP BY already ensures one row per characteristic; DISTINCT on a row
+    // including a JSON aggregate forces Postgres to compare json values (no equality operator).
     const result = await pool.query(
-      `SELECT DISTINCT 
+      `SELECT 
               c.id_caracteristica,
               c.nombre_caracteristica,
               json_agg(json_build_object('id_valor', v.id_valor, 'nombre_valor', v.nombre_valor) ORDER BY v.nombre_valor) as valores

@@ -198,6 +198,9 @@ export default function ProductDetail() {
         </div>
         <div className="producto-info">
           <h2 className="producto-nombre">{producto.nombre}</h2>
+          {singleVariant && (
+            <p className="producto-unico">Producto único</p>
+          )}
           <p className="producto-codigo">Código: {producto.codigo}</p>
           <p className="producto-descripcion">{producto.descripcion}</p>
 
@@ -208,14 +211,22 @@ export default function ProductDetail() {
                   <div key={v.id_variante} className="variante-item">
                   <div>{v.nombre || `Variante ${v.id_variante}`}</div>
                   <div className="variante-precio">${parseFloat(v.precio).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
-                  <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, v)}>Agregar al carrito</button>
+                  {Number(v.stock) > 0 ? (
+                    <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, v)}>Agregar al carrito</button>
+                  ) : (
+                    <button className={`${addBtnClass} disabled`} disabled>No hay stock disponible</button>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <div className="producto-precio">
               <h3>${(singleVariant ? parseFloat(singleVariant.precio) : (producto.precio || 0)).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</h3>
-              <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, singleVariant)}>{singleVariant ? 'Agregar al carrito' : 'Agregar al carrito'}</button>
+              {singleVariant && Number(singleVariant.stock) <= 0 ? (
+                <button className={`${addBtnClass} disabled`} disabled>No hay stock disponible</button>
+              ) : (
+                <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, singleVariant)}>{singleVariant ? 'Agregar al carrito' : 'Agregar al carrito'}</button>
+              )}
             </div>
           )}
         </div>

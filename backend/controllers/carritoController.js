@@ -117,6 +117,9 @@ export const agregarProducto = async (req, res) => {
         precioUnitario = null;
       }
 
+      // Ensure precio_unitario is never null (DB has NOT NULL). If unknown, fallback to 0.00
+      if (precioUnitario === null || precioUnitario === undefined) precioUnitario = 0.00;
+
       await pool.query(
         'INSERT INTO m_n_prod_carrito (id_carrito, id_producto, id_variante, cantidad, precio_unitario) VALUES ($1, $2, $3, $4, $5)',
         [id_carrito, id_producto, id_variante || null, cantidad, precioUnitario]

@@ -312,7 +312,11 @@ export const getMetodosComercio = async (req, res) => {
       [id_comercio]
     );
 
-    res.json({ payments: pagosRes.rows.map(r => r.id_pago), shipping: enviosRes.rows.map(r => r.id_envio) });
+    // obtener shipping_price del comercio
+    const comercioResFull = await pool.query("SELECT shipping_price FROM comercio WHERE id_comercio = $1", [id_comercio]);
+    const shippingPrice = comercioResFull.rows.length ? comercioResFull.rows[0].shipping_price : null;
+
+    res.json({ payments: pagosRes.rows.map(r => r.id_pago), shipping: enviosRes.rows.map(r => r.id_envio), shippingPrice });
   } catch (error) {
     console.error("Error getMetodosComercio:", error);
     res.status(500).json({ error: "Error al leer métodos del comercio" });
@@ -323,7 +327,7 @@ export const getMetodosComercio = async (req, res) => {
 export const setMetodosComercio = async (req, res) => {
   const client = await pool.connect();
   try {
-    const { id_usuario, payments = [], shipping = [] } = req.body;
+    const { id_usuario, payments = [], shipping = [], shippingPrice = null } = req.body;
     console.log('setMetodosComercio called with:', { id_usuario, payments, shipping });
     if (!id_usuario) return res.status(400).json({ error: "id_usuario es requerido" });
 
@@ -355,6 +359,16 @@ export const setMetodosComercio = async (req, res) => {
     }
 
     console.log(`Inserted ${insertedShipping} shipping rows for comercio ${id_comercio}`);
+
+    // Si se envió un precio de envío, guardarlo en la tabla comercio
+    if (shippingPrice !== undefined && shippingPrice !== null && shippingPrice !== '') {
+      try {
+        await client.query("UPDATE comercio SET shipping_price = $1 WHERE id_comercio = $2", [shippingPrice, id_comercio]);
+        console.log(`Updated shipping_price=${shippingPrice} for comercio ${id_comercio}`);
+      } catch (upErr) {
+        console.warn('No se pudo actualizar shipping_price:', upErr.message);
+      }
+    }
 
     await client.query('COMMIT');
     res.json({ success: true });

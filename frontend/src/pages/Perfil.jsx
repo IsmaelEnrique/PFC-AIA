@@ -14,10 +14,7 @@ export default function Perfil() {
     mail: "",
     contrasena_nueva: "",
     contrasena_anterior: "",
-    cta_bancaria: "",
     dni: "",
-    nombre_banco: "",
-    nombre_titular: "",
     mp_vinculado: false,
   });
 
@@ -43,10 +40,7 @@ export default function Perfil() {
             mail: data.mail || "",
             contrasena_nueva: "",
             contrasena_anterior: "",
-            cta_bancaria: data.cta_bancaria || "",
             dni: data.dni || "",
-            nombre_banco: data.nombre_banco || "",
-            nombre_titular: data.nombre_titular || "",
             mp_vinculado: !!data.mp_user_id,
           };
           setForm(datosUsuario);
@@ -100,15 +94,12 @@ export default function Perfil() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id_usuario: user.id_usuario,
-          nombre: form.nombre,
-          contrasena_anterior: form.contrasena_anterior || null,
-          contrasena_nueva: form.contrasena_nueva || null,
-          cta_bancaria: form.cta_bancaria || null,
-          dni: form.dni || null,
-          nombre_banco: form.nombre_banco || null,
-          nombre_titular: form.nombre_titular || null,
-        }),
+            id_usuario: user.id_usuario,
+            nombre: form.nombre,
+            contrasena_anterior: form.contrasena_anterior || null,
+            contrasena_nueva: form.contrasena_nueva || null,
+            dni: form.dni || null,
+          }),
       });
 
       if (!response.ok) {
@@ -195,20 +186,7 @@ export default function Perfil() {
             )}
           </div>
 
-          <div className="form-group">
-            <label>Cuenta Bancaria / CBU / Alias</label>
-            <input type="text" value={form.cta_bancaria} onChange={e => setForm({ ...form, cta_bancaria: e.target.value })} />
-          </div>
-
-          <div className="form-group">
-            <label>Nombre del Banco</label>
-            <input type="text" value={form.nombre_banco} onChange={e => setForm({ ...form, nombre_banco: e.target.value })} />
-          </div>
-
-          <div className="form-group">
-            <label>Titular de la Cuenta</label>
-            <input type="text" value={form.nombre_titular} onChange={e => setForm({ ...form, nombre_titular: e.target.value })} />
-          </div>
+          {/* Campos bancarios movidos a Métodos de pago y envíos */}
 
           {cambiosRealizados && (
             <button type="button" className="btn btn-primary" onClick={handleGuardarCambios}>

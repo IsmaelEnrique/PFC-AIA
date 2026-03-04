@@ -250,7 +250,22 @@ a {
    ✅ CHECKOUT PAGE STYLES
    ================================ */
 .checkout-page { padding: 2rem 0; }
-.checkout-container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 1.25rem; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.04);} 
+.checkout-container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 1.25rem; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); position: relative;} 
+
+/* Top-right small back button on checkout with same typography as confirm button */
+.volver-tienda-top {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
 .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.25rem; align-items: start; }
 .checkout-summary h3, .checkout-options h3 { margin-top: 0; color: var(--accent-2); }
 .checkout-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
@@ -493,6 +508,25 @@ a {
   box-shadow: 0 0 0 2px rgba(252, 163, 17, 0.2);
 }
 
+/* Input específico para precio de envío */
+.shipping-input {
+  width: 220px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid #e6e6e9;
+  font-size: 1rem;
+  color: var(--accent-2);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(20, 33, 61, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+}
+.shipping-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 8px 30px rgba(252, 163, 17, 0.12);
+  transform: translateY(-1px);
+}
+
 textarea {
   resize: none;
 }
@@ -683,4 +717,22 @@ textarea {
 
 .admin-actions .btn-primary:hover {
   background: var(--accent);
+}
+
+/* Disabled product add button */
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Badge for single-variant products */
+.product-unico-badge,
+.producto-unico {
+  margin: 6px 0 0 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
 }

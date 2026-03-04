@@ -20,20 +20,20 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
     return `Variante ${v.id_variante || v.id || ''}`;
   };
 
+  const isSingle = variantes.length === 1;
+
   return (
     <div className="variantpicker-overlay" onClick={onClose}>
       <div className="variantpicker-modal" onClick={(e) => e.stopPropagation()}>
         <div className="variantpicker-header">
-          <h3>Elige una variante</h3>
+          <h3 style={{ margin: 0 }}>{product.name}</h3>
           <button className="variantpicker-close" onClick={onClose}>✕</button>
         </div>
-
         <div className="variantpicker-body">
-          <h4 style={{ marginTop: 0 }}>{product.name}</h4>
           {variantes.length === 0 && <p>No hay variantes disponibles.</p>}
 
           {variantes.map(v => {
-            const name = variantDisplayName(v);
+            const name = isSingle ? 'Producto único' : variantDisplayName(v);
             const caracText = v.caracteristicas && Array.isArray(v.caracteristicas) && v.caracteristicas.length
               ? v.caracteristicas.map(c => c.valor).join(' - ')
               : (v.valores && Array.isArray(v.valores) && v.valores.length ? v.valores.map(x => x.nombre_valor || x.valor || '').filter(Boolean).join(' - ') : null);
@@ -48,7 +48,11 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
                   )}
                 </div>
                 <div>
-                  <button className={addButtonClass || "variantpicker-add"} onClick={() => { onSelectVariant(product, v); onClose(); }}>Agregar</button>
+                  {Number(v.stock) > 0 ? (
+                    <button className={addButtonClass || "variantpicker-add"} onClick={() => { onSelectVariant(product, v); onClose(); }}>Agregar</button>
+                  ) : (
+                    <button className={`${addButtonClass || "variantpicker-add"} disabled`} disabled>No hay stock disponible</button>
+                  )}
                 </div>
               </div>
             );

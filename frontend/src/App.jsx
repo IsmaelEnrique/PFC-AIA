@@ -19,6 +19,7 @@ import GestionCategorias from "./pages/GestionCategorias";
 import TiendaPublica from "./pages/TiendaPublica";
 import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
+import PedidoConfirmado from "./pages/PedidoConfirmado";
 import Checkout from "./pages/Checkout";
 
 // Componente para proteger rutas
@@ -53,7 +54,7 @@ export default function App() {
           <Route path="/tienda/:slug/productos" element={<AllProducts />} />
           <Route path="/tienda/:slug/producto/:id" element={<ProductDetail />} />
           <Route path="/tienda/:slug/checkout" element={<Checkout />} />
-          <Route path="/tienda/:slug/pedido/:id" element={<ProductDetail />} />
+          <Route path="/tienda/:slug/pedido/:id" element={<PedidoConfirmado />} />
         </Routes>
       ) : (
         // Rutas CON navbar/footer

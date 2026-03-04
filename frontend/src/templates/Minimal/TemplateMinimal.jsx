@@ -114,6 +114,9 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
                   {p.name}
                 </Link>
               </h4>
+              {p.variantes && p.variantes.length === 1 && (
+                <p className="product-unico-badge">Producto único</p>
+              )}
               {(() => {
                 if (p.variantes && p.variantes.length > 0) {
                   const precios = p.variantes.map(v => parseFloat(v.precio)).filter(n => !isNaN(n));
@@ -132,19 +135,31 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
                 return <p className="minimal-sin-precio">Ver precio en el detalle del producto</p>;
               })()}
-              <button 
-                className="minimal-item-btn"
-                onClick={() => {
-                  if (p.variantes && p.variantes.length > 0) {
-                    setVariantProduct(p);
-                    setVariantModalOpen(true);
-                  } else {
-                    agregarAlCarrito(p);
-                  }
-                }}
-              >
-                Agregar al carrito 🛒
-              </button>
+              {(() => {
+                const hasStock = p.variantes && p.variantes.length > 0
+                  ? p.variantes.some(v => Number(v.stock) > 0)
+                  : Number(p.stock) > 0;
+                if (!hasStock) {
+                  return (
+                    <button className="minimal-item-btn disabled" disabled>No hay stock disponible</button>
+                  );
+                }
+                return (
+                  <button 
+                    className="minimal-item-btn"
+                    onClick={() => {
+                      if (p.variantes && p.variantes.length > 0) {
+                        setVariantProduct(p);
+                        setVariantModalOpen(true);
+                      } else {
+                        agregarAlCarrito(p);
+                      }
+                    }}
+                  >
+                    Agregar al carrito 🛒
+                  </button>
+                );
+              })()}
             </div>
           ))}
           </div>
