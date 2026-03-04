@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AuthModal from "../components/AuthModal";
+import CartModal from "../components/CartModal";
 import TemplateMinimal from "../templates/Minimal/TemplateMinimal";
 import TemplateColorful from "../templates/Colorful/TemplateColorful";
 import TemplateModern from "../templates/Modern/TemplateModern";
@@ -226,445 +227,73 @@ export default function ProductDetail() {
     case 1:
       return <>
         <TemplateMinimal {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateMinimal>
-        {carritoAbierto && (
-          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
-            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
-              <div className="carrito-header">
-                <h2>🛒 Mi Carrito</h2>
-                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
-              </div>
-
-              <div className="carrito-contenido">
-                {carrito.length === 0 ? (
-                  <div className="carrito-vacio">
-                    <p>Tu carrito está vacío</p>
-                    <span style={{ fontSize: '3rem' }}></span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="carrito-items">
-                      {carrito.map(item => (
-                        <div key={item.key} className="carrito-item">
-                          <div className="carrito-item-imagen">
-                            {item.producto.foto ? (
-                              <img src={item.producto.foto} alt={item.producto.name} />
-                            ) : (
-                              <div className="carrito-item-sin-imagen">📦</div>
-                            )}
-                          </div>
-
-                          <div className="carrito-item-info">
-                            <h4>{displayProductName(item)}</h4>
-                            {item.variante && (
-                              <p className="carrito-item-variante">
-                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
-                              </p>
-                            )}
-                            <p className="carrito-item-precio">
-                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                          </div>
-
-                          <div className="carrito-item-acciones">
-                            <div className="carrito-cantidad-control">
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="carrito-cantidad">{item.cantidad}</span>
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-                              <div className="carrito-acciones-footer">
-                                <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                                  Vaciar Carrito
-                                </button>
-                                <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
-                                  Finalizar Compra
-                                </button>
-                              </div>
-                            <button 
-                              onClick={() => quitarDelCarrito(item.key)}
-                              className="carrito-btn-eliminar"
-                              title="Eliminar del carrito"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                            <div className="carrito-acciones-footer">
-                              <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                                Vaciar Carrito
-                              </button>
-                              <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
-                                Finalizar Compra
-                              </button>
-                            </div>
-
-                          <div className="carrito-item-subtotal">
-                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="carrito-resumen">
-                      <div className="carrito-resumen-linea">
-                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
-                        <span className="carrito-precio-subtotal">
-                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                      <div className="carrito-resumen-linea carrito-total">
-                        <span>Total</span>
-                        <span className="carrito-precio-total">
-                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="carrito-acciones-footer">
-                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                        Vaciar Carrito
-                      </button>
-                      <button className="carrito-btn-finalizar">
-                        Finalizar Compra
-                      </button>
-                    </div>
-                      <div className="carrito-acciones-footer">
-                        <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                          Vaciar Carrito
-                        </button>
-                        <button className="carrito-btn-finalizar" onClick={() => navigate(`/tienda/${slug}/checkout`)}>
-                          Finalizar Compra
-                        </button>
-                      </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <CartModal
+          isOpen={carritoAbierto}
+          onClose={() => setCarritoAbierto(false)}
+          carrito={carrito}
+          cantidadTotalItems={cantidadTotalItems}
+          calcularSubtotal={calcularSubtotal}
+          calcularTotal={calcularTotal}
+          actualizarCantidad={actualizarCantidad}
+          quitarDelCarrito={quitarDelCarrito}
+          vaciarCarrito={vaciarCarrito}
+          tipoDiseño={tipoDiseño}
+          onCheckout={() => navigate(`/tienda/${slug}/checkout`)}
+        />
         <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={handleLogin} id_comercio={comercio?.id_comercio} />
       </>;
     case 2:
       return <>
         <TemplateColorful {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateColorful>
-        {carritoAbierto && (
-          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
-            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
-              <div className="carrito-header">
-                <h2>🛒 Mi Carrito</h2>
-                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
-              </div>
-
-              <div className="carrito-contenido">
-                {carrito.length === 0 ? (
-                  <div className="carrito-vacio">
-                    <p>Tu carrito está vacío</p>
-                    <span style={{ fontSize: '3rem' }}></span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="carrito-items">
-                      {carrito.map(item => (
-                        <div key={item.key} className="carrito-item">
-                          <div className="carrito-item-imagen">
-                            {item.producto.foto ? (
-                              <img src={item.producto.foto} alt={item.producto.name} />
-                            ) : (
-                              <div className="carrito-item-sin-imagen">📦</div>
-                            )}
-                          </div>
-
-                          <div className="carrito-item-info">
-                            <h4>{item.producto.name}</h4>
-                            {item.variante && (
-                              <p className="carrito-item-variante">
-                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
-                              </p>
-                            )}
-                            <p className="carrito-item-precio">
-                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                          </div>
-
-                          <div className="carrito-item-acciones">
-                            <div className="carrito-cantidad-control">
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="carrito-cantidad">{item.cantidad}</span>
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button 
-                              onClick={() => quitarDelCarrito(item.key)}
-                              className="carrito-btn-eliminar"
-                              title="Eliminar del carrito"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-
-                          <div className="carrito-item-subtotal">
-                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="carrito-resumen">
-                      <div className="carrito-resumen-linea">
-                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
-                        <span className="carrito-precio-subtotal">
-                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                      <div className="carrito-resumen-linea carrito-total">
-                        <span>Total</span>
-                        <span className="carrito-precio-total">
-                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="carrito-acciones-footer">
-                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                        Vaciar Carrito
-                      </button>
-                      <button className="carrito-btn-finalizar">
-                        Finalizar Compra
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <CartModal
+          isOpen={carritoAbierto}
+          onClose={() => setCarritoAbierto(false)}
+          carrito={carrito}
+          cantidadTotalItems={cantidadTotalItems}
+          calcularSubtotal={calcularSubtotal}
+          calcularTotal={calcularTotal}
+          actualizarCantidad={actualizarCantidad}
+          quitarDelCarrito={quitarDelCarrito}
+          vaciarCarrito={vaciarCarrito}
+          tipoDiseño={tipoDiseño}
+          onCheckout={() => navigate(`/tienda/${slug}/checkout`)}
+        />
         <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={handleLogin} id_comercio={comercio?.id_comercio} />
       </>;
     case 3:
       return <>
         <TemplateModern {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateModern>
-        {carritoAbierto && (
-          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
-            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
-              <div className="carrito-header">
-                <h2>Mi Carrito</h2>
-                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
-              </div>
-
-              <div className="carrito-contenido">
-                {carrito.length === 0 ? (
-                  <div className="carrito-vacio">
-                    <p>Tu carrito está vacío</p>
-                    <span style={{ fontSize: '3rem' }}></span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="carrito-items">
-                      {carrito.map(item => (
-                        <div key={item.key} className="carrito-item">
-                          <div className="carrito-item-imagen">
-                            {item.producto.foto ? (
-                              <img src={item.producto.foto} alt={item.producto.name} />
-                            ) : (
-                              <div className="carrito-item-sin-imagen">📦</div>
-                            )}
-                          </div>
-
-                          <div className="carrito-item-info">
-                            <h4>{item.producto.name}</h4>
-                            {item.variante && (
-                              <p className="carrito-item-variante">
-                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
-                              </p>
-                            )}
-                            <p className="carrito-item-precio">
-                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                          </div>
-
-                          <div className="carrito-item-acciones">
-                            <div className="carrito-cantidad-control">
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="carrito-cantidad">{item.cantidad}</span>
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button 
-                              onClick={() => quitarDelCarrito(item.key)}
-                              className="carrito-btn-eliminar"
-                              title="Eliminar del carrito"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-
-                          <div className="carrito-item-subtotal">
-                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="carrito-resumen">
-                      <div className="carrito-resumen-linea">
-                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
-                        <span className="carrito-precio-subtotal">
-                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                      <div className="carrito-resumen-linea carrito-total">
-                        <span>Total</span>
-                        <span className="carrito-precio-total">
-                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="carrito-acciones-footer">
-                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                        Vaciar Carrito
-                      </button>
-                      <button className="carrito-btn-finalizar">
-                        Finalizar Compra
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <CartModal
+          isOpen={carritoAbierto}
+          onClose={() => setCarritoAbierto(false)}
+          carrito={carrito}
+          cantidadTotalItems={cantidadTotalItems}
+          calcularSubtotal={calcularSubtotal}
+          calcularTotal={calcularTotal}
+          actualizarCantidad={actualizarCantidad}
+          quitarDelCarrito={quitarDelCarrito}
+          vaciarCarrito={vaciarCarrito}
+          tipoDiseño={tipoDiseño}
+          onCheckout={() => navigate(`/tienda/${slug}/checkout`)}
+        />
         <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={handleLogin} id_comercio={comercio?.id_comercio} />
       </>;
     default:
       return <>
         <TemplateMinimal {...templateProps} hideHero={true} hideProducts={true}>{productDetail}</TemplateMinimal>
-        {carritoAbierto && (
-          <div className="carrito-modal-overlay" onClick={() => setCarritoAbierto(false)}>
-            <div className={`carrito-modal ${getCarritoTema()}`} onClick={(e) => e.stopPropagation()}>
-              <div className="carrito-header">
-                <h2>🛒 Mi Carrito</h2>
-                <button className="carrito-close" onClick={() => setCarritoAbierto(false)}>✕</button>
-              </div>
-
-              <div className="carrito-contenido">
-                {carrito.length === 0 ? (
-                  <div className="carrito-vacio">
-                    <p>Tu carrito está vacío</p>
-                    <span style={{ fontSize: '3rem' }}></span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="carrito-items">
-                      {carrito.map(item => (
-                        <div key={item.key} className="carrito-item">
-                          <div className="carrito-item-imagen">
-                            {item.producto.foto ? (
-                              <img src={item.producto.foto} alt={item.producto.name} />
-                            ) : (
-                              <div className="carrito-item-sin-imagen">📦</div>
-                            )}
-                          </div>
-
-                          <div className="carrito-item-info">
-                            <h4>{item.producto.name}</h4>
-                            {item.variante && (
-                              <p className="carrito-item-variante">
-                                {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
-                              </p>
-                            )}
-                            <p className="carrito-item-precio">
-                              ${item.precio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            </p>
-                          </div>
-
-                          <div className="carrito-item-acciones">
-                            <div className="carrito-cantidad-control">
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad - 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                -
-                              </button>
-                              <span className="carrito-cantidad">{item.cantidad}</span>
-                              <button 
-                                onClick={() => actualizarCantidad(item.key, item.cantidad + 1)}
-                                className="carrito-btn-cantidad"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button 
-                              onClick={() => quitarDelCarrito(item.key)}
-                              className="carrito-btn-eliminar"
-                              title="Eliminar del carrito"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-
-                          <div className="carrito-item-subtotal">
-                            ${(item.precio * item.cantidad).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="carrito-resumen">
-                      <div className="carrito-resumen-linea">
-                        <span>Subtotal ({cantidadTotalItems} {cantidadTotalItems === 1 ? 'producto' : 'productos'})</span>
-                        <span className="carrito-precio-subtotal">
-                          ${calcularSubtotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                      <div className="carrito-resumen-linea carrito-total">
-                        <span>Total</span>
-                        <span className="carrito-precio-total">
-                          ${calcularTotal().toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="carrito-acciones-footer">
-                      <button className="carrito-btn-vaciar" onClick={vaciarCarrito}>
-                        Vaciar Carrito
-                      </button>
-                      <button className="carrito-btn-finalizar">
-                        Finalizar Compra
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        <CartModal
+          isOpen={carritoAbierto}
+          onClose={() => setCarritoAbierto(false)}
+          carrito={carrito}
+          cantidadTotalItems={cantidadTotalItems}
+          calcularSubtotal={calcularSubtotal}
+          calcularTotal={calcularTotal}
+          actualizarCantidad={actualizarCantidad}
+          quitarDelCarrito={quitarDelCarrito}
+          vaciarCarrito={vaciarCarrito}
+          tipoDiseño={tipoDiseño}
+          onCheckout={() => navigate(`/tienda/${slug}/checkout`)}
+        />
         <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} onLogin={handleLogin} id_comercio={comercio?.id_comercio} />
       </>;
   }
