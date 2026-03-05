@@ -1,118 +1,140 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("verificado") === "true") {
+      Swal.fire({
+        title: "¡Cuenta activada!",
+        text: "Ya podés iniciar sesión con tus datos.",
+        icon: "success",
+        confirmButtonColor: "#009EE3"
+      });
+      navigate("/login", { replace: true });
+    }
+  }, [location, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
-    if (!email) {
-      newErrors.email = "El correo electrónico es obligatorio.";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "El formato del correo no es válido.";
-    }
-
-    if (!password) {
-      newErrors.password = "La contraseña es obligatoria.";
-    } else if (password.length < 6) {
-      newErrors.password = "Debe tener al menos 6 caracteres.";
-    }
-
+    if (!email) newErrors.email = "El correo electrónico es obligatorio.";
+    if (!password) newErrors.password = "La contraseña es obligatoria.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleResendEmail = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:4000/api/auth/reenviar-verificacion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mail: email, tipo: "usuario" }), // El vendedor es tipo 'usuario'
+      });
+
+      if (response.ok) {
+        Swal.fire("¡Enviado!", "Revisá tu casilla de correo para el nuevo enlace.", "success");
+        setUnverified(false);
+      } else {
+        Swal.fire("Error", "No se pudo reenviar. Intentá más tarde.", "error");
+      }
+    } catch (error) {
+      Swal.fire("Error", "Error de conexión.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(false);
-
+    setUnverified(false);
     if (!validateForm()) return;
+    setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:4000/api/usuarios/login", {
+      // 🚀 Apuntamos a la nueva ruta de login unificada
+      const response = await fetch("http://localhost:4000/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mail: email,
-          contrasena: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mail: email, contrasena: password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErrors({ general: data.error || "Credenciales inválidas" });
+        // Detectar si el error es por falta de verificación (status 403)
+        if (response.status === 403 || data.error?.includes("verificar")) {
+          setUnverified(true);
+          setErrors({ general: "Tu cuenta no ha sido activada aún." });
+        } else {
+          setErrors({ general: data.error || "Credenciales incorrectas" });
+        }
         return;
       }
 
-      // ✅ LOGIN OK - Corregido el error de paréntesis
-      // Usamos una lógica que detecte si el usuario viene solo o en una lista
+      // Login exitoso: Guardamos los datos del vendedor
       const usuarioFinal = Array.isArray(data) ? data[0] : data;
       localStorage.setItem("user", JSON.stringify(usuarioFinal));
-
-      console.log("Login correcto ✅", usuarioFinal);
-      setSuccess(true);
-      setErrors({});
       
-      // Pequeña espera para que se guarde bien antes de navegar
-      setTimeout(() => {
-        navigate("/admin");
-      }, 500);
+      Swal.fire({
+        title: "¡Bienvenido!",
+        text: "Entrando al panel de administración...",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      setTimeout(() => navigate("/admin"), 1500);
 
     } catch (error) {
       setErrors({ general: "No se pudo conectar con el servidor" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <section className="auth-page">
       <div className="auth-container">
-        <h1 className="auth-title">Iniciar sesión en <span className="accent">Emprendify</span></h1>
-        <p className="auth-subtitle">Accedé a tu cuenta para gestionar tu emprendimiento</p>
-
+        <h1 className="auth-title">Panel <span className="accent">Vendedor</span></h1>
+        
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="tuemail@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <label>Correo electrónico</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             {errors.email && <p className="error-text">{errors.email}</p>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="********"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <label>Contraseña</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             {errors.password && <p className="error-text">{errors.password}</p>}
           </div>
 
-          <button type="submit" className="btn btn-primary">
-            Iniciar sesión
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? "Iniciando..." : "Ingresar al Panel"}
           </button>
 
           {errors.general && <p className="error-text">{errors.general}</p>}
-          {success && <p className="success-text">Inicio de sesión exitoso 🎉</p>}
+          
+          {unverified && (
+            <button type="button" className="btn-resend-link" onClick={handleResendEmail} 
+              style={{ marginTop: '10px', color: '#009EE3', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}>
+              ¿No recibiste el mail? Reenviar activación
+            </button>
+          )}
         </form>
 
-        <p className="auth-footer">
-          ¿No tenés una cuenta?{" "}
-          <Link to="/register" className="accent-text">Registrate</Link>
-        </p>
+        <p className="auth-footer">¿No tenés cuenta? <Link to="/register" className="accent-text">Registrate aquí</Link></p>
       </div>
     </section>
   );

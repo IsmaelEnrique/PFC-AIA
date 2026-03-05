@@ -27,3 +27,22 @@ export const generarFacturaHTML = (pedido, detalles, nombreCliente) => {
     </div>
   `;
 };
+export const plantillaVerificacion = (nombre, url) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+      <h2 style="color: #009EE3; text-align: center;">¡Bienvenido a Emprendify! 🚀</h2>
+      <p>Hola <b>${nombre}</b>, gracias por registrarte.</p>
+      <p>Para activar tu cuenta y poder empezar a operar, por favor hacé clic en el siguiente botón:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${url}" style="background-color: #009EE3; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+          Verificar mi cuenta
+        </a>
+      </div>
+      <p style="font-size: 12px; color: #666; text-align: center;">
+        Este enlace expirará en <b>24 horas</b>.<br>
+        Si el botón no funciona, podés copiar y pegar este link: <br>
+        ${url}
+      </p>
+    </div>
+  `;
+};

@@ -1,11 +1,14 @@
+// 1. CARGA DE VARIABLES (Debe ser lo primero, antes que cualquier import local)
+import dotenv from "dotenv";
+dotenv.config(); 
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// 1. TODOS LOS IMPORTS AL PRINCIPIO
-import pool from './db/db.js'; 
+// 2. IMPORTS DE RUTAS
+import authRoutes from "./routes/auth.routes.js"; 
 import usuarioRoutes from "./routes/usuario.routes.js";
 import comercioRoutes from "./routes/comercio.routes.js";
 import categoriaRoutes from "./routes/categoria.routes.js";
@@ -17,22 +20,42 @@ import consumidorRoutes from "./routes/consumidor.routes.js";
 import mercadoPagoRoutes from "./routes/mercadoPago.routes.js";
 import pedidoRoutes from "./routes/pedido.routes.js";
 
+// 3. IMPORTS DE UTILIDADES / CONFIG
+import pool from './db/db.js'; 
+import { sendEmail } from './controllers/mailer.controller.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
-
 const app = express();
 
-// 2. CONFIGURACIÓN DE MIDDLEWARES
+// 4. CONFIGURACIÓN DE MIDDLEWARES
 app.use(cors({
-  origin: ["http://localhost:5173", "https://pfc-aia.onrender.com"] // Actualicé a tu URL de Render
+  origin: ["http://localhost:5173", "https://pfc-aia.onrender.com"],
+  credentials: true // Recomendado si vas a usar cookies o sesiones luego
 }));
 app.use(express.json());
 
+// Servir archivos estáticos
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 3. RUTAS
+// 5. RUTA DE TEST (Mantenela para debug)
+app.get("/test-mail", async (req, res) => {
+  const resultado = await sendEmail(
+    process.env.EMAIL_USER, // Se manda a vos mismo
+    "Prueba de Emprendify 🚀",
+    "<h1>¡Si lees esto, tu servidor ya manda mails!</h1><p>El motor de Gmail quedó 10 puntos.</p>"
+  );
+  
+  if (resultado.success) {
+    res.send("✅ Mail de prueba enviado. Revisá tu casilla.");
+  } else {
+    res.status(500).send("❌ Error al enviar: " + resultado.error);
+  }
+});
+
+// 6. DEFINICIÓN DE RUTAS API
+app.use("/api/auth", authRoutes); // 👈 Esta maneja /registrar, /verificar, etc.
 app.use("/api/comercio", comercioRoutes);
 app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/categorias", categoriaRoutes);
@@ -44,13 +67,10 @@ app.use("/api/consumidor", consumidorRoutes);
 app.use("/api/pagos", mercadoPagoRoutes);
 app.use("/api/pedidos", pedidoRoutes);
 
-const PORT = process.env.PORT || 4000;
-
-// 4. LÓGICA DE MIGRACIONES (La que agregó tu compañero)
+// 7. LÓGICA DE MIGRACIONES (Sin cambios, es excelente para la consistencia)
 const runMigrations = async () => {
   try {
     await pool.query('BEGIN');
-
     const colRes = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='m_n_prod_carrito' AND column_name='id_prod_carrito'");
     if (colRes.rows.length === 0) {
       await pool.query("CREATE SEQUENCE IF NOT EXISTS seq_m_n_prod_carrito_id_prod_carrito");
@@ -83,7 +103,9 @@ const runMigrations = async () => {
   }
 };
 
-// 5. INICIO UNIFICADO DEL SERVIDOR
+const PORT = process.env.PORT || 4000;
+
+// 8. INICIO DEL SERVIDOR
 runMigrations()
   .then(() => {
     app.listen(PORT, '0.0.0.0', () => {
