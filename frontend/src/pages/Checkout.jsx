@@ -13,7 +13,7 @@ export default function Checkout() {
   const [selected, setSelected] = useState({ payment: null, shipping: null });
   const [sellerUser, setSellerUser] = useState(null);
   const [address, setAddress] = useState({ calle: '', numero: '', piso: '', localidad: '', provincia: '', codigo_postal: '' });
-  const { carrito, idCarrito, calcularTotal, cantidadTotalItems, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, syncOnLogin } = useCart({ tiendaData, consumidor });
+  const { carrito, idCarrito, calcularTotal } = useCart({ tiendaData, consumidor });
 
   const tipoDiseño = tiendaData?.comercio ? Number(tiendaData.comercio.tipo_diseño) : 1;
 
@@ -51,7 +51,14 @@ export default function Checkout() {
   }, [tiendaData]);
 
   const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || `Pago ${id}`);
-  const shippingLabel = (id) => ({ 1: 'Retiro en el local', 2: 'Envío por correo' }[id] || `Envio ${id}`);
+
+  const variantLabel = (variante) => {
+    if (!variante) return '';
+    if (variante.caracteristicas && Array.isArray(variante.caracteristicas) && variante.caracteristicas.length) {
+      return variante.caracteristicas.map(c => c.valor).join(' - ');
+    }
+    return variante.nombre || variante.displayName || '';
+  };
 
   const handleConfirm = async () => {
     if (!consumidor) return alert('Debés iniciar sesión como comprador para finalizar la compra');
@@ -72,7 +79,14 @@ export default function Checkout() {
       total: calcularTotal(),
       id_pago: selected.payment,
       id_envio: selected.shipping,
-      direccion: Number(selected.shipping) === 2 ? address : null,
+      ...(Number(selected.shipping) === 2 ? {
+        calle: address.calle,
+        numero: address.numero,
+        piso: address.piso,
+        localidad: address.localidad,
+        provincia: address.provincia,
+        codigo_postal: address.codigo_postal,
+      } : {}),
     };
 
     try {
@@ -85,8 +99,6 @@ export default function Checkout() {
   };
 
   if (!tiendaData) return <TiendaLoading />;
-
-  const { comercio } = tiendaData;
 
   const checkoutContent = (
     <section className={`checkout-page-inner`}>
@@ -183,7 +195,7 @@ export default function Checkout() {
                       <div className="checkout-item-name">{i.producto.name}</div>
                       {i.variante && (
                         <div className="checkout-item-variant muted" style={{ fontSize: '0.95rem' }}>
-                          {i.variante.caracteristicas ? i.variante.caracteristicas.map(c => c.valor).join(' - ') : i.variante.nombre}
+                          {variantLabel(i.variante)}
                         </div>
                       )}
                       <div className="checkout-item-meta">x {i.cantidad} — ${(i.precio * i.cantidad).toFixed(2)}</div>

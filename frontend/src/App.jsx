@@ -8,6 +8,7 @@ import Register from "./pages/RegisterPage";
 import LogoUpload from "./pages/LogoUpload";
 import Perfil from "./pages/Perfil";
 import MetodosPagoEnvio from "./pages/MetodosPagoEnvio";
+import SeguimientoPedidos from "./pages/SeguimientoPedidos";
 import "./styles/index.css";
 import DesignSelector from "./pages/DesignSelector";
 import StorePreview from "./pages/StorePreview";
@@ -75,6 +76,7 @@ export default function App() {
               <Route path="/agregar-producto" element={<ProtectedRoute element={<AgregarProducto />} />} />
               <Route path="/gestion-categorias" element={<ProtectedRoute element={<GestionCategorias />} />} />
               <Route path="/metodos-pago-envio" element={<ProtectedRoute element={<MetodosPagoEnvio />} />} />
+              <Route path="/seguimiento-pedidos" element={<ProtectedRoute element={<SeguimientoPedidos />} />} />
               <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             </Routes>
           </main>

@@ -1,9 +1,9 @@
 import express from "express";
 import { 
   registrarUsuario, 
-  verificarCuenta,
-  loginUsuario, 
-  reenviarVerificacion 
+  verificarCuenta, 
+  reenviarVerificacion,
+  loginUsuario
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();

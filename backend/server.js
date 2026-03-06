@@ -96,6 +96,13 @@ const runMigrations = async () => {
       await pool.query('ALTER TABLE m_n_prod_carrito ADD CONSTRAINT m_n_prod_carrito_unique UNIQUE (id_carrito, id_producto, id_variante)');
     }
 
+    // Store the selected variant in order details so admin can audit what was sold.
+    await pool.query('ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS id_variante INT');
+    const fkVarRes = await pool.query("SELECT conname FROM pg_constraint WHERE conrelid = 'detalle_pedido'::regclass AND conname = 'detalle_pedido_fk_variante'");
+    if (fkVarRes.rows.length === 0) {
+      await pool.query('ALTER TABLE detalle_pedido ADD CONSTRAINT detalle_pedido_fk_variante FOREIGN KEY (id_variante) REFERENCES variante(id_variante)');
+    }
+
     await pool.query('COMMIT');
     console.log('✅ DB migrations checked/applied');
   } catch (e) {

@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import { supabase } from '../config/supabase.js';
 import { sendEmail } from './mailer.controller.js';
 import { plantillaVerificacion } from '../utils/emailTemplates.js';
+import pool from '../db/db.js';
+import bcrypt from 'bcrypt';
 
 // 1. REGISTRO
 export const registrarUsuario = async (req, res) => {
@@ -92,15 +94,64 @@ export const reenviarVerificacion = async (req, res) => {
 
 export const loginUsuario = async (req, res) => {
   const { mail, contrasena } = req.body;
+  const mailNormalizado = (mail || '').trim().toLowerCase();
+  const passwordIngresada = (contrasena || '').trim();
+
+  if (!mailNormalizado || !passwordIngresada) {
+    return res.status(400).json({ error: 'Faltan credenciales' });
+  }
 
   try {
     // 1. Intentar login en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: mail,
-      password: contrasena,
+      email: mailNormalizado,
+      password: passwordIngresada,
     });
 
-    if (authError) return res.status(401).json({ error: "Credenciales inválidas en Auth" });
+    if (authError) {
+      // Compatibilidad con cuentas legacy: usuarios creados en PostgreSQL sin id_auth.
+      const legacyResult = await pool.query(
+        'SELECT * FROM usuario WHERE LOWER(mail) = LOWER($1) LIMIT 1',
+        [mailNormalizado]
+      );
+
+      if (legacyResult.rows.length === 0) {
+        return res.status(401).json({ error: 'Credenciales inválidas en Auth' });
+      }
+
+      const legacyUser = legacyResult.rows[0];
+
+      const legacyPassword = legacyUser.contrasena || legacyUser.password_hash;
+      if (!legacyPassword) {
+        return res.status(401).json({ error: 'Credenciales inválidas en Auth' });
+      }
+
+      // Acepta hashes bcrypt y, para datos importados antiguos, texto plano.
+      const isBcryptHash = typeof legacyPassword === 'string' && legacyPassword.startsWith('$2');
+      const passwordOk = isBcryptHash
+        ? await bcrypt.compare(passwordIngresada, legacyPassword)
+        : legacyPassword === passwordIngresada;
+
+      if (!passwordOk) {
+        return res.status(401).json({ error: 'Credenciales inválidas en Auth' });
+      }
+
+      if (legacyUser.verificado === false) {
+        return res.status(403).json({
+          error: 'Debés verificar tu cuenta. Revisá tu email.',
+          unverified: true
+        });
+      }
+
+      const {
+        contrasena: _legacyContrasena,
+        password_hash: _legacyPasswordHash,
+        token_verificacion: _legacyToken,
+        ...legacyUserSafe
+      } = legacyUser;
+
+      return res.json(legacyUserSafe);
+    }
 
     // 2. Buscar al usuario en TU tabla de la DB para ver si está verificado
     const { data: usuario, error: dbError } = await supabase

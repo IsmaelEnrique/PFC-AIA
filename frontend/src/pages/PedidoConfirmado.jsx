@@ -19,7 +19,12 @@ export default function PedidoConfirmado() {
   const [preferenceId, setPreferenceId] = useState(null); // 👈 Estado para el ID de pago
   const [loadingPay, setLoadingPay] = useState(false);
 
+<<<<<<< HEAD
   // 1. Cargar datos de la tienda (lo que ya tenías)
+=======
+  const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || 'Metodo');
+
+>>>>>>> pri-seguimiento
   useEffect(() => {
     if (!slug) return;
     const fetchTienda = async () => {
@@ -29,7 +34,7 @@ export default function PedidoConfirmado() {
         if (!res.ok) return setTiendaData(null);
         const d = await res.json();
         setTiendaData(d);
-      } catch (e) {
+      } catch {
         setTiendaData(null);
       } finally {
         setLoading(false);
@@ -91,7 +96,11 @@ export default function PedidoConfirmado() {
 
   if (loading || !tiendaData) return <TiendaLoading />;
 
+  const tipoDiseño = tiendaData?.comercio ? Number(tiendaData.comercio.tipo_diseño) : 1;
+  const themeClass = tipoDiseño === 1 ? 'minimal' : (tipoDiseño === 2 ? 'colorful' : 'modern');
+
   return (
+<<<<<<< HEAD
     <section style={{ padding: 24, maxWidth: '600px', margin: '0 auto' }}>
       <h1>¡Pedido # {pedido?.numero_pedido} recibido! 🛍️</h1>
       <p>Gracias por tu compra en <strong>{tiendaData.nombre_comercio}</strong>.</p>
@@ -133,9 +142,49 @@ export default function PedidoConfirmado() {
                 </ul>
               </div>
             )}
+=======
+    <section className={`pedido-confirmado-page ${themeClass}`}>
+      <div className="pedido-confirmado-container">
+        <h1>Pedido confirmado</h1>
+        <p className="pedido-confirmado-intro">Gracias por tu compra. Tu pedido fue creado correctamente en espera hasta que recibamos tu pago. Recibiras por mail las actualizaciones de tu pedido.</p>
+        {pedido?.numero_pedido && <p className="pedido-confirmado-number"><strong>Numero de pedido:</strong> {pedido.numero_pedido}</p>}
+
+        {detalles.length > 0 && (
+          <div className="pedido-confirmado-block">
+            <h3>Detalle de la compra</h3>
+            <ul className="pedido-confirmado-list">
+              {detalles.map(d => (
+                <li key={d.id_detallepedido} className="pedido-confirmado-item">
+                  <span>{d.producto_nombre || `Producto ${d.id_producto}`}</span>
+                  <span>x{d.cantidad}</span>
+                  <span>${Number(d.precio).toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+>>>>>>> pri-seguimiento
           </div>
         )}
+
+        <div className="pedido-confirmado-block">
+          <h3>Metodo de pago</h3>
+          {pedido && (
+            <div>
+              <p><strong>{paymentLabel(pedido.id_pago)}</strong></p>
+              {Number(pedido.id_pago) === 1 && <p>Coordinaremos el pago al momento de la entrega. Espera nuestro mensaje.</p>}
+              {Number(pedido.id_pago) === 3 && (
+                <p>Esperamos tu comprobante al numero {comercio.contacto || '---'} o por mail {(usuario.mail || comercio.mail) || '---'}.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <p className="pedido-confirmado-action">
+          <Link to={`/tienda/${slug}`} className="pedido-confirmado-back">
+            Volver a la tienda
+          </Link>
+        </p>
       </div>
+<<<<<<< HEAD
 
       {/* Detalle de compra (igual que tenías) */}
       <div style={{ marginTop: 12 }}>
@@ -153,6 +202,8 @@ export default function PedidoConfirmado() {
       <p style={{ marginTop: 24, textAlign: 'center' }}>
         <Link to={`/tienda/${slug}`} className="btn-back">Volver a la tienda</Link>
       </p>
+=======
+>>>>>>> pri-seguimiento
     </section>
   );
 }
