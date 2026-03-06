@@ -36,6 +36,10 @@ export default function AdminPanel() {
           <Link to="/metodos-pago-envio" className="btn btn-secondary">
             Métodos de pago y envíos
           </Link>
+
+          <Link to="/seguimiento-pedidos" className="btn btn-secondary">
+            Seguimiento de pedidos
+          </Link>
         </div>
       </div>
     </section>

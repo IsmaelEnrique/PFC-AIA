@@ -30,3 +30,23 @@
 .variantpicker-carac { color:#666; font-size:0.9rem; margin-top:4px; }
 .variantpicker-add { background:#0b74de; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; }
 .variantpicker-close { background:transparent; border:none; font-size:1rem; cursor:pointer; }
+
+/* Colorful theme keeps many texts white globally; ensure VariantPicker stays readable on white card */
+.colorful .variantpicker-modal,
+.colorful .variantpicker-header,
+.colorful .variantpicker-body,
+.colorful .variantpicker-name,
+.colorful .variantpicker-price,
+.colorful .variantpicker-carac,
+.colorful .variantpicker-close,
+.colorful .variantpicker-body p {
+  color: #4b2e83;
+}
+
+.colorful .variantpicker-header {
+  border-bottom: 1px solid #e8dbfb;
+}
+
+.colorful .variantpicker-item {
+  border-bottom: 1px solid #efe6fb;
+}

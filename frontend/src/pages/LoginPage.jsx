@@ -61,14 +61,27 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 🚀 Apuntamos a la nueva ruta de login unificada
-      const response = await fetch("http://localhost:4000/api/auth/login", {
+      // 1) Intentamos el login por Auth (flujo nuevo)
+      const authResponse = await fetch("http://localhost:4000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mail: email, contrasena: password }),
       });
 
-      const data = await response.json();
+      let response = authResponse;
+      let data = await authResponse.json();
+
+      // 2) Fallback legacy: cuentas históricas en la tabla usuario
+      if (!authResponse.ok && authResponse.status === 401) {
+        const legacyResponse = await fetch("http://localhost:4000/api/usuarios/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mail: email, contrasena: password }),
+        });
+
+        response = legacyResponse;
+        data = await legacyResponse.json();
+      }
 
       if (!response.ok) {
         // Detectar si el error es por falta de verificación (status 403)

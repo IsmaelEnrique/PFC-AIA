@@ -88,6 +88,18 @@ export default function useCart({ tiendaData, consumidor }) {
   const agregarAlCarrito = async (producto, variante = null) => {
     const p = normalizeProduct(producto);
     const v = normalizeVariant(variante);
+
+    const variantesProducto = Array.isArray(producto?.variantes) ? producto.variantes : [];
+    if (!v && variantesProducto.length > 0) {
+      // Guard clause: products with variants must always be added with a selected variant.
+      console.warn('Se intentó agregar un producto con variantes sin seleccionar variante', {
+        id_producto: p.id,
+        variantes: variantesProducto.length,
+      });
+      alert('Este producto tiene variantes. Seleccioná una variante antes de agregar al carrito.');
+      return;
+    }
+
     const variantKeyPart = v ? (v.id_variante != null ? String(v.id_variante) : encodeURIComponent(v.displayName || JSON.stringify(v.__raw || ''))) : '';
     const itemKey = variantKeyPart ? `${p.id}-${variantKeyPart}` : `${p.id}`;
 
