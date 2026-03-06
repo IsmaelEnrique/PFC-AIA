@@ -1,7 +1,8 @@
 import express from "express";
 import { 
   registrarUsuario, 
-  verificarCuenta, 
+  verificarCuenta,
+  loginUsuario, 
   reenviarVerificacion 
 } from "../controllers/auth.controller.js";
 

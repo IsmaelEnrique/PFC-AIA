@@ -1,8 +1,9 @@
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { supabase } from '../config/supabase.js';
 import { sendEmail } from '../utils/mailer.js';
 import { generarFacturaHTML } from '../utils/emailTemplates.js';
 
-// 1. Esta es la función de apoyo que ya tenías (mantenela igual o dentro del mismo archivo)
+// 1. Notificaciones (Mantenemos tu lógica pero corregimos la consulta)
 export const procesarNotificaciones = async (idPedido) => {
   try {
     const { data: pedido, error } = await supabase
@@ -16,7 +17,7 @@ export const procesarNotificaciones = async (idPedido) => {
       .eq('id_pedido', idPedido)
       .single();
 
-    if (error || !pedido) throw new Error("Pedido no encontrado en la base de datos");
+    if (error || !pedido) throw new Error("Pedido no encontrado");
 
     // Mail al Cliente
     await sendEmail(
@@ -31,40 +32,76 @@ export const procesarNotificaciones = async (idPedido) => {
       `¡Nueva Venta! Pedido #${pedido.numero_pedido}`,
       `<h3>Venta realizada con éxito</h3><p>Total a cobrar: $${pedido.total}</p>`
     );
-
-    console.log("✅ Notificaciones enviadas correctamente");
   } catch (err) {
-    console.error("❌ Error procesando notificaciones:", err.message);
+    console.error("❌ Error notificaciones:", err.message);
   }
 };
 
-// 2. ESTE ES EL CONTROLADOR que maneja la ruta (el que recibe el req y res)
+// 2. 🚀 NUEVO: Función para generar el link de pago
+export const crearPreferencia = async (req, res) => {
+  const { id_pedido, items, id_comercio } = req.body;
+
+  try {
+    // Buscamos el token del dueño de ESTA tienda
+    const { data: vendedor, error: errV } = await supabase
+      .from('usuario')
+      .select('mp_access_token')
+      .eq('id_comercio', id_comercio) // Relación directa o vía tabla comercio
+      .single();
+
+    if (!vendedor?.mp_access_token) {
+      return res.status(400).json({ error: "El comercio no tiene MP vinculado" });
+    }
+
+    const client = new MercadoPagoConfig({ accessToken: vendedor.mp_access_token });
+    const preference = new Preference(client);
+
+    const result = await preference.create({
+      body: {
+        items: items.map(i => ({
+          title: i.nombre,
+          unit_price: Number(i.precio),
+          quantity: Number(i.cantidad),
+          currency_id: 'ARS'
+        })),
+        // 🔑 CLAVE: El external_reference para que recibirConfirmacionPago funcione
+        external_reference: id_pedido, 
+        back_urls: {
+          success: `https://pfc-aia.onrender.com/api/pagos/callback`, // Tu ruta de confirmación
+          failure: `https://tu-tienda.com/pago-fallido`,
+        },
+        auto_return: "approved",
+      }
+    });
+
+    res.json({ id: result.id, init_point: result.init_point });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 3. Tu controlador de Callback (Con una pequeña corrección)
 export const recibirConfirmacionPago = async (req, res) => {
   try {
-    // Mercado Pago envía los datos por la URL (Query Params)
     const { status, external_reference } = req.query;
 
     if (status === 'approved') {
-      const idPedido = external_reference; // Aquí viaja el UUID de tu tabla 'pedido'
+      const idPedido = external_reference; 
 
-      // Actualizamos el estado del pedido en Supabase a 'Pagado'
+      // Actualizamos a 'Pagado'
       await supabase
         .from('pedido')
         .update({ estado: 'Pagado' })
         .eq('id_pedido', idPedido);
 
-      // LLAMAMOS A LA FUNCIÓN DE NOTIFICACIONES
       await procesarNotificaciones(idPedido);
 
-      // Redirigimos al usuario a tu pantalla de éxito en el Frontend
-      // Si estás en Render, esto debería ser tu URL de producción o localhost si probás local
-      return res.redirect(`http://localhost:5173/perfil?status=success`);
+      // Redirigimos a la tienda (Ajustá esta URL a la de tu tienda frontend)
+      return res.redirect(`http://localhost:5173/pedido-exitoso?id=${idPedido}`);
     }
 
-    res.redirect(`http://localhost:5173/perfil?status=error`);
-
+    res.redirect(`http://localhost:5173/pago-error`);
   } catch (error) {
-    console.error("Error en el controlador de pagos:", error);
     res.status(500).send("Error interno");
   }
 };
