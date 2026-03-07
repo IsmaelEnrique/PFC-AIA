@@ -19,12 +19,8 @@ export default function PedidoConfirmado() {
   const [preferenceId, setPreferenceId] = useState(null); // 👈 Estado para el ID de pago
   const [loadingPay, setLoadingPay] = useState(false);
 
-<<<<<<< HEAD
-  // 1. Cargar datos de la tienda (lo que ya tenías)
-=======
   const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || 'Metodo');
 
->>>>>>> pri-seguimiento
   useEffect(() => {
     if (!slug) return;
     const fetchTienda = async () => {
@@ -64,7 +60,7 @@ export default function PedidoConfirmado() {
               }))
             })
           });
-          */
+         */
          // ... dentro de generarPreferencia ...
 
           // 🔄 CAMBIO: Apuntamos al backend local para testear ahora mismo
@@ -81,7 +77,8 @@ export default function PedidoConfirmado() {
               }))
             })
           });
-
+          
+          if (!response.ok) throw new Error("Error en la respuesta del servidor");
           const data = await response.json();
           if (data.id) setPreferenceId(data.id);
         } catch (error) {
@@ -100,49 +97,6 @@ export default function PedidoConfirmado() {
   const themeClass = tipoDiseño === 1 ? 'minimal' : (tipoDiseño === 2 ? 'colorful' : 'modern');
 
   return (
-<<<<<<< HEAD
-    <section style={{ padding: 24, maxWidth: '600px', margin: '0 auto' }}>
-      <h1>¡Pedido # {pedido?.numero_pedido} recibido! 🛍️</h1>
-      <p>Gracias por tu compra en <strong>{tiendaData.nombre_comercio}</strong>.</p>
-      
-      <div style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px', margin: '20px 0' }}>
-        <h3>Estado del pago:</h3>
-        
-        {/* Lógica condicional según el método de pago */}
-        {pedido && (
-          <div>
-            <p>Método: <strong>{{1:'Efectivo', 2:'Mercado Pago', 3:'Transferencia'}[pedido.id_pago]}</strong></p>
-            
-            {/* OPCIÓN 1: EFECTIVO */}
-            {Number(pedido.id_pago) === 1 && (
-              <p>Coordinaremos el pago al momento de la entrega. ¡Estate atento a nuestros mensajes!</p>
-            )}
-
-            {/* OPCIÓN 2: MERCADO PAGO 💳 */}
-            {Number(pedido.id_pago) === 2 && (
-              <div style={{ marginTop: '15px' }}>
-                {preferenceId ? (
-                  <>
-                    <p>Hacé clic abajo para completar tu pago de forma segura:</p>
-                    <Wallet initialization={{ preferenceId }} customization={{ texts: { valueProp: 'smart_option' } }} />
-                  </>
-                ) : (
-                  <p>{loadingPay ? "Generando botón de pago..." : "Hubo un problema al generar el pago. Contactate con la tienda."}</p>
-                )}
-              </div>
-            )}
-
-            {/* OPCIÓN 3: TRANSFERENCIA */}
-            {Number(pedido.id_pago) === 3 && (
-              <div style={{ borderLeft: '4px solid #009EE3', paddingLeft: '10px' }}>
-                <p>Por favor, realizá la transferencia y enviá el comprobante:</p>
-                <ul>
-                  <li>📱 WhatsApp: {comercio.contacto || 'No disponible'}</li>
-                  <li>📧 Email: {usuario.mail || comercio.mail}</li>
-                </ul>
-              </div>
-            )}
-=======
     <section className={`pedido-confirmado-page ${themeClass}`}>
       <div className="pedido-confirmado-container">
         <h1>Pedido confirmado</h1>
@@ -161,18 +115,35 @@ export default function PedidoConfirmado() {
                 </li>
               ))}
             </ul>
->>>>>>> pri-seguimiento
           </div>
         )}
 
-        <div className="pedido-confirmado-block">
-          <h3>Metodo de pago</h3>
+       <div className="pedido-confirmado-block">
+          <h3>Método de pago</h3>
           {pedido && (
-            <div>
+            <div className="metodo-pago-box">
               <p><strong>{paymentLabel(pedido.id_pago)}</strong></p>
-              {Number(pedido.id_pago) === 1 && <p>Coordinaremos el pago al momento de la entrega. Espera nuestro mensaje.</p>}
+              
+              {/* --- 🚀 AQUÍ VOLVEMOS A AGREGAR LA LÓGICA DEL BOTÓN --- */}
+              {Number(pedido.id_pago) === 2 && (
+                <div className="mp-button-container" style={{ marginTop: '20px' }}>
+                  {preferenceId ? (
+                    <>
+                      <p style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Hacé clic abajo para pagar con Mercado Pago:</p>
+                      <Wallet initialization={{ preferenceId }} customization={{ texts: { valueProp: 'smart_option' } }} />
+                    </>
+                  ) : (
+                    <p className="loading-pay-text">
+                      {loadingPay ? "Generando botón de pago..." : "Hubo un problema al generar el pago. Verificá si el comercio vinculó su cuenta."}
+                    </p>
+                  )}
+                </div>
+              )}
+              {/* --------------------------------------------------- */}
+
+              {Number(pedido.id_pago) === 1 && <p>Coordinaremos el pago al momento de la entrega. Esperá nuestro mensaje.</p>}
               {Number(pedido.id_pago) === 3 && (
-                <p>Esperamos tu comprobante al numero {comercio.contacto || '---'} o por mail {(usuario.mail || comercio.mail) || '---'}.</p>
+                <p>Esperamos tu comprobante al número {comercio.contacto || '---'} o por mail {(usuario.mail || comercio.mail) || '---'}.</p>
               )}
             </div>
           )}
@@ -184,26 +155,7 @@ export default function PedidoConfirmado() {
           </Link>
         </p>
       </div>
-<<<<<<< HEAD
-
-      {/* Detalle de compra (igual que tenías) */}
-      <div style={{ marginTop: 12 }}>
-        <h3>Tu resumen:</h3>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {detalles.map(d => (
-            <li key={d.id_detallepedido} style={{ borderBottom: '1px solid #eee', padding: '8px 0' }}>
-              {d.producto_nombre} — x{d.cantidad} — <strong>${Number(d.precio).toFixed(2)}</strong>
-            </li>
-          ))}
-        </ul>
-        <p style={{ textAlign: 'right', fontSize: '1.2rem' }}>Total: <strong>${Number(pedido?.total).toFixed(2)}</strong></p>
-      </div>
-
-      <p style={{ marginTop: 24, textAlign: 'center' }}>
-        <Link to={`/tienda/${slug}`} className="btn-back">Volver a la tienda</Link>
-      </p>
-=======
->>>>>>> pri-seguimiento
     </section>
   );
 }
+
