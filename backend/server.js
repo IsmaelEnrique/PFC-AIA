@@ -77,6 +77,26 @@ app.use('/api/pagos', pagoRoutes);
 const runMigrations = async () => {
   try {
     await pool.query('BEGIN');
+
+    // Expand comercio.descripcion for richer storefront descriptions.
+    const descripcionLenRes = await pool.query(
+      `SELECT character_maximum_length
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'comercio'
+         AND column_name = 'descripcion'`
+    );
+
+    if (
+      descripcionLenRes.rows.length > 0 &&
+      Number(descripcionLenRes.rows[0].character_maximum_length) < 500
+    ) {
+      await pool.query('ALTER TABLE comercio ALTER COLUMN descripcion TYPE VARCHAR(500)');
+    }
+
+    await pool.query('ALTER TABLE comercio ADD COLUMN IF NOT EXISTS banner VARCHAR(255)');
+    await pool.query('ALTER TABLE comercio ADD COLUMN IF NOT EXISTS preguntas_frecuentes TEXT');
+
     const colRes = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='m_n_prod_carrito' AND column_name='id_prod_carrito'");
     if (colRes.rows.length === 0) {
       await pool.query("CREATE SEQUENCE IF NOT EXISTS seq_m_n_prod_carrito_id_prod_carrito");

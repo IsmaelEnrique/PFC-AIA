@@ -1,5 +1,38 @@
 import pool from "../db/db.js";
 
+let comercioLengthLimitsCache = null;
+const FAQ_MAX_LENGTH = 5000;
+
+const getComercioLengthLimits = async () => {
+  if (comercioLengthLimitsCache) return comercioLengthLimitsCache;
+
+  const result = await pool.query(
+    `SELECT column_name, character_maximum_length
+     FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'comercio'
+       AND data_type IN ('character varying', 'character')`
+  );
+
+  const limits = {};
+  for (const row of result.rows) {
+    if (row.character_maximum_length) {
+      limits[row.column_name] = Number(row.character_maximum_length);
+    }
+  }
+
+  comercioLengthLimitsCache = limits;
+  return limits;
+};
+
+const validateFieldLength = (value, maxLength, fieldLabel) => {
+  if (value == null || maxLength == null) return null;
+  if (String(value).length > maxLength) {
+    return `${fieldLabel} supera el máximo de ${maxLength} caracteres.`;
+  }
+  return null;
+};
+
 // Obtener comercio del usuario
 export const getComercioByUsuario = async (req, res) => {
   try {
@@ -28,7 +61,7 @@ export const getComercioByUsuario = async (req, res) => {
 export const activarComercio = async (req, res) => {
   try {
     const id_usuario = Number(req.body.id_usuario);
-    const { nombre, rubro, descripcion, direccion, contacto, cuit, activo, tipo_diseno, slug } = req.body;
+    const { nombre, rubro, descripcion, direccion, contacto, cuit, activo, tipo_diseno, slug, banner, preguntas_frecuentes } = req.body;
     const tipoDiseno =
       tipo_diseno === undefined || tipo_diseno === null ? null : Number(tipo_diseno);
 
@@ -40,6 +73,8 @@ export const activarComercio = async (req, res) => {
     if (tipoDiseno !== null && ![1, 2, 3].includes(tipoDiseno)) {
       return res.status(400).json({ error: "tipo_diseno inválido" });
     }
+
+    const limits = await getComercioLengthLimits();
 
     // 1. Verificar si ya existe un comercio para este usuario
     const existente = await pool.query(
@@ -59,9 +94,32 @@ export const activarComercio = async (req, res) => {
       const contactoFinal = contacto || null;
       const cuitFinal = cuit || null;
       const slugFinal = slug || null;
+      const bannerFinal = banner !== undefined ? (banner || null) : comercioActual.banner || null;
+      const preguntasFrecuentesFinal =
+        preguntas_frecuentes !== undefined
+          ? (preguntas_frecuentes || null)
+          : comercioActual.preguntas_frecuentes || null;
       const activoFinal = activo !== undefined ? activo : comercioActual.activo;
       const tipoDisenoFinal =
         tipoDiseno !== null ? tipoDiseno : comercioActual["tipo_diseño"] || null;
+
+      const validations = [
+        validateFieldLength(nombreFinal, limits.nombre_comercio, "Nombre del comercio"),
+        validateFieldLength(rubroFinal, limits.rubro, "Rubro"),
+        validateFieldLength(descripcionFinal, limits.descripcion, "Descripción"),
+        validateFieldLength(direccionFinal, limits.direccion, "Dirección"),
+        validateFieldLength(contactoFinal, limits.contacto, "Contacto"),
+        validateFieldLength(cuitFinal, limits.cuit, "CUIT"),
+        validateFieldLength(slugFinal, limits.slug, "Slug"),
+        validateFieldLength(bannerFinal, limits.banner, "Banner"),
+        preguntasFrecuentesFinal && String(preguntasFrecuentesFinal).length > FAQ_MAX_LENGTH
+          ? `Preguntas frecuentes supera el máximo de ${FAQ_MAX_LENGTH} caracteres.`
+          : null,
+      ].filter(Boolean);
+
+      if (validations.length > 0) {
+        return res.status(400).json({ error: validations[0] });
+      }
 
       const actualizado = await pool.query(
         `UPDATE comercio 
@@ -73,8 +131,10 @@ export const activarComercio = async (req, res) => {
              cuit = $6,
              "tipo_diseño" = $7,
              activo = $8,
-             slug = $9
-         WHERE id_usuario = $10 
+             slug = $9,
+             banner = $10,
+             preguntas_frecuentes = $11
+           WHERE id_usuario = $12 
          RETURNING *`,
         [
           nombreFinal,
@@ -86,6 +146,8 @@ export const activarComercio = async (req, res) => {
           tipoDisenoFinal,
           activoFinal,
           slugFinal,
+          bannerFinal,
+          preguntasFrecuentesFinal,
           id_usuario,
         ]
       );
@@ -98,14 +160,33 @@ export const activarComercio = async (req, res) => {
       return res.status(400).json({ error: "El nombre es obligatorio para crear un comercio" });
     }
 
+    const nombreFinal = nombre.trim();
+    const validations = [
+      validateFieldLength(nombreFinal, limits.nombre_comercio, "Nombre del comercio"),
+      validateFieldLength(rubro, limits.rubro, "Rubro"),
+      validateFieldLength(descripcion, limits.descripcion, "Descripción"),
+      validateFieldLength(direccion, limits.direccion, "Dirección"),
+      validateFieldLength(contacto, limits.contacto, "Contacto"),
+      validateFieldLength(cuit, limits.cuit, "CUIT"),
+      validateFieldLength(slug, limits.slug, "Slug"),
+      validateFieldLength(banner, limits.banner, "Banner"),
+      preguntas_frecuentes && String(preguntas_frecuentes).length > FAQ_MAX_LENGTH
+        ? `Preguntas frecuentes supera el máximo de ${FAQ_MAX_LENGTH} caracteres.`
+        : null,
+    ].filter(Boolean);
+
+    if (validations.length > 0) {
+      return res.status(400).json({ error: validations[0] });
+    }
+
     const nuevo = await pool.query(
       `INSERT INTO comercio 
-       (id_usuario, nombre_comercio, rubro, descripcion, direccion, contacto, cuit, "tipo_diseño", activo, slug) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+       (id_usuario, nombre_comercio, rubro, descripcion, direccion, contacto, cuit, "tipo_diseño", activo, slug, banner, preguntas_frecuentes) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
        RETURNING *`,
       [
         id_usuario,
-        nombre.trim(),
+        nombreFinal,
         rubro || null,
         descripcion || null,
         direccion || null,
@@ -114,6 +195,8 @@ export const activarComercio = async (req, res) => {
         tipoDiseno || null,
         true,
         slug || null,
+        banner || null,
+        preguntas_frecuentes || null,
       ]
     );
 
@@ -121,6 +204,11 @@ export const activarComercio = async (req, res) => {
   } catch (error) {
     console.error("Error completo en activarComercio:", error);
     console.error("Stack trace:", error.stack);
+    if (error?.code === '22001') {
+      return res.status(400).json({
+        error: 'Uno de los campos supera el tamaño máximo permitido para comercio.',
+      });
+    }
     res.status(500).json({ error: "Error interno del servidor", details: error.message });
   }
 };

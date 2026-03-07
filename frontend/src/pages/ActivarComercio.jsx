@@ -2,18 +2,32 @@ import { apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+const FIELD_LIMITS = {
+  nombre: 50,
+  rubro: 50,
+  descripcion: 500,
+  preguntas_frecuentes: 5000,
+  direccion: 100,
+  contacto: 50,
+  cuit: 11,
+  slug: 255,
+};
+
 export default function ActivarComercio() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?.id_usuario;
 
   const [form, setForm] = useState({
     nombre: "",
     rubro: "",
     descripcion: "",
+    preguntas_frecuentes: "",
     direccion: "",
     contacto: "",
     cuit: "",
     slug: "",
+    banner: "",
   });
 
   const [formOriginal, setFormOriginal] = useState(null);
@@ -21,12 +35,13 @@ export default function ActivarComercio() {
   const [activo, setActivo] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [mostrarPreguntasFrecuentes, setMostrarPreguntasFrecuentes] = useState(false);
 
   // 🔄 Cargar comercio si existe
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
-    fetch(apiUrl(`/api/comercio/${user.id_usuario}`))
+    fetch(apiUrl(`/api/comercio/${userId}`))
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -34,24 +49,67 @@ export default function ActivarComercio() {
             nombre: data.nombre_comercio || "",
             rubro: data.rubro || "",
             descripcion: data.descripcion || "",
+            preguntas_frecuentes: data.preguntas_frecuentes || "",
             direccion: data.direccion || "",
             contacto: data.contacto || "",
             cuit: data.cuit || "",
             slug: data.slug || "",
+            banner: data.banner || "",
           };
           setForm(datosComercio);
           setFormOriginal(datosComercio);
           setActivo(data.activo);
+          setMostrarPreguntasFrecuentes(Boolean(data.preguntas_frecuentes));
         }
       });
-  }, []);
+  }, [userId]);
 
   // Detectar cambios en el formulario
   const cambiosRealizados = formOriginal !== null && JSON.stringify(form) !== JSON.stringify(formOriginal);
 
   const validateForm = () => {
     const newErrors = {};
-    if (!form.nombre) newErrors.nombre = "El nombre es obligatorio";
+
+    const cuitSoloDigitos = (form.cuit || "").replace(/\D/g, "");
+
+    if (!form.nombre?.trim()) {
+      newErrors.nombre = "El nombre es obligatorio";
+    } else if (form.nombre.trim().length > FIELD_LIMITS.nombre) {
+      newErrors.nombre = `El nombre no puede superar ${FIELD_LIMITS.nombre} caracteres`;
+    }
+
+    if (form.rubro && form.rubro.length > FIELD_LIMITS.rubro) {
+      newErrors.rubro = `El rubro no puede superar ${FIELD_LIMITS.rubro} caracteres`;
+    }
+
+    if (form.descripcion && form.descripcion.length > FIELD_LIMITS.descripcion) {
+      newErrors.descripcion = `La descripción no puede superar ${FIELD_LIMITS.descripcion} caracteres`;
+    }
+
+    if (form.preguntas_frecuentes && form.preguntas_frecuentes.length > FIELD_LIMITS.preguntas_frecuentes) {
+      newErrors.preguntas_frecuentes = `Las preguntas frecuentes no pueden superar ${FIELD_LIMITS.preguntas_frecuentes} caracteres`;
+    }
+
+    if (form.direccion && form.direccion.length > FIELD_LIMITS.direccion) {
+      newErrors.direccion = `La dirección no puede superar ${FIELD_LIMITS.direccion} caracteres`;
+    }
+
+    if (form.contacto && form.contacto.length > FIELD_LIMITS.contacto) {
+      newErrors.contacto = `El contacto no puede superar ${FIELD_LIMITS.contacto} caracteres`;
+    }
+
+    if (form.slug && form.slug.length > FIELD_LIMITS.slug) {
+      newErrors.slug = `La URL personalizada no puede superar ${FIELD_LIMITS.slug} caracteres`;
+    }
+
+    if (!form.slug?.trim()) {
+      newErrors.slug = "La URL personalizada (slug) es obligatoria";
+    }
+
+    if (cuitSoloDigitos && cuitSoloDigitos.length !== FIELD_LIMITS.cuit) {
+      newErrors.cuit = "El CUIT debe tener exactamente 11 dígitos";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -74,19 +132,22 @@ export default function ActivarComercio() {
     }
 
     try {
+      const cuitSoloDigitos = (form.cuit || "").replace(/\D/g, "");
       const response = await fetch(apiUrl("/api/comercio/activar"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id_usuario: user.id_usuario,
-            nombre: form.nombre,
+            nombre: form.nombre.trim(),
             rubro: form.rubro || null,
             descripcion: form.descripcion || null,
+            preguntas_frecuentes: form.preguntas_frecuentes || null,
             direccion: form.direccion || null,
             contacto: form.contacto || null,
-            cuit: form.cuit || null,
+            cuit: cuitSoloDigitos || null,
             slug: form.slug || null,
+            banner: form.banner || null,
             activo: activo,
           }),
         }
@@ -132,18 +193,22 @@ export default function ActivarComercio() {
     }
 
     try {
+      const cuitSoloDigitos = (form.cuit || "").replace(/\D/g, "");
       const response = await fetch(apiUrl("/api/comercio/activar"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id_usuario: user.id_usuario,
-            nombre: form.nombre,
+            nombre: form.nombre.trim(),
             rubro: form.rubro || null,
             descripcion: form.descripcion || null,
+            preguntas_frecuentes: form.preguntas_frecuentes || null,
             direccion: form.direccion || null,
             contacto: form.contacto || null,
-            cuit: form.cuit || null,
+            cuit: cuitSoloDigitos || null,
+            slug: form.slug || null,
+            banner: form.banner || null,
             activo: nuevoEstado,
           }),
         }
@@ -190,27 +255,6 @@ export default function ActivarComercio() {
           <p className="panel-subtitle" style={{ margin: 0 }}>
             Completá los datos de tu emprendimiento. Los datos con * son obligarios.
           </p>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => navigate("/cargar-logo")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              padding: "16px 26px",
-              fontSize: "16px",
-              fontWeight: 800,
-              minWidth: "210px",
-              letterSpacing: "0.3px",
-              boxShadow: "0 8px 18px rgba(102, 126, 234, 0.25)",
-              borderRadius: "10px"
-            }}
-          >
-          
-            <span style={{ lineHeight: 1 }}>Subir logo</span>
-          </button>
         </div>
 
         <form className="panel-form" noValidate>
@@ -226,6 +270,7 @@ export default function ActivarComercio() {
               type="text"
               value={form.nombre}
               className={errors.nombre ? "error-input" : ""}
+              maxLength={FIELD_LIMITS.nombre}
               onChange={e =>
                 setForm({ ...form, nombre: e.target.value })
               }
@@ -238,6 +283,7 @@ export default function ActivarComercio() {
             <label>Rubro</label>
             <select
               value={form.rubro}
+              className={errors.rubro ? "error-input" : ""}
               onChange={e =>
                 setForm({ ...form, rubro: e.target.value })
               }
@@ -249,6 +295,7 @@ export default function ActivarComercio() {
               <option value="tecnologia">Tecnología</option>
               <option value="otro">Otro</option>
             </select>
+            {errors.rubro && <p className="error-text">{errors.rubro}</p>}
           </div>
 
           {/* Descripción */}
@@ -257,10 +304,46 @@ export default function ActivarComercio() {
             <textarea
               rows="4"
               value={form.descripcion}
+              className={errors.descripcion ? "error-input" : ""}
+              maxLength={FIELD_LIMITS.descripcion}
               onChange={e =>
                 setForm({ ...form, descripcion: e.target.value })
               }
             />
+            {errors.descripcion && <p className="error-text">{errors.descripcion}</p>}
+          </div>
+
+          <div className="form-group">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setMostrarPreguntasFrecuentes((prev) => !prev)}
+              style={{ marginBottom: "10px" }}
+            >
+              {mostrarPreguntasFrecuentes
+                ? "Ocultar texto de preguntas frecuentes"
+                : "Agregar texto de preguntas frecuentes"}
+            </button>
+
+            {mostrarPreguntasFrecuentes && (
+              <>
+                <label>Preguntas frecuentes (envíos, pagos, cambios, devoluciones)</label>
+                <textarea
+                  rows="8"
+                  value={form.preguntas_frecuentes}
+                  className={errors.preguntas_frecuentes ? "error-input" : ""}
+                  maxLength={FIELD_LIMITS.preguntas_frecuentes}
+                  placeholder="Ejemplo: Envíos en 24/48 hs, medios de pago disponibles, política de cambios y devoluciones..."
+                  onChange={e =>
+                    setForm({ ...form, preguntas_frecuentes: e.target.value })
+                  }
+                />
+                <p style={{ fontSize: "12px", color: "#6c757d", marginTop: "6px" }}>
+                  {form.preguntas_frecuentes.length}/{FIELD_LIMITS.preguntas_frecuentes} caracteres
+                </p>
+                {errors.preguntas_frecuentes && <p className="error-text">{errors.preguntas_frecuentes}</p>}
+              </>
+            )}
           </div>
 
           {/* Dirección */}
@@ -269,10 +352,13 @@ export default function ActivarComercio() {
             <input
               type="text"
               value={form.direccion}
+              className={errors.direccion ? "error-input" : ""}
+              maxLength={FIELD_LIMITS.direccion}
               onChange={e =>
                 setForm({ ...form, direccion: e.target.value })
               }
             />
+            {errors.direccion && <p className="error-text">{errors.direccion}</p>}
           </div>
 
           {/* Contacto*/}
@@ -281,10 +367,13 @@ export default function ActivarComercio() {
             <input
               type="text"
               value={form.contacto}
+              className={errors.contacto ? "error-input" : ""}
+              maxLength={FIELD_LIMITS.contacto}
               onChange={e =>
                 setForm({ ...form, contacto: e.target.value })
               }
             />
+            {errors.contacto && <p className="error-text">{errors.contacto}</p>}
           </div>
 
           {/* CUIT - Opcional */}
@@ -294,10 +383,13 @@ export default function ActivarComercio() {
               type="text"
               placeholder="Ej: 20-12345678-9"
               value={form.cuit}
+              className={errors.cuit ? "error-input" : ""}
+              maxLength={13}
               onChange={e =>
-                setForm({ ...form, cuit: e.target.value })
+                setForm({ ...form, cuit: e.target.value.replace(/[^\d-]/g, "") })
               }
             />
+            {errors.cuit && <p className="error-text">{errors.cuit}</p>}
           </div>
 
           {/* Slug - URL personalizada */}
@@ -332,6 +424,8 @@ export default function ActivarComercio() {
               type="text"
               placeholder="Ej: mi-tienda, mi-emprendimiento"
               value={form.slug}
+              className={errors.slug ? "error-input" : ""}
+              maxLength={FIELD_LIMITS.slug}
               onChange={e => {
                 const valor = e.target.value.toLowerCase();
                 const slug = valor
@@ -342,6 +436,7 @@ export default function ActivarComercio() {
                 setForm({ ...form, slug });
               }}
             />
+            {errors.slug && <p className="error-text">{errors.slug}</p>}
             <p style={{ 
               fontSize: "13px", 
               color: "#6c757d", 

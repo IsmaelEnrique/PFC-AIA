@@ -3,11 +3,20 @@ import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import VariantPicker from '../../components/VariantPicker';
 
-export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [variantProduct, setVariantProduct] = useState(null);
+  const hasBanner = Boolean(store.banner);
+  const heroClassName = `colorful-hero${hasBanner ? ' banner-full' : ''}`;
+  const heroStyle = store.banner
+    ? {
+        backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.22), rgba(17, 24, 39, 0.12)), url(${store.banner})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : undefined;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -72,8 +81,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
       )}
     </div>
 
-    <a href="#">Contacto</a>
-    <a href="#">Preguntas frecuentes</a>
+    <Link to={`/tienda/${store.comercio?.slug || ''}/preguntas-frecuentes`}>Preguntas frecuentes</Link>
 
     {consumidor ? (
       <>
@@ -91,7 +99,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
 
       {/* HERO SECTION */}
       {!hideHero && (
-        <section className="colorful-hero">
+        <section className={heroClassName} style={heroStyle}>
           <div className="colorful-hero-content">
             <h1>{store.name}</h1>
             <p className="colorful-description">{store.description}</p>
@@ -190,7 +198,7 @@ export default function TemplateColorful({ store, agregarAlCarrito, cantidadCarr
         <>
           {/* FOOTER */}
           <footer className="colorful-footer">
-            <p>© 2024 {store.name}. ¡Gracias por tu visita!</p>
+            <p>© 2026 {store.name}. ¡Gracias por tu visita!</p>
           </footer>
 
           {/* Botón flotante del carrito */}

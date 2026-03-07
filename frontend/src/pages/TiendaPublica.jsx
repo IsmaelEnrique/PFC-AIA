@@ -17,9 +17,10 @@ export default function TiendaPublica() {
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [consumidor, setConsumidor] = useState(null);
-  const { carrito, setCarrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
+  const { carrito, setCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const location = useLocation();
+  const isFaqPage = location.pathname.endsWith('/preguntas-frecuentes');
 
   // Initialize category from URL query `?cat=` when visiting main store
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function TiendaPublica() {
     const params = new URLSearchParams(location.search);
     const cat = params.get('cat');
     if (cat) setCategoriaSeleccionada(cat);
-  }, [location.search]);
+  }, [location]);
 
   // Cargar consumidor del localStorage al montar
   useEffect(() => {
@@ -108,10 +109,16 @@ export default function TiendaPublica() {
       : `${API_BASE_URL}${comercio.logo}`
     : null;
 
+  const bannerUrl = comercio.banner
+    ? (comercio.banner.startsWith('http') ? comercio.banner : `${API_BASE_URL}${comercio.banner}`)
+    : null;
+
   const storeData = {
     name: comercio.nombre_comercio,
     description: comercio.descripcion || "Bienvenido a nuestra tienda",
+    faqText: comercio.preguntas_frecuentes || "",
     logo: logoUrl,
+    banner: bannerUrl,
     logoSize: 60,
     products: filteredProducts.map(p => {
       // Normalizar variantes para asegurar `nombre` y `caracteristicas`
@@ -214,6 +221,28 @@ export default function TiendaPublica() {
       onShowAll: () => navigate(`/tienda/${slug}/productos`),
       showAll: false
     };
+
+    if (isFaqPage) {
+      templateProps.onShowAll = () => navigate(`/tienda/${slug}`);
+      templateProps.hideHero = true;
+      templateProps.hideProducts = true;
+      templateProps.children = (
+        <section style={{ padding: '32px 20px' }}>
+          <div style={{ maxWidth: '980px', margin: '0 auto', background: '#fff', border: '1px solid #eceff3', borderRadius: '14px', padding: '24px' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '14px' }}>Preguntas frecuentes</h2>
+            {storeData.faqText ? (
+              <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, margin: 0 }}>
+                {storeData.faqText}
+              </p>
+            ) : (
+              <p style={{ margin: 0, color: '#6b7280' }}>
+                Este comercio todavia no cargó información de preguntas frecuentes.
+              </p>
+            )}
+          </div>
+        </section>
+      );
+    }
 
     switch (tipoDiseño) {
       case 1:

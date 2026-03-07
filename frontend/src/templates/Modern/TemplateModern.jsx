@@ -3,11 +3,20 @@ import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import VariantPicker from '../../components/VariantPicker';
 
-export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [variantProduct, setVariantProduct] = useState(null);
+  const hasBanner = Boolean(store.banner);
+  const heroClassName = `modern-hero${hasBanner ? ' banner-full' : ''}`;
+  const heroStyle = store.banner
+    ? {
+        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.22), rgba(15, 23, 42, 0.14)), url(${store.banner})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : undefined;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -65,8 +74,7 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
             )}
           </div>
 
-          <a href="#">Contacto</a>
-          <a href="#">Preguntas frecuentes</a>
+          <Link to={`/tienda/${store.comercio?.slug || ''}/preguntas-frecuentes`}>Preguntas frecuentes</Link>
           
           {consumidor ? (
             <>
@@ -83,11 +91,11 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
       </header>
 
       {!hideHero && (
-        <section className="modern-hero">
+        <section className={heroClassName} style={heroStyle}>
           <div className="modern-hero-content">
             <h2>{store.description}</h2>
           </div>
-          <div className="modern-hero-image"></div>
+          {!hasBanner && <div className="modern-hero-image"></div>}
         </section>
       )}
 
@@ -180,7 +188,7 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
       {!hideFooter && (
         <>
           <footer className="modern-footer">
-            <p>© 2024 {store.name}. Todos los derechos reservados.</p>
+            <p>© 2026 {store.name}. Todos los derechos reservados.</p>
           </footer>
 
           {/* Botón flotante del carrito */}

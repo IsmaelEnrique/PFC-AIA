@@ -264,7 +264,7 @@ export default function AllProducts() {
       {/* Render footer after pagination so it's at the bottom of the page */}
       <footer className={tipoDiseño === 1 ? 'minimal-footer' : tipoDiseño === 2 ? 'colorful-footer' : 'modern-footer'} style={{ marginTop: 20 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '12px 16px', textAlign: 'center' }}>
-          <p>© 2024 {storeData.name}. Todos los derechos reservados.</p>
+          <p>© 2026 {storeData.name}. Todos los derechos reservados.</p>
         </div>
       </footer>
 

@@ -5,33 +5,145 @@ import { plantillaVerificacion } from '../utils/emailTemplates.js';
 import pool from '../db/db.js';
 import bcrypt from 'bcrypt';
 
+const columnCache = new Map();
+
+async function getTableColumns(tableName) {
+  if (columnCache.has(tableName)) return columnCache.get(tableName);
+
+  const result = await pool.query(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1`,
+    [tableName]
+  );
+
+  const cols = new Set(result.rows.map((r) => r.column_name));
+  columnCache.set(tableName, cols);
+  return cols;
+}
+
+async function insertUsuarioPerfilCompatible({ mail, nombre, password, idAuth, token, expiracion }) {
+  const cols = await getTableColumns('usuario');
+  const values = {};
+
+  const nombreNormalizado = (nombre || '').trim();
+  const nombreFinal = nombreNormalizado || (mail || '').split('@')[0] || 'Usuario';
+
+  if (cols.has('mail')) values.mail = mail;
+  if (cols.has('email')) values.email = mail;
+  if (cols.has('nombre_usuario')) values.nombre_usuario = nombreFinal;
+  if (cols.has('nombre')) values.nombre = nombreFinal;
+  if (cols.has('id_auth')) values.id_auth = idAuth;
+
+  // In schema legacy, password is required in `contrasena`.
+  const hashedPassword = await bcrypt.hash(password, 10);
+  if (cols.has('contrasena')) values.contrasena = hashedPassword;
+  if (cols.has('password_hash')) values.password_hash = hashedPassword;
+
+  const hasTokenColumns = cols.has('token_verificacion') && cols.has('token_expiracion');
+  if (cols.has('token_verificacion')) values.token_verificacion = token;
+  if (cols.has('token_expiracion')) values.token_expiracion = expiracion;
+  if (cols.has('verificado')) values.verificado = hasTokenColumns ? false : true;
+
+  const keys = Object.keys(values);
+  if (keys.length === 0) {
+    throw new Error('No hay columnas compatibles para insertar en usuario');
+  }
+
+  const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+  const params = keys.map((k) => values[k]);
+
+  const query = `INSERT INTO usuario (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`;
+  const inserted = await pool.query(query, params);
+  return { row: inserted.rows[0], hasTokenColumns };
+}
+
+async function getUsuarioPerfilCompatible({ authUserId, mail }) {
+  const cols = await getTableColumns('usuario');
+
+  if (authUserId && cols.has('id_auth')) {
+    const byAuth = await pool.query(
+      'SELECT * FROM usuario WHERE id_auth = $1 LIMIT 1',
+      [authUserId]
+    );
+    if (byAuth.rows.length > 0) return byAuth.rows[0];
+  }
+
+  const byMail = await pool.query(
+    'SELECT * FROM usuario WHERE LOWER(mail) = LOWER($1) LIMIT 1',
+    [mail]
+  );
+  return byMail.rows[0] || null;
+}
+
 // 1. REGISTRO
 export const registrarUsuario = async (req, res) => {
   const { mail, password, nombre, tipo } = req.body;
   const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
 
   try {
+    let authUserId = null;
+    let authRateLimited = false;
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: mail,
       password: password,
     });
 
-    if (authError) return res.status(400).json({ error: authError.message });
+    if (authError) {
+      const authMsg = String(authError.message || '').toLowerCase();
+      const isRateLimit = authMsg.includes('rate limit') || authMsg.includes('email rate limit exceeded');
+
+      // For vendor registration in local/legacy mode, allow graceful fallback when
+      // Supabase throttles confirmation emails.
+      if (!(tabla === 'usuario' && isRateLimit)) {
+        return res.status(400).json({ error: authError.message });
+      }
+
+      authRateLimited = true;
+    } else {
+      authUserId = authData?.user?.id || null;
+    }
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiracion = new Date();
     expiracion.setHours(expiracion.getHours() + 24);
 
-    const { error: dbError } = await supabase.from(tabla).insert([{
-      nombre,
-      mail,
-      id_auth: authData.user.id,
-      verificado: false,
-      token_verificacion: token,
-      token_expiracion: expiracion
-    }]);
+    if (tabla === 'usuario') {
+      const { hasTokenColumns } = await insertUsuarioPerfilCompatible({
+        mail,
+        nombre,
+        password,
+        idAuth: authUserId,
+        token,
+        expiracion,
+      });
 
-    if (dbError) return res.status(500).json({ error: dbError.message });
+      if (!hasTokenColumns) {
+        return res.status(201).json({
+          message: authRateLimited
+            ? 'Registro exitoso. Supabase limitó correos por ahora, pero tu cuenta quedó activa en modo compatibilidad.'
+            : 'Registro exitoso. Tu cuenta quedó activa en modo compatibilidad.',
+        });
+      }
+
+      if (authRateLimited) {
+        return res.status(201).json({
+          message: 'Registro exitoso. Tu cuenta fue creada, pero Supabase limitó el envío automático de verificación.',
+        });
+      }
+    } else {
+      const { error: dbError } = await supabase.from(tabla).insert([{
+        nombre,
+        mail,
+        id_auth: authUserId,
+        verificado: false,
+        token_verificacion: token,
+        token_expiracion: expiracion
+      }]);
+
+      if (dbError) return res.status(500).json({ error: dbError.message });
+    }
 
     const urlVerificacion = `${process.env.BACKEND_URL}/api/auth/verificar/${token}?tipo=${tipo}`;
     await sendEmail(mail, "Activá tu cuenta en Emprendify 🚀", plantillaVerificacion(nombre, urlVerificacion));
@@ -154,13 +266,27 @@ export const loginUsuario = async (req, res) => {
     }
 
     // 2. Buscar al usuario en TU tabla de la DB para ver si está verificado
-    const { data: usuario, error: dbError } = await supabase
-      .from('usuario')
-      .select('*')
-      .eq('id_auth', authData.user.id)
-      .single();
+    let usuario = null;
+    try {
+      const { data, error: dbError } = await supabase
+        .from('usuario')
+        .select('*')
+        .eq('id_auth', authData.user.id)
+        .single();
 
-    if (dbError || !usuario) return res.status(404).json({ error: "Perfil de usuario no encontrado" });
+      if (!dbError && data) usuario = data;
+    } catch (_) {
+      // If schema differs from Supabase cache, fallback to direct Postgres query.
+    }
+
+    if (!usuario) {
+      usuario = await getUsuarioPerfilCompatible({
+        authUserId: authData.user.id,
+        mail: mailNormalizado,
+      });
+    }
+
+    if (!usuario) return res.status(404).json({ error: "Perfil de usuario no encontrado" });
 
     // 3. Bloquear si no está verificado
     if (!usuario.verificado) {

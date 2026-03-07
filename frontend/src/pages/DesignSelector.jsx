@@ -1,4 +1,4 @@
-import { apiUrl } from "../config/api";
+import { API_BASE_URL, apiUrl } from "../config/api";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // 1. Importación de tus plantillas reales
@@ -12,17 +12,21 @@ import PreviewModern from '../previews/PreviewModern';
 // 3. Importación de estilos
 import '../styles/design-selector.css';
 
-const DesignSelector = ({ proyectoId, storeLogo }) => {
+const DesignSelector = ({ storeLogo }) => {
   const navigate = useNavigate();
   // Estados para manejar la previsualización y la carga
   const [previewing, setPreviewing] = useState(null);
   const [savingId, setSavingId] = useState(null);
   const [fetching, setFetching] = useState(true);
   const [selectedDesign, setSelectedDesign] = useState(null);
+  const [comercioData, setComercioData] = useState(null);
+  const [subiendoBanner, setSubiendoBanner] = useState(false);
+  const [bannerError, setBannerError] = useState('');
+  const [mostrarBannerPreview, setMostrarBannerPreview] = useState(false);
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user'));
-    } catch (err) {
+    } catch {
       return null;
     }
   }, []);
@@ -83,6 +87,7 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
         if ([1, 2, 3].includes(saved)) {
           setSelectedDesign(saved);
         }
+        setComercioData(comercio || null);
       } catch (err) {
         console.error('No se pudo cargar el diseño guardado', err);
       } finally {
@@ -116,7 +121,7 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
         try {
           const data = await response.json();
           msg = data?.error || msg;
-        } catch (parseErr) {
+        } catch {
           const text = await response.text();
           msg = text || msg;
         }
@@ -130,6 +135,98 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
       alert(error.message || 'Ocurrió un error al guardar el diseño');
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const actionButtonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    padding: '14px 22px',
+    fontSize: '15px',
+    fontWeight: 700,
+    minWidth: '230px',
+    borderRadius: '10px'
+  };
+
+  const bannerPreviewUrl = comercioData?.banner
+    ? (comercioData.banner.startsWith('http') ? comercioData.banner : `${API_BASE_URL}${comercioData.banner}`)
+    : null;
+
+  const persistBanner = async (nextBanner) => {
+    if (!user || !comercioData?.nombre_comercio) {
+      throw new Error('Primero completá y guardá los datos del comercio en Activar Comercio.');
+    }
+
+    const cuitSoloDigitos = (comercioData.cuit || '').toString().replace(/\D/g, '');
+    const res = await fetch(apiUrl('/api/comercio/activar'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_usuario: user.id_usuario,
+        nombre: comercioData.nombre_comercio,
+        rubro: comercioData.rubro || null,
+        descripcion: comercioData.descripcion || null,
+        direccion: comercioData.direccion || null,
+        contacto: comercioData.contacto || null,
+        cuit: cuitSoloDigitos || null,
+        slug: comercioData.slug || null,
+        banner: nextBanner || null,
+        activo: Boolean(comercioData.activo),
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error || 'No se pudo guardar el banner');
+    }
+
+    setComercioData(prev => ({ ...prev, banner: nextBanner || '' }));
+  };
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setBannerError('El banner debe ser una imagen');
+      return;
+    }
+
+    try {
+      setBannerError('');
+      setSubiendoBanner(true);
+
+      const formData = new FormData();
+      formData.append('imagen', file);
+
+      const uploadRes = await fetch(apiUrl('/api/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        throw new Error(uploadData?.error || 'No se pudo subir el banner');
+      }
+
+      await persistBanner(uploadData.url);
+    } catch (err) {
+      setBannerError(err.message || 'Error al subir el banner');
+    } finally {
+      setSubiendoBanner(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    try {
+      setBannerError('');
+      await persistBanner('');
+      setMostrarBannerPreview(false);
+    } catch (err) {
+      setBannerError(err.message || 'No se pudo quitar el banner');
     }
   };
 
@@ -151,6 +248,67 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
           >
             ← Volver al panel
           </button>
+        </div>
+
+        <div style={{ marginBottom: '28px' }}>
+          <h2 className="design-main-title" style={{ fontSize: '1.35rem', marginBottom: '8px' }}>Branding de la tienda</h2>
+          <p className="design-subtitle text-muted" style={{ marginBottom: '14px' }}>
+            Subí y administrá el logo y el banner desde esta pantalla.
+          </p>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => navigate('/cargar-logo')}
+              style={actionButtonStyle}
+            >
+              Subir logo
+            </button>
+
+            <label
+              htmlFor="banner-input-design"
+              className="btn btn-secondary"
+              style={{
+                ...actionButtonStyle,
+                cursor: subiendoBanner ? 'wait' : 'pointer',
+                opacity: subiendoBanner ? 0.7 : 1,
+              }}
+            >
+              {subiendoBanner ? 'Subiendo banner...' : 'Subir imagen de banner'}
+            </label>
+            <input
+              id="banner-input-design"
+              type="file"
+              accept="image/*"
+              onChange={handleBannerChange}
+              disabled={subiendoBanner}
+              style={{ display: 'none' }}
+            />
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setMostrarBannerPreview(true)}
+              style={actionButtonStyle}
+              disabled={!bannerPreviewUrl}
+              title={!bannerPreviewUrl ? 'Todavía no hay banner cargado' : ''}
+            >
+              Ver banner seleccionado
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleRemoveBanner}
+              style={actionButtonStyle}
+              disabled={!bannerPreviewUrl}
+            >
+              Quitar banner
+            </button>
+          </div>
+
+          {bannerError && <p className="error-text" style={{ marginTop: '10px' }}>{bannerError}</p>}
         </div>
 
         <div className="design-cards-container">
@@ -234,6 +392,48 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
                 ¡Me encanta, elegir este!
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarBannerPreview && bannerPreviewUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista previa del banner"
+          onClick={() => setMostrarBannerPreview(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            zIndex: 3000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(1000px, 95vw)',
+              background: '#fff',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.35)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderBottom: '1px solid #e6e6e6' }}>
+              <strong>Banner seleccionado</strong>
+              <button type="button" className="btn btn-secondary" onClick={() => setMostrarBannerPreview(false)}>
+                Cerrar
+              </button>
+            </div>
+            <img
+              src={bannerPreviewUrl}
+              alt="Banner del comercio"
+              style={{ width: '100%', maxHeight: '75vh', objectFit: 'cover', display: 'block' }}
+            />
           </div>
         </div>
       )}

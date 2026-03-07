@@ -52,6 +52,7 @@ export default function App() {
         // Rutas públicas SIN navbar/footer (tienda y detalle)
         <Routes>
           <Route path="/tienda/:slug" element={<TiendaPublica />} />
+          <Route path="/tienda/:slug/preguntas-frecuentes" element={<TiendaPublica />} />
           <Route path="/tienda/:slug/productos" element={<AllProducts />} />
           <Route path="/tienda/:slug/producto/:id" element={<ProductDetail />} />
           <Route path="/tienda/:slug/checkout" element={<Checkout />} />

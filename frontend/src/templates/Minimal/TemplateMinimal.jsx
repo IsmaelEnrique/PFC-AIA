@@ -3,11 +3,20 @@ import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import VariantPicker from '../../components/VariantPicker';
 
-export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children, compact = false }) {
+export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [variantProduct, setVariantProduct] = useState(null);
+  const hasBanner = Boolean(store.banner);
+  const heroClassName = `minimal-hero${hasBanner ? ' banner-full' : ''}`;
+  const heroStyle = store.banner
+    ? {
+        backgroundImage: `linear-gradient(rgba(20, 33, 61, 0.26), rgba(20, 33, 61, 0.16)), url(${store.banner})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : undefined;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -67,8 +76,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
               )}
             </div>
 
-            <a href="#">Contacto</a>
-            <a href="#">Preguntas frecuentes</a>
+            <Link to={`/tienda/${store.comercio?.slug || ''}/preguntas-frecuentes`}>Preguntas frecuentes</Link>
 
             {consumidor ? (
               <>
@@ -87,7 +95,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
       </header>
 
       {!hideHero && (
-        <section className="minimal-hero">
+        <section className={heroClassName} style={heroStyle}>
           <h2>{store.description}</h2>
         </section>
       )}
@@ -187,7 +195,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
       {!hideFooter && (
         <>
           <footer className="minimal-footer">
-            <p>© 2024 {store.name}. Todos los derechos reservados.</p>
+            <p>© 2026 {store.name}. Todos los derechos reservados.</p>
           </footer>
 
           {/* Botón flotante del carrito */}
