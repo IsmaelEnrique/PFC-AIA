@@ -27,6 +27,7 @@ export const generarFacturaHTML = (pedido, detalles, nombreCliente) => {
     </div>
   `;
 };
+
 export const plantillaVerificacion = (nombre, url) => {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -43,6 +44,75 @@ export const plantillaVerificacion = (nombre, url) => {
         Si el botón no funciona, podés copiar y pegar este link: <br>
         ${url}
       </p>
+    </div>
+  `;
+};
+
+export const generarMailSeguimiento = (pedido, nuevoEstado, nombreCliente) => {
+  const configuracionEstados = {
+    'Cancelado': {
+      titulo: 'Pedido Cancelado',
+      color: '#e53e3e',
+      mensaje: 'Lo sentimos, tu pedido ha sido cancelado por el comercio. Si tenés dudas, contactate con ellos.'
+    },
+    'Confirmado': {
+      titulo: '¡Pedido Confirmado!',
+      color: '#38a169',
+      mensaje: '¡Buenas noticias! Tu pago fue verificado y el pedido ya está confirmado.'
+    },
+    'En espera': {
+      titulo: 'Pago en Espera',
+      color: '#d69e2e',
+      mensaje: 'Estamos esperando la acreditación de tu pago para poder procesar el pedido.'
+    },
+    'Pendiente': {
+      titulo: 'Pedido Recibido',
+      color: '#4a5568',
+      mensaje: 'Recibimos tu pedido. El comercio lo revisará a la brevedad.'
+    },
+    'En preparación': {
+      titulo: 'Preparando tu pedido',
+      color: '#805ad5',
+      mensaje: 'El comercio ya está preparando tus productos. ¡Falta poco!'
+    },
+    'Enviado': {
+      titulo: '🚚 Pedido en camino',
+      color: '#3182ce',
+      mensaje: '¡Tu pedido ya fue despachado! Pronto llegará a tu domicilio.'
+    },
+    'Retirado': {
+      titulo: '✅ Pedido Entregado',
+      color: '#38a169',
+      mensaje: '¡Gracias por retirar tu pedido en nuestro local!'
+    },
+    'Entregado': {
+      titulo: '✅ Pedido Recibido',
+      color: '#38a169',
+      mensaje: '¡Confirmamos que tu pedido ha sido entregado con éxito!'
+    }
+  };
+
+  const info = configuracionEstados[nuevoEstado] || { 
+    titulo: 'Actualización de Pedido', 
+    color: '#4a5568', 
+    mensaje: `Tu pedido ha cambiado al estado: ${nuevoEstado}` 
+  };
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
+      <div style="text-align: center; border-bottom: 2px solid ${info.color}; padding-bottom: 10px;">
+        <h2 style="color: ${info.color};">${info.titulo}</h2>
+      </div>
+      <p style="font-size: 16px; color: #333; margin-top: 20px;">Hola <strong>${nombreCliente}</strong>,</p>
+      <p style="font-size: 15px; color: #555; line-height: 1.5;">${info.mensaje}</p>
+      
+      <div style="background-color: #f7fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Número de Pedido:</strong> #${pedido.numero_pedido}</p>
+        <p style="margin: 5px 0;"><strong>Comercio:</strong> ${pedido.comercio.nombre_comercio}</p>
+        <p style="margin: 5px 0;"><strong>Total:</strong> $${pedido.total}</p>
+      </div>
+
+      <p style="font-size: 13px; color: #999; text-align: center;">Podés seguir el estado desde tu perfil en nuestra web.</p>
     </div>
   `;
 };

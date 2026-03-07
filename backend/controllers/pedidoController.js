@@ -1,4 +1,6 @@
 import pool from "../db/db.js";
+import { sendEmail } from '../utils/mailer.js';
+import { generarMailSeguimiento } from '../utils/emailTemplates.js';
 
 const ESTADOS_PEDIDO_VALIDOS = [
   'Pendiente',
@@ -17,6 +19,49 @@ function generateOrderNumber() {
   const rand = Math.floor(Math.random() * 900).toString().padStart(3, '0');
   return `ORD-${nowSlice}${rand}`;
 }
+
+// --- FUNCIÓN DE APOYO PARA NOTIFICACIONES ---
+const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.numero_pedido, p.total, p.id_envio, 
+              c.mail AS cliente_mail, c.nombre AS cliente_nombre,
+              com.nombre_comercio
+       FROM pedido p
+       JOIN consumidor c ON p.id_consumidor = c.id_consumidor
+       JOIN comercio com ON p.id_comercio = com.id_comercio
+       WHERE p.id_pedido = $1`,
+      [id_pedido]
+    );
+
+    const datos = result.rows[0];
+
+    if (datos) {
+      const html = generarMailSeguimiento(
+        { 
+          numero_pedido: datos.numero_pedido, 
+          total: datos.total, 
+          id_envio: datos.id_envio,
+          comercio: { nombre_comercio: datos.nombre_comercio }
+        }, 
+        nuevoEstado, 
+        datos.cliente_nombre
+      );
+
+      await sendEmail(
+        datos.cliente_mail,
+        `Actualización de tu pedido #${datos.numero_pedido}: ${nuevoEstado}`,
+        html
+      );
+      console.log(`✅ Mail de seguimiento enviado a ${datos.cliente_mail}`);
+    }
+  } catch (error) {
+    console.error("❌ Error en notificación de seguimiento:", error.message);
+  }
+};
+
+
+// ... mantener crearPedido y listarPedidosPorComercio igual que antes ...
 
 export const crearPedido = async (req, res) => {
   try {
@@ -242,6 +287,7 @@ export const listarPedidosPorComercio = async (req, res) => {
   }
 };
 
+
 export const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id_pedido } = req.params;
@@ -266,6 +312,9 @@ export const actualizarEstadoPedido = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Pedido no encontrado para este comercio' });
     }
+
+    // 🚀 DISPARAMOS EL MAIL (Sin esperar con await para que el Front responda rápido)
+    notificarSeguimientoCliente(id_pedido, estado);
 
     res.json({ mensaje: 'Estado actualizado correctamente', pedido: result.rows[0] });
   } catch (error) {
