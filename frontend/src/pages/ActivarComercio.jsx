@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,7 +26,7 @@ export default function ActivarComercio() {
   useEffect(() => {
     if (!user) return;
 
-    fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+    fetch(apiUrl(`/api/comercio/${user.id_usuario}`))
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -73,8 +74,7 @@ export default function ActivarComercio() {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:4000/api/comercio/activar",
+      const response = await fetch(apiUrl("/api/comercio/activar"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -132,8 +132,7 @@ export default function ActivarComercio() {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:4000/api/comercio/activar",
+      const response = await fetch(apiUrl("/api/comercio/activar"),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

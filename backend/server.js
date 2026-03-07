@@ -29,10 +29,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // 4. CONFIGURACIÓN DE MIDDLEWARES
 app.use(cors({
-  origin: ["http://localhost:5173", "https://pfc-aia.onrender.com"],
+  origin: allowedOrigins,
   credentials: true // Recomendado si vas a usar cookies o sesiones luego
 }));
 app.use(express.json());

@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import TiendaLoading from '../components/TiendaLoading';
@@ -26,7 +27,7 @@ export default function PedidoConfirmado() {
     const fetchTienda = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:4000/api/comercio/tienda/${slug}`);
+        const res = await fetch(apiUrl(`/api/comercio/tienda/${slug}`));
         if (!res.ok) return setTiendaData(null);
         const d = await res.json();
         setTiendaData(d);
@@ -47,7 +48,7 @@ export default function PedidoConfirmado() {
         try {
           setLoadingPay(true);
           // Dentro de generarPreferencia, cambia la línea del fetch por esta:
-          /*const response = await fetch("https://pfc-aia.onrender.com/api/pagos/crear-preferencia", {
+          /*const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -64,7 +65,7 @@ export default function PedidoConfirmado() {
          // ... dentro de generarPreferencia ...
 
           // 🔄 CAMBIO: Apuntamos al backend local para testear ahora mismo
-          const response = await fetch("http://localhost:4000/api/pagos/crear-preferencia", {
+          const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

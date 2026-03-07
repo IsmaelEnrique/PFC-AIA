@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useState } from 'react';
 import './AuthModal.css';
 
@@ -48,7 +49,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         console.log('📤 Enviando registro:', { nombre: formData.nombre, apellido: formData.apellido, mail: formData.mail, id_comercio });
 
         // Registro
-        const response = await fetch('http://localhost:4000/api/consumidor/registro', {
+        const response = await fetch(apiUrl("/api/consumidor/registro"), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -79,7 +80,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
       } else {
         console.log('📤 Enviando login:', formData.mail, id_comercio);
         // Login
-        const response = await fetch('http://localhost:4000/api/consumidor/login', {
+        const response = await fetch(apiUrl("/api/consumidor/login"), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Logo from "../components/Logo.jsx";
@@ -17,7 +18,7 @@ export default function Navbar() {
   // 🔍 Obtener slug si el usuario está logueado
   useEffect(() => {
     if (user?.id_usuario) {
-      fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+      fetch(apiUrl(`/api/comercio/${user.id_usuario}`))
         .then(res => res.json())
         .then(data => {
           console.log("Datos del comercio:", data); // ← LOG PARA DEBUG

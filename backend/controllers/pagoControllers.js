@@ -3,6 +3,9 @@ import { supabase } from '../config/supabase.js';
 import { sendEmail } from '../utils/mailer.js';
 import { generarFacturaHTML } from '../utils/emailTemplates.js';
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+
 // 1. Notificaciones (Mantenemos tu lógica pero corregimos la consulta)
 export const procesarNotificaciones = async (idPedido) => {
   try {
@@ -67,8 +70,8 @@ export const crearPreferencia = async (req, res) => {
         // 🔑 CLAVE: El external_reference para que recibirConfirmacionPago funcione
         external_reference: id_pedido, 
         back_urls: {
-          success: `https://pfc-aia.onrender.com/api/pagos/callback`, // Tu ruta de confirmación
-          failure: `https://tu-tienda.com/pago-fallido`,
+          success: `${BACKEND_URL}/api/pagos/callback`,
+          failure: `${FRONTEND_URL}/pago-error`,
         },
         auto_return: "approved",
       }
@@ -97,10 +100,10 @@ export const recibirConfirmacionPago = async (req, res) => {
       await procesarNotificaciones(idPedido);
 
       // Redirigimos a la tienda (Ajustá esta URL a la de tu tienda frontend)
-      return res.redirect(`http://localhost:5173/pedido-exitoso?id=${idPedido}`);
+      return res.redirect(`${FRONTEND_URL}/pedido-exitoso?id=${idPedido}`);
     }
 
-    res.redirect(`http://localhost:5173/pago-error`);
+    res.redirect(`${FRONTEND_URL}/pago-error`);
   } catch (error) {
     res.status(500).send("Error interno");
   }

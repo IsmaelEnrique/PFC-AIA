@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -39,7 +40,7 @@ export default function AgregarProducto() {
 
     const user = JSON.parse(userData);
 
-    fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+    fetch(apiUrl(`/api/comercio/${user.id_usuario}`))
       .then(res => res.json())
       .then(data => {
         if (data && data.id_comercio) {
@@ -54,13 +55,13 @@ export default function AgregarProducto() {
     if (!comercio) return;
 
     // Cargar categorías
-    fetch(`http://localhost:4000/api/categorias?id_comercio=${comercio.id_comercio}`)
+    fetch(apiUrl(`/api/categorias?id_comercio=${comercio.id_comercio}`))
       .then(r => r.json())
       .then(data => setCategorias(Array.isArray(data) ? data : []))
       .catch(() => {});
 
     // Cargar características
-    fetch(`http://localhost:4000/api/caracteristicas?id_comercio=${comercio.id_comercio}`)
+    fetch(apiUrl(`/api/caracteristicas?id_comercio=${comercio.id_comercio}`))
       .then(r => r.json())
       .then(async (data) => {
         console.log("📦 Características recibidas:", data);
@@ -71,7 +72,7 @@ export default function AgregarProducto() {
           caracteristicasArray.map(async (carac) => {
             try {
               console.log(`🔍 Cargando valores para característica ${carac.id_caracteristica}...`);
-              const valoresRes = await fetch(`http://localhost:4000/api/caracteristicas/valores?id_caracteristica=${carac.id_caracteristica}`);
+              const valoresRes = await fetch(apiUrl(`/api/caracteristicas/valores?id_caracteristica=${carac.id_caracteristica}`));
               console.log(`📡 Status HTTP: ${valoresRes.status} ${valoresRes.statusText}`);
               
               if (!valoresRes.ok) {
@@ -99,7 +100,7 @@ export default function AgregarProducto() {
 
     // Si es edición, cargar producto
     if (idProducto) {
-      fetch(`http://localhost:4000/api/productos/${idProducto}`)
+      fetch(apiUrl(`/api/productos/${idProducto}`))
         .then(r => r.json())
         .then(producto => {
           setFormData({
@@ -109,7 +110,7 @@ export default function AgregarProducto() {
             activo: producto.activo,
           });
           if (producto.foto) {
-            setImagenPreview(`http://localhost:4000${producto.foto}`);
+            setImagenPreview(`${API_BASE_URL}${producto.foto}`);
           }
           // Extraer solo los IDs de las categorías
           const categoriasIds = producto.categorias ? producto.categorias.map(c => c.id_categoria) : [];
@@ -117,7 +118,7 @@ export default function AgregarProducto() {
         });
 
       // Cargar características del producto
-      fetch(`http://localhost:4000/api/productos/${idProducto}/caracteristicas`)
+      fetch(apiUrl(`/api/productos/${idProducto}/caracteristicas`))
         .then(r => r.json())
         .then(data => {
           console.log("📋 Características del producto:", data);
@@ -132,7 +133,7 @@ export default function AgregarProducto() {
         .catch(error => console.error("Error cargando características del producto:", error));
 
       // Cargar variantes
-      fetch(`http://localhost:4000/api/productos/${idProducto}/variantes`)
+      fetch(apiUrl(`/api/productos/${idProducto}/variantes`))
         .then(r => r.json())
         .then(data => {
           console.log("📦 Variantes recibidas del backend:", data);
@@ -222,7 +223,7 @@ export default function AgregarProducto() {
 
     try {
       // Crear la característica
-      const caracResponse = await fetch("http://localhost:4000/api/caracteristicas", {
+      const caracResponse = await fetch(apiUrl("/api/caracteristicas"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -238,7 +239,7 @@ export default function AgregarProducto() {
       // Crear los valores
       const valoresCreados = [];
       for (const valorNombre of valoresValidos) {
-        const valorResponse = await fetch("http://localhost:4000/api/caracteristicas/valores", {
+        const valorResponse = await fetch(apiUrl("/api/caracteristicas/valores"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -327,7 +328,7 @@ export default function AgregarProducto() {
     try {
       const valoresCreados = [];
       for (const valorNombre of valoresValidos) {
-        const valorResponse = await fetch("http://localhost:4000/api/caracteristicas/valores", {
+        const valorResponse = await fetch(apiUrl("/api/caracteristicas/valores"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -461,7 +462,7 @@ export default function AgregarProducto() {
         const formDataImg = new FormData();
         formDataImg.append("imagen", imagen);
 
-        const imgResponse = await fetch("http://localhost:4000/api/upload", {
+        const imgResponse = await fetch(apiUrl("/api/upload"), {
           method: "POST",
           body: formDataImg,
         });
@@ -483,8 +484,8 @@ export default function AgregarProducto() {
       };
 
       const url = idProducto
-        ? `http://localhost:4000/api/productos/${idProducto}`
-        : "http://localhost:4000/api/productos";
+        ? apiUrl(`/api/productos/${idProducto}`)
+        : apiUrl("/api/productos");
 
       const method = idProducto ? "PUT" : "POST";
 
@@ -503,12 +504,10 @@ export default function AgregarProducto() {
       if (showVariantes && variantes.length > 0) {
         // Si es edición, primero eliminar variantes anteriores
         if (idProducto) {
-          const variantesAnteriores = await fetch(
-            `http://localhost:4000/api/productos/${idProductoFinal}/variantes`
-          ).then(r => r.json()).catch(() => []);
+          const variantesAnteriores = await fetch(apiUrl(`/api/productos/${idProductoFinal}/variantes`)).then(r => r.json()).catch(() => []);
 
           for (const varianteAnterior of variantesAnteriores) {
-            await fetch(`http://localhost:4000/api/productos/variantes/${varianteAnterior.id_variante}`, {
+            await fetch(apiUrl(`/api/productos/variantes/${varianteAnterior.id_variante}`), {
               method: "DELETE"
             }).catch(err => console.error("Error eliminando variante:", err));
           }
@@ -523,7 +522,7 @@ export default function AgregarProducto() {
             stock: parseInt(variante.stock) || 0,
           };
 
-          await fetch(`http://localhost:4000/api/productos/${idProductoFinal}/variantes`, {
+          await fetch(apiUrl(`/api/productos/${idProductoFinal}/variantes`), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(varianteData),

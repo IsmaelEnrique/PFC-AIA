@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import useCart from "../hooks/useCart";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -44,7 +45,7 @@ export default function TiendaPublica() {
     const fetchTienda = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:4000/api/comercio/tienda/${slug}`);
+        const response = await fetch(apiUrl(`/api/comercio/tienda/${slug}`));
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -104,7 +105,7 @@ export default function TiendaPublica() {
   const logoUrl = comercio.logo 
     ? comercio.logo.startsWith('http') 
       ? comercio.logo 
-      : `http://localhost:4000${comercio.logo}`
+      : `${API_BASE_URL}${comercio.logo}`
     : null;
 
   const storeData = {
@@ -140,7 +141,7 @@ export default function TiendaPublica() {
         minVariantPrice,
         code: p.codigo,
         description: p.descripcion,
-        foto: p.foto ? `http://localhost:4000${p.foto}` : null,
+        foto: p.foto ? `${API_BASE_URL}${p.foto}` : null,
         categorias: p.categorias,
         variantes: variantesNorm
       };

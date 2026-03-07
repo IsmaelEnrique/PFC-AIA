@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AuthModal from "../components/AuthModal";
@@ -38,20 +39,20 @@ export default function ProductDetail() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const resT = await fetch(`http://localhost:4000/api/comercio/tienda/${slug}`);
+        const resT = await fetch(apiUrl(`/api/comercio/tienda/${slug}`));
         if (!resT.ok) return setError('Tienda no encontrada');
         const tienda = await resT.json();
         setTiendaData(tienda);
 
-        const resP = await fetch(`http://localhost:4000/api/productos/${id}`);
+        const resP = await fetch(apiUrl(`/api/productos/${id}`));
         if (!resP.ok) return setError('Producto no encontrado');
         const prod = await resP.json();
         // Normalizar foto
-        prod.foto = prod.foto ? `http://localhost:4000${prod.foto}` : null;
+        prod.foto = prod.foto ? `${API_BASE_URL}${prod.foto}` : null;
 
         // Obtener variantes con sus valores (nombre de cada valor)
         try {
-          const resV = await fetch(`http://localhost:4000/api/productos/${id}/variantes`);
+          const resV = await fetch(apiUrl(`/api/productos/${id}/variantes`));
           if (resV.ok) {
             const variantesRaw = await resV.json();
             const variantes = variantesRaw.map(v => {
@@ -98,7 +99,7 @@ export default function ProductDetail() {
   const storeData = {
     name: comercio.nombre_comercio,
     description: comercio.descripcion || "Bienvenido a nuestra tienda",
-    logo: comercio.logo ? (comercio.logo.startsWith('http') ? comercio.logo : `http://localhost:4000${comercio.logo}`) : null,
+    logo: comercio.logo ? (comercio.logo.startsWith('http') ? comercio.logo : `${API_BASE_URL}${comercio.logo}`) : null,
     logoSize: 60,
     products: tiendaData.productos.map(p => ({
       id: p.id_producto,
@@ -106,7 +107,7 @@ export default function ProductDetail() {
       price: p.precio || 0,
       code: p.codigo,
       description: p.descripcion,
-      foto: p.foto ? `http://localhost:4000${p.foto}` : null,
+      foto: p.foto ? `${API_BASE_URL}${p.foto}` : null,
       categorias: p.categorias,
       variantes: p.variantes
     })),

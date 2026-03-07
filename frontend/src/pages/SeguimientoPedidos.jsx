@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,10 +24,7 @@ const ENVIO_LABELS = {
   2: "Envío por correo",
 };
 
-const API_BASE =
-  import.meta.env && import.meta.env.PROD
-    ? "https://pfc-aia.onrender.com"
-    : "http://localhost:4000";
+const API_BASE = API_BASE_URL;
 
 async function parseApiResponse(res) {
   const contentType = res.headers.get("content-type") || "";

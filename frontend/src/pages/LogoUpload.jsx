@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/logo-upload.css';
@@ -26,12 +27,12 @@ const LogoUpload = ({ onLogoUpload }) => {
         return;
       }
       try {
-        const res = await fetch(`http://localhost:4000/api/comercio?id_usuario=${user.id_usuario}`);
+        const res = await fetch(apiUrl(`/api/comercio?id_usuario=${user.id_usuario}`));
         const comercio = await res.json();
         if (comercio?.logo) {
           const fullUrl = comercio.logo.startsWith('http')
             ? comercio.logo
-            : `http://localhost:4000${comercio.logo}`;
+            : `${API_BASE_URL}${comercio.logo}`;
           setLogoPreview(fullUrl);
           localStorage.setItem('storeLogo', fullUrl);
         }
@@ -159,7 +160,7 @@ const LogoUpload = ({ onLogoUpload }) => {
       const formData = new FormData();
       formData.append('imagen', logoFile);
 
-      const uploadRes = await fetch('http://localhost:4000/api/upload', {
+      const uploadRes = await fetch(apiUrl("/api/upload"), {
         method: 'POST',
         body: formData,
       });
@@ -171,7 +172,7 @@ const LogoUpload = ({ onLogoUpload }) => {
 
       const { url } = await uploadRes.json();
 
-      const saveRes = await fetch('http://localhost:4000/api/comercio/logo', {
+      const saveRes = await fetch(apiUrl("/api/comercio/logo"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: user.id_usuario, logo: url }),

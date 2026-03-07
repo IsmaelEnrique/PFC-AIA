@@ -1,92 +1,65 @@
-# 🛒 Backend - Proyecto E-commerce (PFC-AIA)
+# Backend - PFC-AIA
 
-Este backend está desarrollado en **Node.js + Express**, con base de datos **PostgreSQL**.  
-Su función es conectar el frontend (React) con la base de datos, manejando productos, usuarios, pedidos, etc.
----
+API REST para ecommerce basico, construida con Node.js + Express y PostgreSQL.
 
-## Requisitos previos
+## Requisitos
 
-Antes de ejecutar el servidor, asegurate de tener instalado:
+- Node.js 18+
+- PostgreSQL
 
-- [Node.js](https://nodejs.org/en/) (versión 18 o superior)
-- [PostgreSQL](https://www.postgresql.org/download/)
-- DBeaver (opcional, para visualizar la base de datos)
----
+## Instalacion
 
-## ⚙️ Instalación inicial
-1. Clonar el repositorio:
-
-   ```bash
-   git clone https://github.com/tu_usuario/PFC-AIA.git
-   cd PFC-AIA/backend
-
-Instalar dependencias:
-
-bash
-Copiar código
+```bash
+cd backend
 npm install
+```
 
-Crear un archivo .env en esta carpeta con tus datos de conexión:
-env
-Copiar código
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=tu_contraseña ((es postgres tamb la contra))
-DB_NAME=ecommerce
-PORT=3001
-(Opcional) Crear la base de datos en PostgreSQL usando el script db/init.sql:
+## Variables de entorno
 
-bash
-Copiar código
-psql -U postgres -f db/init.sql
-🖥️ Ejecutar el servidor
-Para levantar el backend en modo desarrollo:
+Usar las plantillas incluidas:
 
-bash
-Copiar código
+- `backend/.env.example`
+- `backend/.env.development.example`
+- `backend/.env.production.example`
+
+Para local, copiar:
+
+```bash
+cp .env.development.example .env
+```
+
+Campos clave:
+
+- `PORT`: puerto del servidor (default 4000)
+- `BACKEND_URL`: URL publica del backend
+- `FRONTEND_URL`: URL publica del frontend
+- `CORS_ORIGINS`: lista separada por comas de orígenes permitidos
+- `SUPABASE_URL` y `SUPABASE_KEY`
+- `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`, `PGDATABASE`
+- `EMAIL_USER`, `EMAIL_PASS`
+- `MP_CLIENT_ID`, `MP_CLIENT_SECRET`, `MP_REDIRECT_URI`
+
+## Scripts
+
+- `npm run dev`: iniciar backend en desarrollo
+- `npm start`: iniciar backend en produccion
+
+## Ejecucion local
+
+```bash
+cd backend
 npm run dev
-El servidor se ejecuta en: http://localhost:3001
+```
 
-Si querés probar el servidor:
+Servidor por defecto: `http://localhost:4000`
 
-Abrí el navegador en http://localhost:3001
+## Deploy
 
-O usá Postman para enviar peticiones a /api/...
+1. Crear servicio Node en tu plataforma.
+2. Configurar variables de entorno de `backend/.env.production.example`.
+3. Configurar comando start: `npm start`.
+4. Confirmar que `BACKEND_URL`, `FRONTEND_URL` y `CORS_ORIGINS` esten correctas para producción.
 
-🔗 Conexión con el frontend
-El frontend está desarrollado en React (carpeta /frontend o raíz del proyecto).
+## Nota
 
-Asegurate de que el backend esté corriendo antes de abrir el frontend.
-
-Las peticiones desde React se hacen a http://localhost:3001/api/...
-
-Ejemplo de uso con fetch:
-
-js
-Copiar código
-fetch("http://localhost:3001/api/productos")
-  .then(res => res.json())
-  .then(data => console.log(data))
-👥 Equipo
-Priscila Rouiller — Backend / Base de datos
-
-[Nombre del compañero] — Frontend / UI
-
-🧩 Estructura
-bash
-Copiar código
-backend/
-│
-├── db/
-│   └── init.sql           # Script de creación de tablas
-│
-├── server.js              # Servidor principal Express
-├── package.json           # Dependencias y scripts
-├── .env                   # Variables de entorno (no se sube a Git)
-└── README.md              # Guía del backend
-🛠 Scripts útiles
-Comando	Descripción
-npm run dev	Inicia el servidor en modo desarrollo
-npm start	Inicia el servidor en modo producción
-npm install	Instala las dependencias
+No subir `.env` reales con secretos al repositorio.

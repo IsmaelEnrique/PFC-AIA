@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -34,7 +35,7 @@ export default function LoginConsumidor({ id_comercio, nombreTienda }) {
 
     try {
       // 🚀 Enviamos mail, password Y EL ID_COMERCIO de la tienda actual
-      const response = await fetch("http://localhost:4000/api/auth/login", {
+      const response = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

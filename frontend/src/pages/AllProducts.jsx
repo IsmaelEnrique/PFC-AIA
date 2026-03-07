@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useState, useEffect } from 'react';
 import useCart from '../hooks/useCart';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
@@ -69,7 +70,7 @@ export default function AllProducts() {
     const fetchTienda = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:4000/api/comercio/tienda/${slug}`);
+        const res = await fetch(apiUrl(`/api/comercio/tienda/${slug}`));
         if (!res.ok) {
           setError('No se pudo cargar la tienda');
           return;
@@ -92,7 +93,7 @@ export default function AllProducts() {
 
   const { comercio, categorias, productos } = tiendaData;
 
-  const logoUrl = comercio.logo ? (comercio.logo.startsWith('http') ? comercio.logo : `http://localhost:4000${comercio.logo}`) : null;
+  const logoUrl = comercio.logo ? (comercio.logo.startsWith('http') ? comercio.logo : `${API_BASE_URL}${comercio.logo}`) : null;
 
   const storeData = {
     name: comercio.nombre_comercio,
@@ -113,7 +114,7 @@ export default function AllProducts() {
       name: p.nombre,
       price: p.precio || 0,
       description: p.descripcion,
-      foto: p.foto ? `http://localhost:4000${p.foto}` : null,
+      foto: p.foto ? `${API_BASE_URL}${p.foto}` : null,
       categorias: p.categorias,
       variantes: variantesNorm
     };

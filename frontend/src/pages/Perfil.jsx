@@ -1,11 +1,10 @@
+import { API_BASE_URL } from "../config/api";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Perfil() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-
-  const API_BASE_URL = "https://pfc-aia.onrender.com";
 
   const [form, setForm] = useState({
     nombre: "",

@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // 1. Importación de tus plantillas reales
@@ -76,7 +77,7 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
         return;
       }
       try {
-        const res = await fetch(`http://localhost:4000/api/comercio?id_usuario=${user.id_usuario}`);
+        const res = await fetch(apiUrl(`/api/comercio?id_usuario=${user.id_usuario}`));
         const comercio = await res.json();
         const saved = Number(comercio?.["tipo_diseño"]);
         if ([1, 2, 3].includes(saved)) {
@@ -104,7 +105,7 @@ const DesignSelector = ({ proyectoId, storeLogo }) => {
 
     setSavingId(template.id);
     try {
-      const response = await fetch('http://localhost:4000/api/comercio/diseno', {
+      const response = await fetch(apiUrl("/api/comercio/diseno"), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_usuario: user.id_usuario, tipo_diseno: template.code })

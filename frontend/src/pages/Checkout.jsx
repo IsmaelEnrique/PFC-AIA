@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useEffect, useState } from "react";
 import TiendaLoading from "../components/TiendaLoading";
 import { useParams, useNavigate } from "react-router-dom";
@@ -24,7 +25,7 @@ export default function Checkout() {
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`http://localhost:4000/api/comercio/tienda/${slug}`)
+    fetch(apiUrl(`/api/comercio/tienda/${slug}`))
       .then(r => r.json())
       .then(d => setTiendaData(d))
       .catch(() => {});
@@ -33,7 +34,7 @@ export default function Checkout() {
   useEffect(() => {
     if (!tiendaData) return;
     // get enabled methods for this commerce (uses id_usuario from comercio)
-    fetch(`http://localhost:4000/api/comercio/metodos?id_usuario=${tiendaData.comercio.id_usuario}`)
+    fetch(apiUrl(`/api/comercio/metodos?id_usuario=${tiendaData.comercio.id_usuario}`))
       .then(r => r.json())
       .then(data => {
         const pm = data.payments || [];
@@ -44,7 +45,7 @@ export default function Checkout() {
       .catch(() => {});
 
     // Cargar datos del usuario propietario (para datos bancarios)
-    fetch(`http://localhost:4000/api/usuarios/${tiendaData.comercio.id_usuario}`)
+    fetch(apiUrl(`/api/usuarios/${tiendaData.comercio.id_usuario}`))
       .then(r => r.json())
       .then(u => setSellerUser(u))
       .catch(() => setSellerUser(null));
@@ -90,7 +91,7 @@ export default function Checkout() {
     };
 
     try {
-      const res = await fetch('http://localhost:4000/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch(apiUrl("/api/pedidos"), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) return alert(data.error || 'Error al crear pedido');
       // success: navigate to confirmation with detalles and comercio info

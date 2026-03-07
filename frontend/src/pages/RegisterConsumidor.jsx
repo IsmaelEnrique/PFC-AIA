@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -38,7 +39,7 @@ export default function RegisterConsumidor({ id_comercio, nombreTienda }) {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/registrar", {
+      const response = await fetch(apiUrl("/api/auth/registrar"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

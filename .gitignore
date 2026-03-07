@@ -23,6 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment files
+.env
+.env.*
+frontend/.env
+backend/.env
+!*.env.example
+!*.env.development.example
+!*.env.production.example
+
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md

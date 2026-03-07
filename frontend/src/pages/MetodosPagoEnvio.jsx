@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -28,7 +29,7 @@ export default function MetodosPagoEnvio() {
   });
   const [shippingPrice, setShippingPrice] = useState("");
 
-  const API_BASE = (import.meta.env && import.meta.env.PROD) ? 'https://pfc-aia.onrender.com' : 'http://localhost:4000';
+  const API_BASE = API_BASE_URL;
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -72,7 +73,7 @@ export default function MetodosPagoEnvio() {
   const handleVincularMP = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const clientId = "7848395303150296"; 
-    const redirectUri = encodeURIComponent("https://pfc-aia.onrender.com/api/pagos/callback");
+    const redirectUri = encodeURIComponent(apiUrl("/api/pagos/callback"));
     const state = user.id_usuario;
     window.location.href = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;
   };

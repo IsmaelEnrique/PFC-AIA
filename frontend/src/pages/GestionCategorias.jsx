@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 // frontend/src/pages/GestionCategorias.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ export default function GestionCategorias() {
   useEffect(() => {
     if (!user) return;
 
-    fetch(`http://localhost:4000/api/comercio?id_usuario=${user.id_usuario}`)
+    fetch(apiUrl(`/api/comercio?id_usuario=${user.id_usuario}`))
       .then(res => res.json())
       .then(data => {
         if (data && data.id_comercio) {
@@ -37,7 +38,7 @@ export default function GestionCategorias() {
   }, [user]);
 
   const cargarCategorias = (idComercio) => {
-    fetch(`http://localhost:4000/api/categorias?id_comercio=${idComercio}`)
+    fetch(apiUrl(`/api/categorias?id_comercio=${idComercio}`))
       .then(res => res.json())
       .then(data => {
         const categoriasFormato = Array.isArray(data) ? data.map(cat => ({
@@ -81,7 +82,7 @@ const categoriasOrdenadas = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch("http://localhost:4000/api/categorias", {
+      const response = await fetch(apiUrl("/api/categorias"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -116,7 +117,7 @@ const categoriasOrdenadas = () => {
     if (!window.confirm("¿Estás seguro que querés eliminar esta categoría?")) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/categorias/${idCategoria}`, {
+      const response = await fetch(apiUrl(`/api/categorias/${idCategoria}`), {
         method: "DELETE",
       });
 

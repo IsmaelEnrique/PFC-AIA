@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/api";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -35,7 +36,7 @@ export default function Login() {
   const handleResendEmail = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/api/auth/reenviar-verificacion", {
+      const response = await fetch(apiUrl("/api/auth/reenviar-verificacion"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mail: email, tipo: "usuario" }), // El vendedor es tipo 'usuario'
@@ -62,7 +63,7 @@ export default function Login() {
 
     try {
       // 1) Intentamos el login por Auth (flujo nuevo)
-      const authResponse = await fetch("http://localhost:4000/api/auth/login", {
+      const authResponse = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mail: email, contrasena: password }),
@@ -73,7 +74,7 @@ export default function Login() {
 
       // 2) Fallback legacy: cuentas históricas en la tabla usuario
       if (!authResponse.ok && authResponse.status === 401) {
-        const legacyResponse = await fetch("http://localhost:4000/api/usuarios/login", {
+        const legacyResponse = await fetch(apiUrl("/api/usuarios/login"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mail: email, contrasena: password }),

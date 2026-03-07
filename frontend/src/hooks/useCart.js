@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useState, useEffect, useCallback } from 'react';
 
 export default function useCart({ tiendaData, consumidor }) {
@@ -11,7 +12,7 @@ export default function useCart({ tiendaData, consumidor }) {
     const id = p.id || p.id_producto || null;
     const name = p.name || p.nombre || '';
     let foto = p.foto || null;
-    if (foto && !foto.startsWith('http')) foto = `http://localhost:4000${foto}`;
+    if (foto && !foto.startsWith('http')) foto = `${API_BASE_URL}${foto}`;
     const price = p.price || p.precio || p.effectivePrice || 0;
     return { id, name, foto, price };
   };
@@ -68,7 +69,7 @@ export default function useCart({ tiendaData, consumidor }) {
       }
 
       try {
-        const res = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+        const res = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`));
         if (res.ok) {
           const data = await res.json();
           setIdCarrito(data.carrito?.id_carrito || null);
@@ -118,12 +119,12 @@ export default function useCart({ tiendaData, consumidor }) {
 
     if (consumidor && tiendaData) {
       try {
-        await fetch('http://localhost:4000/api/carrito/agregar', {
+        await fetch(apiUrl("/api/carrito/agregar"), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id_consumidor: consumidor.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, id_producto: p.id, id_variante: v?.id_variante || null, cantidad: 1 })
         });
         // refresh backend cart
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+        const r = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`));
         if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); try { if (storageKey) localStorage.removeItem(storageKey); } catch {} }
       } catch (e) { console.error('Error syncing add to backend', e); }
     }
@@ -141,8 +142,8 @@ export default function useCart({ tiendaData, consumidor }) {
       try {
         const q = new URLSearchParams({ id_carrito: String(item.id_carrito), id_producto: String(item.id_producto) });
         if (item.id_variante != null) q.append('id_variante', String(item.id_variante));
-        await fetch(`http://localhost:4000/api/carrito/eliminar?${q.toString()}`, { method: 'DELETE' });
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+        await fetch(apiUrl(`/api/carrito/eliminar?${q.toString()}`), { method: 'DELETE' });
+        const r = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`));
         if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); }
       } catch (e) { console.error('Error syncing remove to backend', e); }
     }
@@ -159,8 +160,8 @@ export default function useCart({ tiendaData, consumidor }) {
 
     if (consumidor && item?.id_carrito && item?.id_producto) {
       try {
-        await fetch('http://localhost:4000/api/carrito/actualizar', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad }) });
-        const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+        await fetch(apiUrl("/api/carrito/actualizar"), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_carrito: item.id_carrito, id_producto: item.id_producto, id_variante: item.id_variante || null, cantidad: nuevaCantidad }) });
+        const r = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`));
         if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); }
       } catch (e) { console.error('Error syncing update to backend', e); }
     }
@@ -170,7 +171,7 @@ export default function useCart({ tiendaData, consumidor }) {
     setCarrito([]);
     try { if (!consumidor && storageKey) localStorage.removeItem(storageKey); } catch (e) {}
     if (consumidor && idCarrito) {
-      try { await fetch(`http://localhost:4000/api/carrito/vaciar/${idCarrito}`, { method: 'DELETE' }); const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`); if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); } } catch (e) { console.error('Error vaciando backend cart', e); }
+      try { await fetch(apiUrl(`/api/carrito/vaciar/${idCarrito}`), { method: 'DELETE' }); const r = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidor.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`)); if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); } } catch (e) { console.error('Error vaciando backend cart', e); }
     }
   };
 
@@ -186,12 +187,12 @@ export default function useCart({ tiendaData, consumidor }) {
       if (localRaw) {
         const items = JSON.parse(localRaw).map(item => ({ id_producto: item.producto.id, id_variante: item.variante?.id_variante || item.variante?.id || null, cantidad: item.cantidad }));
         if (items.length) {
-          await fetch('http://localhost:4000/api/consumidor/migrar-carrito', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items }) });
+          await fetch(apiUrl("/api/consumidor/migrar-carrito"), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_consumidor: consumidorData.id_consumidor, id_comercio: tiendaData.comercio.id_comercio, items }) });
           try { if (storageKey) localStorage.removeItem(storageKey); } catch {}
         }
       }
       // fetch backend cart
-      const r = await fetch(`http://localhost:4000/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`);
+      const r = await fetch(apiUrl(`/api/carrito?id_consumidor=${consumidorData.id_consumidor}&id_comercio=${tiendaData.comercio.id_comercio}`));
       if (r.ok) { const data = await r.json(); setIdCarrito(data.carrito?.id_carrito || null); setCarrito(mapBackendItems(data.items || [])); }
     } catch (e) { console.error('Error syncing on login', e); }
   };

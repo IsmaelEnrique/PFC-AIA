@@ -1,3 +1,4 @@
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -20,7 +21,7 @@ export default function GestionProductos() {
     }
 
     const user = JSON.parse(userData);
-    fetch(`http://localhost:4000/api/comercio/${user.id_usuario}`)
+    fetch(apiUrl(`/api/comercio/${user.id_usuario}`))
       .then(res => res.json())
       .then(data => {
         if (data && data.id_comercio) {
@@ -34,7 +35,7 @@ export default function GestionProductos() {
   useEffect(() => {
     if (!comercio) return;
 
-    fetch(`http://localhost:4000/api/productos?id_comercio=${comercio.id_comercio}`)
+    fetch(apiUrl(`/api/productos?id_comercio=${comercio.id_comercio}`))
       .then(r => r.json())
       .then(data => {
         setProductos(Array.isArray(data) ? data : []);
@@ -47,8 +48,7 @@ export default function GestionProductos() {
     if (!window.confirm("¿Cambiar estado del producto?")) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/productos/${producto.id_producto}/estado`,
+      const response = await fetch(apiUrl(`/api/productos/${producto.id_producto}/estado`),
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -487,7 +487,7 @@ export default function GestionProductos() {
                     <div key={p.id_producto} className="producto-card">
                       <div className="producto-imagen">
                         {p.foto ? (
-                          <img src={`http://localhost:4000${p.foto}`} alt={p.nombre} />
+                          <img src={`${API_BASE_URL}${p.foto}`} alt={p.nombre} />
                         ) : (
                           <span className="placeholder">Sin imagen</span>
                         )}

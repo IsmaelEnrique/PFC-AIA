@@ -1,6 +1,8 @@
 // backend/src/controllers/mercadoPagoController.js
 import pool from "../db/db.js";
 
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
 export const vincularVendedor = async (req, res) => {
   const { code, state } = req.query; // 'code' es el permiso, 'state' es el ID del usuario
 
@@ -25,9 +27,9 @@ export const vincularVendedor = async (req, res) => {
         "UPDATE comercio SET mp_access_token = $1, mp_user_id = $2 WHERE id_usuario = $3",
         [data.access_token, data.user_id, state]
       );
-      res.redirect("http://localhost:5173/admin/configuracion?vinc=success");
+      res.redirect(`${FRONTEND_URL}/admin/configuracion?vinc=success`);
     }
   } catch (error) {
-    res.redirect("http://localhost:5173/admin/configuracion?vinc=error");
+    res.redirect(`${FRONTEND_URL}/admin/configuracion?vinc=error`);
   }
 };
