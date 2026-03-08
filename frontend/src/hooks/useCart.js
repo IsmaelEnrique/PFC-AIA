@@ -1,5 +1,6 @@
 import { API_BASE_URL, apiUrl } from "../config/api";
 import { useState, useEffect, useCallback } from 'react';
+import { calcularSubtotal as calcularSubtotalItems, calcularTotal as calcularTotalItems } from '../utils/cartMath';
 
 export default function useCart({ tiendaData, consumidor }) {
   const [carrito, setCarrito] = useState([]);
@@ -175,8 +176,8 @@ export default function useCart({ tiendaData, consumidor }) {
     }
   };
 
-  const calcularSubtotal = () => carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
-  const calcularTotal = calcularSubtotal;
+  const calcularSubtotal = () => calcularSubtotalItems(carrito);
+  const calcularTotal = () => calcularTotalItems(carrito);
   const cantidadTotalItems = carrito.reduce((t,i) => t + i.cantidad, 0);
 
   const syncOnLogin = async (consumidorData) => {

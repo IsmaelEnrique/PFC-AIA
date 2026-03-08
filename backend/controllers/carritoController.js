@@ -70,6 +70,41 @@ export const agregarProducto = async (req, res) => {
   }
 
   try {
+    // Validar que el producto exista y esté activo para el comercio.
+    const productoRes = await pool.query(
+      `SELECT id_producto, activo
+       FROM producto
+       WHERE id_producto = $1 AND id_comercio = $2`,
+      [id_producto, id_comercio]
+    );
+
+    if (productoRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Producto no encontrado para este comercio' });
+    }
+
+    if (productoRes.rows[0].activo === false) {
+      return res.status(400).json({ error: 'Este producto no está disponible para la venta' });
+    }
+
+    // Si se agrega una variante, validar stock para evitar compras sin disponibilidad.
+    if (id_variante) {
+      const varianteRes = await pool.query(
+        `SELECT stock
+         FROM variante
+         WHERE id_variante = $1 AND id_producto = $2`,
+        [id_variante, id_producto]
+      );
+
+      if (varianteRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Variante no encontrada para el producto' });
+      }
+
+      const stockActual = Number(varianteRes.rows[0].stock ?? 0);
+      if (stockActual <= 0) {
+        return res.status(400).json({ error: 'Producto sin stock temporal. Podés verlo, pero no sumarlo al carrito.' });
+      }
+    }
+
     // Obtener o crear carrito
     let carrito = await pool.query(
       'SELECT * FROM carrito WHERE id_consumidor = $1 AND id_comercio = $2',
