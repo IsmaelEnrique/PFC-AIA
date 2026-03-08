@@ -7,6 +7,7 @@ import TemplateColorful from '../templates/Colorful/TemplateColorful';
 import TemplateModern from '../templates/Modern/TemplateModern';
 import AuthModal from '../components/AuthModal';
 import CartModal from '../components/CartModal';
+import { getConsumidorSession, clearConsumidorSession } from '../utils/consumidorSession';
 
 export default function AllProducts() {
   const { slug } = useParams();
@@ -16,7 +17,7 @@ export default function AllProducts() {
   const [consumidor, setConsumidor] = useState(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
-  const { carrito, setCarrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
+  const { carrito, setCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
 
   // pagination
   const [page, setPage] = useState(1);
@@ -26,21 +27,28 @@ export default function AllProducts() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const comercioId = tiendaData?.comercio?.id_comercio;
 
   // Initialize selectedCategory from URL query `?cat=` if present
   useEffect(() => {
-    if (!location) return;
     const params = new URLSearchParams(location.search);
     const cat = params.get('cat');
     if (cat) setSelectedCategory(cat);
   }, [location.search]);
 
   useEffect(() => {
-    const consumidorGuardado = localStorage.getItem('consumidor');
-    if (consumidorGuardado) {
-      try { setConsumidor(JSON.parse(consumidorGuardado)); } catch {};
+    if (!comercioId) {
+      setConsumidor(null);
+      return;
     }
-  }, []);
+
+    try {
+      const consumidorGuardado = getConsumidorSession(comercioId);
+      setConsumidor(consumidorGuardado || null);
+    } catch {
+      setConsumidor(null);
+    }
+  }, [comercioId]);
 
   // Manejar login/registro de consumidor (similar a TiendaPublica)
   const handleLogin = async (consumidorData) => {
@@ -59,12 +67,12 @@ export default function AllProducts() {
         try {
           const updated = e.newValue ? JSON.parse(e.newValue) : [];
           setCarrito(updated);
-        } catch (err) { /* ignore parse errors */ }
+        } catch { /* ignore parse errors */ }
       }
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
-  }, [tiendaData]);
+  }, [tiendaData, setCarrito]);
 
   useEffect(() => {
     const fetchTienda = async () => {
@@ -77,7 +85,7 @@ export default function AllProducts() {
         }
         const data = await res.json();
         setTiendaData(data);
-      } catch (err) {
+      } catch {
         setError('Error de conexión');
       } finally { setLoading(false); }
     };
@@ -181,7 +189,7 @@ export default function AllProducts() {
    consumidor,
     abrirAuth: () => setAuthModalOpen(true),
     cerrarSesion: () => {
-      try { localStorage.removeItem('consumidor'); } catch {}
+      clearConsumidorSession(comercio?.id_comercio);
       setConsumidor(null);
       setCarrito([]);
       window.location.reload();
@@ -202,27 +210,6 @@ export default function AllProducts() {
     hideHero: true,
     showAll: true,
     hideFooter: true
-  };
-
-  
-
-  const variantLabel = (variante) => {
-    if (!variante) return '';
-    if (variante.caracteristicas && variante.caracteristicas.length) return variante.caracteristicas.map(c => c.valor).join(' - ');
-    if (variante.nombre) return variante.nombre;
-    if (variante.nombre_variante) return variante.nombre_variante;
-    if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
-    return `Variante ${variante.id_variante || variante.id || ''}`;
-  };
-
-  const displayProductName = (item) => {
-    const vtext = item.variante ? variantLabel(item.variante) : '';
-    let name = item.producto?.name || '';
-    const suffix = vtext ? ` — ${vtext}` : '';
-    if (suffix && name.endsWith(suffix)) {
-      return name.slice(0, -suffix.length);
-    }
-    return name;
   };
 
   

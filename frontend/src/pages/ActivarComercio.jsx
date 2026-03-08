@@ -306,6 +306,7 @@ export default function ActivarComercio() {
               value={form.descripcion}
               className={errors.descripcion ? "error-input" : ""}
               maxLength={FIELD_LIMITS.descripcion}
+              placeholder="Aca puedes poner el nombre de tu marca o el texto que se verá en el banner"
               onChange={e =>
                 setForm({ ...form, descripcion: e.target.value })
               }

@@ -1,6 +1,7 @@
 import { apiUrl } from "../config/api";
 import { useState } from 'react';
 import './AuthModal.css';
+import { saveConsumidorSession } from "../utils/consumidorSession";
 
 export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
   const [modo, setModo] = useState('login'); // 'login' o 'registro'
@@ -73,8 +74,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         }
 
         console.log('✅ Registro exitoso, guardando...');
-        // Guardar en localStorage y notificar al padre
-        localStorage.setItem('consumidor', JSON.stringify(data));
+        // Guardar sesion de consumidor aislada por comercio.
+        saveConsumidorSession(id_comercio, data);
         onLogin(data);
         onClose();
       } else {
@@ -102,8 +103,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, id_comercio }) {
         }
 
         console.log('✅ Login exitoso');
-        // Guardar en localStorage y notificar al padre
-        localStorage.setItem('consumidor', JSON.stringify(data));
+        // Guardar sesion de consumidor aislada por comercio.
+        saveConsumidorSession(id_comercio, data);
         onLogin(data);
         onClose();
       }

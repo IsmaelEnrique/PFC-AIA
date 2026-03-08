@@ -79,7 +79,9 @@
   margin-right: -2rem;
   min-height: 280px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   padding: 2.5rem 2rem;
   margin-bottom: 3rem;
 }
@@ -87,6 +89,8 @@
 .minimal-hero.banner-full h2 {
   color: #ffffff;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  font-size: 2.55rem;
+  margin: 0;
 }
 
 .minimal-hero h2 {
@@ -129,9 +133,27 @@
 
 .minimal-products {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 2.5rem;
   margin-bottom: 3rem;
+}
+
+@media (max-width: 1200px) {
+  .minimal-products {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .minimal-products {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .minimal-products {
+    grid-template-columns: 1fr;
+  }
 }
 
 .minimal-item {

@@ -91,8 +91,24 @@ export const crearPedido = async (req, res) => {
     const fecha = new Date();
     const estado = 'En espera';
 
-    // Use a transaction: insert pedido, insert detalle_pedido rows, update variant stock, clear carrito
+    // Use a transaction: lock cart items, insert pedido, insert detalle_pedido rows, update variant stock, clear carrito.
     await pool.query('BEGIN');
+
+    // Lock rows to avoid duplicate order creation on double-submit/race conditions.
+    const itemsRes = await pool.query(
+      `SELECT mpc.id_producto, mpc.id_variante, mpc.cantidad,
+        COALESCE(NULLIF(mpc.precio_unitario, 0), v.precio, 0) as precio_unitario
+       FROM m_n_prod_carrito mpc
+       LEFT JOIN variante v ON mpc.id_variante = v.id_variante
+       WHERE mpc.id_carrito = $1
+       FOR UPDATE`,
+      [id_carrito]
+    );
+
+    if (!itemsRes.rows.length) {
+      await pool.query('ROLLBACK');
+      return res.status(400).json({ error: 'El carrito está vacío o ya fue procesado.' });
+    }
 
     const insert = await pool.query(
       `INSERT INTO pedido (numero_pedido, id_carrito, id_consumidor, id_comercio, fecha, total, id_pago, id_envio, estado, calle, numero, piso, localidad, provincia, codigo_postal)
@@ -101,16 +117,6 @@ export const crearPedido = async (req, res) => {
     );
 
     const pedidoRow = insert.rows[0];
-
-    // Obtener items del carrito para crear detalle_pedido
-    const itemsRes = await pool.query(
-      `SELECT mpc.id_producto, mpc.id_variante, mpc.cantidad,
-        COALESCE(NULLIF(mpc.precio_unitario, 0), v.precio, 0) as precio_unitario
-       FROM m_n_prod_carrito mpc
-       LEFT JOIN variante v ON mpc.id_variante = v.id_variante
-       WHERE mpc.id_carrito = $1`,
-      [id_carrito]
-    );
 
     for (const item of itemsRes.rows) {
       // Insert detalle

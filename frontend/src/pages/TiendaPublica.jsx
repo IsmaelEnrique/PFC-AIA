@@ -7,6 +7,7 @@ import TemplateColorful from "../templates/Colorful/TemplateColorful";
 import TemplateModern from "../templates/Modern/TemplateModern";
 import AuthModal from "../components/AuthModal";
 import "../styles/tienda-publica.css";
+import { getConsumidorSession, clearConsumidorSession } from "../utils/consumidorSession";
 
 export default function TiendaPublica() {
   const { slug } = useParams();
@@ -27,20 +28,31 @@ export default function TiendaPublica() {
     if (!location) return;
     const params = new URLSearchParams(location.search);
     const cat = params.get('cat');
-    if (cat) setCategoriaSeleccionada(cat);
+    if (cat) {
+      const parsed = Number(cat);
+      setCategoriaSeleccionada(Number.isNaN(parsed) ? cat : parsed);
+    } else {
+      setCategoriaSeleccionada(null);
+    }
   }, [location]);
 
-  // Cargar consumidor del localStorage al montar
+  const comercioId = tiendaData?.comercio?.id_comercio;
+
+  // Cargar consumidor de la sesion del comercio actual.
   useEffect(() => {
-    const consumidorGuardado = localStorage.getItem('consumidor');
-    if (consumidorGuardado) {
-      try {
-        setConsumidor(JSON.parse(consumidorGuardado));
-      } catch (error) {
-        console.error('Error al cargar consumidor:', error);
-      }
+    if (!comercioId) {
+      setConsumidor(null);
+      return;
     }
-  }, []);
+
+    try {
+      const consumidorGuardado = getConsumidorSession(comercioId);
+      setConsumidor(consumidorGuardado || null);
+    } catch (error) {
+      console.error('Error al cargar consumidor:', error);
+      setConsumidor(null);
+    }
+  }, [comercioId]);
 
   useEffect(() => {
     const fetchTienda = async () => {
@@ -100,7 +112,14 @@ export default function TiendaPublica() {
   const { comercio, categorias, productos } = tiendaData;
 
   const filteredProducts = categoriaSeleccionada
-    ? productos.filter(p => Array.isArray(p.categorias) && p.categorias.some(c => c.id_categoria === categoriaSeleccionada))
+    ? productos.filter(
+        (p) =>
+          Array.isArray(p.categorias) &&
+          p.categorias.some(
+            (c) =>
+              String(c.id_categoria ?? c.id ?? c) === String(categoriaSeleccionada)
+          )
+      )
     : productos;
 
   const logoUrl = comercio.logo 
@@ -169,7 +188,7 @@ export default function TiendaPublica() {
 
   // Cerrar sesión
   const handleLogout = () => {
-    localStorage.removeItem('consumidor');
+    clearConsumidorSession(comercio?.id_comercio);
     setConsumidor(null);
     setCarrito([]);
     window.location.reload();

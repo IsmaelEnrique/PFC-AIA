@@ -9,6 +9,7 @@ import TemplateModern from "../templates/Modern/TemplateModern";
 import "../styles/tienda-publica.css";
 import "../styles/product-detail.css";
 import useCart from "../hooks/useCart";
+import { getConsumidorSession, clearConsumidorSession } from "../utils/consumidorSession";
 
 export default function ProductDetail() {
   const { slug, id } = useParams();
@@ -17,18 +18,29 @@ export default function ProductDetail() {
   const [error, setError] = useState(null);
   const [tiendaData, setTiendaData] = useState(null);
   const [producto, setProducto] = useState(null);
+  const [caracteristicasProducto, setCaracteristicasProducto] = useState([]);
+  const [seleccionValores, setSeleccionValores] = useState({});
   const [imageLoaded, setImageLoaded] = useState(false);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [consumidor, setConsumidor] = useState(null);
-  const { carrito, idCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
+  const { carrito, setCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const comercioId = tiendaData?.comercio?.id_comercio;
 
   useEffect(() => {
-    const consumidorGuardado = localStorage.getItem('consumidor');
-    if (consumidorGuardado) {
-      try { setConsumidor(JSON.parse(consumidorGuardado)); } catch (e) { console.error(e); }
+    if (!comercioId) {
+      setConsumidor(null);
+      return;
     }
-  }, []);
+
+    try {
+      const consumidorGuardado = getConsumidorSession(comercioId);
+      setConsumidor(consumidorGuardado || null);
+    } catch (e) {
+      console.error(e);
+      setConsumidor(null);
+    }
+  }, [comercioId]);
 
   const handleLogin = async (consumidorData) => {
     setConsumidor(consumidorData);
@@ -47,8 +59,10 @@ export default function ProductDetail() {
         const resP = await fetch(apiUrl(`/api/productos/${id}`));
         if (!resP.ok) return setError('Producto no encontrado');
         const prod = await resP.json();
-        // Normalizar foto
-        prod.foto = prod.foto ? `${API_BASE_URL}${prod.foto}` : null;
+        // Normalizar foto (acepta URL absoluta y relativa)
+        prod.foto = prod.foto
+          ? (prod.foto.startsWith('http') ? prod.foto : `${API_BASE_URL}${prod.foto}`)
+          : null;
 
         // Obtener variantes con sus valores (nombre de cada valor)
         try {
@@ -57,7 +71,11 @@ export default function ProductDetail() {
             const variantesRaw = await resV.json();
             const variantes = variantesRaw.map(v => {
               // 'valores' viene del backend como array de { id_valor, id_caracteristica, nombre_valor }
-              const caracteristicas = (v.valores || []).map(val => ({ id_caracteristica: val.id_caracteristica, valor: val.nombre_valor }));
+              const caracteristicas = (v.valores || []).map(val => ({
+                id_caracteristica: val.id_caracteristica,
+                id_valor: val.id_valor,
+                valor: val.nombre_valor,
+              }));
               const nombre = caracteristicas.length > 0 ? caracteristicas.map(c => c.valor).join(' - ') : (`Variante ${v.id_variante}`);
               return {
                 ...v,
@@ -67,8 +85,34 @@ export default function ProductDetail() {
             });
             prod.variantes = variantes;
           }
+
+          const resC = await fetch(apiUrl(`/api/productos/${id}/caracteristicas`));
+          if (resC.ok) {
+            const caracteristicasRaw = await resC.json();
+            const caracteristicasUnicas = Array.isArray(caracteristicasRaw)
+              ? caracteristicasRaw.map((carac) => {
+                  const seen = new Set();
+                  const valoresUnicos = (carac.valores || []).filter((valor) => {
+                    const key = String(valor.id_valor ?? valor.nombre_valor ?? '');
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+
+                  return {
+                    ...carac,
+                    valores: valoresUnicos,
+                  };
+                })
+              : [];
+
+            setCaracteristicasProducto(caracteristicasUnicas);
+          } else {
+            setCaracteristicasProducto([]);
+          }
         } catch (e) {
           console.error('Error cargando variantes:', e);
+          setCaracteristicasProducto([]);
         }
 
         setProducto(prod);
@@ -85,7 +129,30 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setImageLoaded(false);
+    if (!producto?.foto) return;
+
+    // En navegacion SPA la imagen puede venir del cache y no disparar onLoad siempre.
+    const probe = new Image();
+    probe.src = producto.foto;
+
+    if (probe.complete) {
+      setImageLoaded(true);
+      return;
+    }
+
+    const handleReady = () => setImageLoaded(true);
+    probe.addEventListener('load', handleReady);
+    probe.addEventListener('error', handleReady);
+
+    return () => {
+      probe.removeEventListener('load', handleReady);
+      probe.removeEventListener('error', handleReady);
+    };
   }, [producto?.foto]);
+
+  useEffect(() => {
+    setSeleccionValores({});
+  }, [id]);
 
   // cart load handled by useCart
 
@@ -117,38 +184,8 @@ export default function ProductDetail() {
 
   const tipoDiseño = Number(comercio.tipo_diseño);
 
-  const variantLabel = (variante) => {
-    if (!variante) return '';
-    if (variante.caracteristicas && variante.caracteristicas.length) return variante.caracteristicas.map(c => c.valor).join(' - ');
-    if (variante.nombre) return variante.nombre;
-    if (variante.nombre_variante) return variante.nombre_variante;
-    if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
-    return `Variante ${variante.id_variante || variante.id || ''}`;
-  };
-
-  const displayProductName = (item) => {
-    const vtext = item.variante ? variantLabel(item.variante) : '';
-    let name = item.producto?.name || '';
-    const suffix = vtext ? ` — ${vtext}` : '';
-    if (suffix && name.endsWith(suffix)) {
-      return name.slice(0, -suffix.length);
-    }
-    return name;
-  };
-
-  const getCarritoTema = () => {
-    switch (tipoDiseño) {
-      case 1: return 'carrito-minimal';
-      case 2: return 'carrito-colorful';
-      case 3: return 'carrito-modern';
-      default: return 'carrito-minimal';
-    }
-  };
-
-  
-
   const handleLogout = () => {
-    localStorage.removeItem('consumidor');
+    clearConsumidorSession(comercio?.id_comercio);
     setConsumidor(null);
     setCarrito([]);
     navigate(`/tienda/${slug}`);
@@ -172,13 +209,30 @@ export default function ProductDetail() {
     compact: true
   };
 
-  const addBtnClass = tipoDiseño === 1 ? 'minimal-item-btn' : (tipoDiseño === 2 ? 'colorful-slide-btn' : 'modern-add-btn');
+  const addBtnClass = 'detalle-add-btn';
 
   const backBtnClass = tipoDiseño === 1 ? 'minimal-back-btn' : (tipoDiseño === 2 ? 'colorful-back-btn' : 'modern-back-btn');
 
-  const hasVariants = producto.variantes && producto.variantes.length > 0;
   const multipleVariants = producto.variantes && producto.variantes.length > 1;
   const singleVariant = producto.variantes && producto.variantes.length === 1 ? producto.variantes[0] : null;
+
+  const totalCaracteristicas = caracteristicasProducto.length;
+  const totalSeleccionadas = Object.keys(seleccionValores).length;
+  const seleccionCompleta = totalCaracteristicas > 0 && totalSeleccionadas === totalCaracteristicas;
+
+  const varianteSeleccionada = multipleVariants
+    ? producto.variantes.find((v) => {
+        const valoresByCarac = new Map((v.valores || []).map((val) => [String(val.id_caracteristica), String(val.id_valor)]));
+        return Object.entries(seleccionValores).every(([idCarac, idValor]) => valoresByCarac.get(String(idCarac)) === String(idValor));
+      })
+    : null;
+
+  const setValorCaracteristica = (idCaracteristica, idValor) => {
+    setSeleccionValores((prev) => ({
+      ...prev,
+      [idCaracteristica]: idValor,
+    }));
+  };
 
   const imageThemeClass = tipoDiseño === 1 ? 'minimal' : (tipoDiseño === 2 ? 'colorful' : 'modern');
 
@@ -207,18 +261,48 @@ export default function ProductDetail() {
 
           {multipleVariants ? (
             <div className="producto-variantes">
-              <h4>Variantes</h4>
-              {producto.variantes.map(v => (
-                  <div key={v.id_variante} className="variante-item">
-                  <div>{v.nombre || `Variante ${v.id_variante}`}</div>
-                  <div className="variante-precio">${parseFloat(v.precio).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
-                  {Number(v.stock) > 0 ? (
-                    <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, v)}>Agregar al carrito</button>
+              <h4>Elegi las opciones</h4>
+
+              {caracteristicasProducto.map((carac) => (
+                <div key={carac.id_caracteristica} className="carac-selector">
+                  <p className="carac-label">{carac.nombre_caracteristica}</p>
+                  <div className="carac-options">
+                    {(carac.valores || []).map((valor) => {
+                      const active = String(seleccionValores[carac.id_caracteristica] || '') === String(valor.id_valor);
+                      return (
+                        <button
+                          key={valor.id_valor}
+                          type="button"
+                          className={`carac-option-btn ${active ? 'active' : ''}`}
+                          onClick={() => setValorCaracteristica(carac.id_caracteristica, valor.id_valor)}
+                        >
+                          {active ? '✓ ' : ''}{valor.nombre_valor}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {!seleccionCompleta && (
+                <p className="variante-hint">Selecciona una opción de cada característica para ver precio y stock.</p>
+              )}
+
+              {seleccionCompleta && !varianteSeleccionada && (
+                <p className="variante-hint error">No existe esa combinación. Probá con otra selección.</p>
+              )}
+
+              {varianteSeleccionada && (
+                <div className="variante-item resumen-seleccion">
+                  <div>{varianteSeleccionada.nombre || `Variante ${varianteSeleccionada.id_variante}`}</div>
+                  <div className="variante-precio">${parseFloat(varianteSeleccionada.precio).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+                  {Number(varianteSeleccionada.stock) > 0 ? (
+                    <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, varianteSeleccionada)}>Agregar al carrito</button>
                   ) : (
                     <button className={`${addBtnClass} disabled`} disabled>No hay stock disponible</button>
                   )}
                 </div>
-              ))}
+              )}
             </div>
           ) : (
             <div className="producto-precio">

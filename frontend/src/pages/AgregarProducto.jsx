@@ -734,7 +734,7 @@ export default function AgregarProducto() {
                       boxShadow: "0 0 0 3px rgba(244, 180, 0, 0.35)"
                     } : {}}
                   >
-                    📦 Producto Único (sin variantes)
+                    Producto Único (sin variantes)
                   </button>
                 </div>
               )}
@@ -835,7 +835,7 @@ export default function AgregarProducto() {
                                 onClick={() => guardarValoresNuevos(index)}
                                 style={{ marginTop: "10px" }}
                               >
-                                💾 Guardar Valores Nuevos
+                               Guardar Valores Nuevos
                               </button>
                             </div>
                           )}

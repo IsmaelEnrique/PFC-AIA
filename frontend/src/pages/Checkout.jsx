@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import TiendaLoading from "../components/TiendaLoading";
 import { useParams, useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
+import { getConsumidorSession } from "../utils/consumidorSession";
 // render checkout content without the store template/header
 
 export default function Checkout() {
@@ -13,15 +14,26 @@ export default function Checkout() {
   const [available, setAvailable] = useState({ payments: [], shipping: [] });
   const [selected, setSelected] = useState({ payment: null, shipping: null });
   const [sellerUser, setSellerUser] = useState(null);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
   const [address, setAddress] = useState({ calle: '', numero: '', piso: '', localidad: '', provincia: '', codigo_postal: '' });
   const { carrito, idCarrito, calcularTotal } = useCart({ tiendaData, consumidor });
 
   const tipoDiseño = tiendaData?.comercio ? Number(tiendaData.comercio.tipo_diseño) : 1;
+  const comercioId = tiendaData?.comercio?.id_comercio;
 
   useEffect(() => {
-    const c = localStorage.getItem('consumidor');
-    if (c) setConsumidor(JSON.parse(c));
-  }, []);
+    if (!comercioId) {
+      setConsumidor(null);
+      return;
+    }
+
+    try {
+      const c = getConsumidorSession(comercioId);
+      setConsumidor(c || null);
+    } catch {
+      setConsumidor(null);
+    }
+  }, [comercioId]);
 
   useEffect(() => {
     if (!slug) return;
@@ -40,7 +52,15 @@ export default function Checkout() {
         const pm = data.payments || [];
         const sh = data.shipping || [];
         setAvailable({ payments: pm, shipping: sh });
-        setSelected({ payment: pm[0] || null, shipping: sh[0] || null });
+        // No pisar la selección del usuario si ya eligió una opción válida.
+        setSelected((prev) => {
+          const paymentValido = pm.includes(prev.payment) ? prev.payment : null;
+          const shippingValido = sh.includes(prev.shipping) ? prev.shipping : null;
+          return {
+            payment: paymentValido ?? pm[0] ?? null,
+            shipping: shippingValido ?? sh[0] ?? null,
+          };
+        });
       })
       .catch(() => {});
 
@@ -62,6 +82,7 @@ export default function Checkout() {
   };
 
   const handleConfirm = async () => {
+    if (submittingOrder) return;
     if (!consumidor) return alert('Debés iniciar sesión como comprador para finalizar la compra');
     if (!carrito || carrito.length === 0) return alert('El carrito está vacío. Agregá al menos un producto para continuar.');
     if (!selected.payment || !selected.shipping) return alert('Seleccioná método de pago y envío');
@@ -91,12 +112,14 @@ export default function Checkout() {
     };
 
     try {
+      setSubmittingOrder(true);
       const res = await fetch(apiUrl("/api/pedidos"), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) return alert(data.error || 'Error al crear pedido');
       // success: navigate to confirmation with detalles and comercio info
       navigate(`/tienda/${slug}/pedido/${data.pedido.id_pedido}`, { state: { pedido: data.pedido, detalles: data.detalles, comercio: data.comercio, usuario: sellerUser } });
     } catch (e) { console.error(e); alert('Error conectando al servidor'); }
+    finally { setSubmittingOrder(false); }
   };
 
   if (!tiendaData) return <TiendaLoading />;
@@ -120,7 +143,7 @@ export default function Checkout() {
             {Number(selected.payment) === 3 && sellerUser && (
               <div style={{ marginTop: 12, padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: '#fff' }}>
                 <h4 style={{ margin: 0 }}>Datos para transferencia</h4>
-                <p className="muted" style={{ marginTop: 8 }}><strong>CBU / Cta:</strong> {sellerUser.cta_bancaria || 'No disponible'}</p>
+                <p className="muted" style={{ marginTop: 8 }}><strong>CBU / Alias:</strong> {sellerUser.cta_bancaria || 'No disponible'}</p>
                 <p className="muted" style={{ marginTop: 4 }}><strong>Banco:</strong> {sellerUser.nombre_banco || 'No disponible'}</p>
                 <p className="muted" style={{ marginTop: 4 }}><strong>Titular:</strong> {sellerUser.nombre_titular || sellerUser.nombre_usuario || 'No disponible'}</p>
               </div>
@@ -179,7 +202,9 @@ export default function Checkout() {
             )}
 
             <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-              <button className="carrito-btn-finalizar" onClick={handleConfirm}>Confirmar pedido</button>
+              <button className="carrito-btn-finalizar" onClick={handleConfirm} disabled={submittingOrder}>
+                {submittingOrder ? 'Procesando...' : 'Confirmar pedido'}
+              </button>
             </div>
           </div>
 

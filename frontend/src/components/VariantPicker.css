@@ -30,6 +30,13 @@
 .variantpicker-carac { color:#666; font-size:0.9rem; margin-top:4px; }
 .variantpicker-add { background:#0b74de; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; }
 .variantpicker-close { background:transparent; border:none; font-size:1rem; cursor:pointer; }
+.variantpicker-selector { margin: 0 0 10px 0; }
+.variantpicker-selector-label { margin: 0 0 6px 0; font-weight: 600; color: #1f2937; }
+.variantpicker-selector-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.variantpicker-option-btn { border: 1px solid #cbd5e1; background: #fff; color: #1f2937; padding: 6px 10px; border-radius: 999px; cursor: pointer; font-size: 0.92rem; }
+.variantpicker-option-btn.active { background: #1e3a8a; color: #fff; border-color: #1e3a8a; }
+.variantpicker-hint { margin: 8px 0; color: #4b5563; font-size: 0.92rem; }
+.variantpicker-hint.error { color: #b91c1c; font-weight: 600; }
 
 /* Colorful theme keeps many texts white globally; ensure VariantPicker stays readable on white card */
 .colorful .variantpicker-modal,
