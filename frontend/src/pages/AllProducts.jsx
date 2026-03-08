@@ -96,7 +96,7 @@ export default function AllProducts() {
   // initial cart load handled by useCart
 
   if (loading) return <div className="tienda-loading"><div className="loader"></div><p>Cargando tienda...</p></div>;
-  if (error) return <div className="tienda-error"><h2>😕 {error}</h2></div>;
+  if (error) return <div className="tienda-error"><h2>{error}</h2></div>;
   if (!tiendaData) return null;
 
   const { comercio, categorias, productos } = tiendaData;

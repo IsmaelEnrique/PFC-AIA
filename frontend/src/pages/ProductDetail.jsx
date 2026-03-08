@@ -158,7 +158,7 @@ export default function ProductDetail() {
 
   
   if (loading) return (<div className="tienda-loading"><div className="loader"></div><p>Cargando...</p></div>);
-  if (error) return (<div className="tienda-error"><h2>😕 {error}</h2><button onClick={() => navigate(-1)}>Volver</button></div>);
+  if (error) return (<div className="tienda-error"><h2>{error}</h2><button onClick={() => navigate(-1)}>Volver</button></div>);
   if (!producto || !tiendaData) return null;
 
   // Construir storeData como en TiendaPublica

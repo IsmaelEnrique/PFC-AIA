@@ -98,7 +98,7 @@ export default function TiendaPublica() {
   if (error) {
     return (
       <div className="tienda-error">
-        <h2>😕 {error}</h2>
+        <h2>{error}</h2>
         <p>La tienda que buscás no está disponible en este momento.</p>
         <a href="/" className="btn-volver">Volver al inicio</a>
       </div>
