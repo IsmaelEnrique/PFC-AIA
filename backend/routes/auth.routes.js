@@ -1,7 +1,7 @@
 import express from "express";
 import { 
   registrarUsuario,      // Para el vendedor (Panel Admin)
-  registrarConsumidor,   // 🚀 AGREGADO: Para el cliente (Tienda)
+  //registrarConsumidor,   // 🚀 AGREGADO: Para el cliente (Tienda)
   verificarCuenta, 
   reenviarVerificacion,
   loginUsuario           // Función única que maneja ambos logins
@@ -11,7 +11,7 @@ const router = express.Router();
 
 // --- RUTAS DE REGISTRO ---
 router.post("/registrar", registrarUsuario);
-router.post("/registrar-consumidor", registrarConsumidor); // 👈 Esta es la que faltaba
+//router.post("/registrar-consumidor", registrarConsumidor); // 👈 Esta es la que faltaba
 
 // --- RUTAS DE SESIÓN ---
 router.post("/login", loginUsuario); 
