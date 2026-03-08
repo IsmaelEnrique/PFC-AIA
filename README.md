@@ -1,6 +1,6 @@
 # PFC-AIA - Ecommerce Basico
 
-Aplicacion full stack para un ecommerce simple, con:
+Aplicacion full stack para un ecommerce simple, con:  
 
 - frontend en React + Vite
 - backend en Node.js + Express
@@ -96,3 +96,5 @@ npm run build
 - El frontend ahora centraliza la base de API en `frontend/src/config/api.js`.
 - Evitar hardcodes de host/puerto en componentes y hooks.
 - No subir archivos `.env` reales al repositorio.
+
+Ahora va a funcionar, confio
