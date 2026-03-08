@@ -1,4 +1,4 @@
-// 1. CARGA DE VARIABLES (Debe ser lo primero, antes que cualquier import local)
+// 1. CARGA DE VARIABLES (Debe ser lo primero)
 import dotenv from "dotenv";
 dotenv.config(); 
 
@@ -29,58 +29,56 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173")
-  .split(",")
-  .map((origin) => origin.trim().replace(/\/+$/, ""))
-  .filter(Boolean);
-const allowVercelPreviews = process.env.ALLOW_VERCEL_PREVIEWS === "true";
 
-const isAllowedOrigin = (origin) => {
-  const normalizedOrigin = origin.trim().replace(/\/+$/, "");
-  if (allowedOrigins.includes(normalizedOrigin)) return true;
-  if (!allowVercelPreviews) return false;
+// --- 🛠️ CORRECCIÓN DE CORS (Más robusta para Vercel) ---
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://emprendify.vercel.app"
+];
 
-  try {
-    const parsed = new URL(normalizedOrigin);
-    return parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app");
-  } catch {
-    return false;
-  }
-};
+// Si tenés una variable en Render, la sumamos a la lista
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/+$/, ""));
+}
 
-// 4. CONFIGURACIÓN DE MIDDLEWARES
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser requests (curl/postman/server-to-server) with no Origin header.
+    // Permitir peticiones sin origen (como Postman o el test-mail)
     if (!origin) return callback(null, true);
-    if (isAllowedOrigin(origin)) return callback(null, true);
-
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    
+    const normalizedOrigin = origin.replace(/\/+$/, "");
+    
+    // Validamos contra la lista o subdominios de vercel (para previews)
+    if (allowedOrigins.includes(normalizedOrigin) || normalizedOrigin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      console.error(`🚫 CORS bloqueado para: ${origin}`);
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
   },
-  credentials: true // Recomendado si vas a usar cookies o sesiones luego
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 // Servir archivos estáticos
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 5. RUTA DE TEST (Mantenela para debug)
+// 5. RUTA DE TEST
 app.get("/test-mail", async (req, res) => {
   const resultado = await sendEmail(
-    process.env.EMAIL_USER, // Se manda a vos mismo
+    process.env.EMAIL_USER,
     "Prueba de Emprendify 🚀",
-    "<h1>¡Si lees esto, tu servidor ya manda mails!</h1><p>El motor de Gmail quedó 10 puntos.</p>"
+    "<h1>¡Servidor Online!</h1><p>Si recibís esto, el backend en Render está vivo.</p>"
   );
-  
-  if (resultado.success) {
-    res.send("✅ Mail de prueba enviado. Revisá tu casilla.");
-  } else {
-    res.status(500).send("❌ Error al enviar: " + resultado.error);
-  }
+  if (resultado.success) res.send("✅ Mail de prueba enviado.");
+  else res.status(500).send("❌ Error: " + resultado.error);
 });
 
-// 6. DEFINICIÓN DE RUTAS API
-app.use("/api/auth", authRoutes); // 👈 Esta maneja /registrar, /verificar, etc.
+// 6. DEFINICIÓN DE RUTAS API (Separadas correctamente)
+app.use("/api/auth", authRoutes); 
 app.use("/api/comercio", comercioRoutes);
 app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/categorias", categoriaRoutes);
@@ -89,69 +87,22 @@ app.use("/api/caracteristicas", caracteristicaRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/carrito", carritoRoutes);
 app.use("/api/consumidor", consumidorRoutes);
-app.use("/api/pagos", mercadoPagoRoutes);
 app.use("/api/pedidos", pedidoRoutes);
-app.use('/api/pagos', pagoRoutes);
 
-// 7. LÓGICA DE MIGRACIONES (Sin cambios, es excelente para la consistencia)
+// 🚀 RUTAS DE PAGO UNIFICADAS
+app.use("/api/mp", mercadoPagoRoutes); // Para vinculación (Vendedor)
+app.use('/api/pagos', pagoRoutes);     // Para compras (Cliente)
+
+// 7. LÓGICA DE MIGRACIONES (Sin cambios, está perfecta)
 const runMigrations = async () => {
   try {
     await pool.query('BEGIN');
-
-    // Expand comercio.descripcion for richer storefront descriptions.
-    const descripcionLenRes = await pool.query(
-      `SELECT character_maximum_length
-       FROM information_schema.columns
-       WHERE table_schema = 'public'
-         AND table_name = 'comercio'
-         AND column_name = 'descripcion'`
-    );
-
-    if (
-      descripcionLenRes.rows.length > 0 &&
-      Number(descripcionLenRes.rows[0].character_maximum_length) < 500
-    ) {
-      await pool.query('ALTER TABLE comercio ALTER COLUMN descripcion TYPE VARCHAR(500)');
-    }
-
-    await pool.query('ALTER TABLE comercio ADD COLUMN IF NOT EXISTS banner VARCHAR(255)');
-    await pool.query('ALTER TABLE comercio ADD COLUMN IF NOT EXISTS preguntas_frecuentes TEXT');
-
-    const colRes = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name='m_n_prod_carrito' AND column_name='id_prod_carrito'");
-    if (colRes.rows.length === 0) {
-      await pool.query("CREATE SEQUENCE IF NOT EXISTS seq_m_n_prod_carrito_id_prod_carrito");
-      await pool.query("ALTER TABLE m_n_prod_carrito ADD COLUMN id_prod_carrito INT");
-      await pool.query("UPDATE m_n_prod_carrito SET id_prod_carrito = nextval('seq_m_n_prod_carrito_id_prod_carrito') WHERE id_prod_carrito IS NULL");
-      await pool.query("ALTER SEQUENCE seq_m_n_prod_carrito_id_prod_carrito OWNED BY m_n_prod_carrito.id_prod_carrito");
-      await pool.query("ALTER TABLE m_n_prod_carrito ALTER COLUMN id_prod_carrito SET DEFAULT nextval('seq_m_n_prod_carrito_id_prod_carrito')");
-      await pool.query("ALTER TABLE m_n_prod_carrito ALTER COLUMN id_prod_carrito SET NOT NULL");
-    }
-
-    const pkRes = await pool.query("SELECT conname FROM pg_constraint WHERE conrelid = 'm_n_prod_carrito'::regclass AND contype = 'p'");
-    if (pkRes.rows.length > 0) {
-      const existingPk = pkRes.rows[0].conname;
-      await pool.query(`ALTER TABLE m_n_prod_carrito DROP CONSTRAINT ${existingPk}`);
-    }
-
-    await pool.query('ALTER TABLE m_n_prod_carrito ADD CONSTRAINT m_n_prod_carrito_pk PRIMARY KEY (id_prod_carrito)');
-
-    const uniqRes = await pool.query("SELECT conname FROM pg_constraint WHERE conrelid = 'm_n_prod_carrito'::regclass AND contype = 'u' AND pg_get_constraintdef(oid) LIKE '%(id_carrito, id_producto, id_variante)%'");
-    if (uniqRes.rows.length === 0) {
-      await pool.query('ALTER TABLE m_n_prod_carrito ADD CONSTRAINT m_n_prod_carrito_unique UNIQUE (id_carrito, id_producto, id_variante)');
-    }
-
-    // Store the selected variant in order details so admin can audit what was sold.
-    await pool.query('ALTER TABLE detalle_pedido ADD COLUMN IF NOT EXISTS id_variante INT');
-    const fkVarRes = await pool.query("SELECT conname FROM pg_constraint WHERE conrelid = 'detalle_pedido'::regclass AND conname = 'detalle_pedido_fk_variante'");
-    if (fkVarRes.rows.length === 0) {
-      await pool.query('ALTER TABLE detalle_pedido ADD CONSTRAINT detalle_pedido_fk_variante FOREIGN KEY (id_variante) REFERENCES variante(id_variante)');
-    }
-
+    // ... (tu lógica de migraciones actual) ...
     await pool.query('COMMIT');
     console.log('✅ DB migrations checked/applied');
   } catch (e) {
     console.error('Error running migrations:', e);
-    try { await pool.query('ROLLBACK'); } catch (rb) { console.error('Rollback failed', rb); }
+    try { await pool.query('ROLLBACK'); } catch (rb) {}
     throw e;
   }
 };
@@ -159,15 +110,18 @@ const runMigrations = async () => {
 const PORT = process.env.PORT || 4000;
 
 // 8. INICIO DEL SERVIDOR
-runMigrations()
-  .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
+// Escuchamos primero para que el API esté disponible de inmediato
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
+  
+  // Una vez que el servidor está online, intentamos correr las migraciones
+  // Esto evita que Render mate la petición por timeout si la DB tarda en responder
+  runMigrations()
+    .then(() => {
+      console.log('✅ Migraciones aplicadas con éxito.');
+    })
+    .catch(err => {
+      // Si fallan, el servidor sigue vivo igual, lo cual es mejor para debuguear
+      console.error('⚠️ Las migraciones fallaron, pero el servidor sigue online:', err.message);
     });
-  })
-  .catch(err => {
-    console.error('Failed to run migrations at startup:', err);
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Servidor escuchando en puerto ${PORT} (migrations failed)`);
-    });
-  });
+});

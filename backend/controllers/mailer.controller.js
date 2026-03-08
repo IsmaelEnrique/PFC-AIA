@@ -3,15 +3,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuración del transporte de Gmail
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 587,              // 🚀 CAMBIO: Usamos 587 en lugar de 465
+  secure: false,          // false para puerto 587 (usa STARTTLS)
   auth: {
-    user: process.env.EMAIL_USER, // Tu correo de Gmail
-    pass: process.env.EMAIL_PASS  // Tu contraseña de aplicación (ecpy twke ogbu ouvm)
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false // Ayuda a evitar bloqueos en servidores de nube
   }
 });
-
 /**
  * Función universal para enviar correos
  * @param {string} to - Destinatario

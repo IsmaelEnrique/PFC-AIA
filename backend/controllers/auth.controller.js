@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+/*import crypto from 'crypto';
 import { supabase } from '../config/supabase.js';
 import { sendEmail } from './mailer.controller.js';
 import { plantillaVerificacion } from '../utils/emailTemplates.js';
@@ -306,7 +306,7 @@ export const loginUsuario = async (req, res) => {
 };
 
 //registro de consumidor con la tienda 
-export const registrarConsumidor = async (req, res) => {
+/*export const registrarConsumidor = async (req, res) => {
   // Recibimos id_comercio desde la tienda específica
   const { mail, password, nombre, apellido, id_comercio } = req.body; 
 
@@ -339,8 +339,8 @@ export const registrarConsumidor = async (req, res) => {
 
     // 3. Envío de Mail Personalizado
     // Podrías buscar el nombre del comercio antes para ponerlo en el asunto
-    const urlVerificacion = `${process.env.BACKEND_URL}/api/auth/verificar/${token}?tipo=consumidor`;
-    
+    //const urlVerificacion = `${process.env.BACKEND_URL}/api/auth/verificar/${token}?tipo=consumidor`;
+    const urlVerificacion = `https://pfc-aia.onrender.com/api/auth/verificar/${token}`;
     await sendEmail(
       mail, 
       "Confirmá tu cuenta en la tienda 🛍️", 
@@ -352,8 +352,68 @@ export const registrarConsumidor = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Error interno" });
   }
-};
+};*/
 
+/*export const registrarConsumidor = async (req, res) => {
+  // 1. Extraemos todos los datos del body (Vienen desde el formulario de la tienda)
+  const { nombre, apellido, mail, password, id_comercio } = req.body; 
+
+  console.log(`🚀 Iniciando registro para: ${mail} en comercio: ${id_comercio}`);
+
+  try {
+    // 2. Crear usuario en la sección de Autenticación de Supabase
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: mail,
+      password: password,
+    });
+
+    if (authError) {
+      console.error("❌ Error en Supabase Auth:", authError.message);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    // 3. Generar token de verificación manual (para tu lógica interna)
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiracion = new Date();
+    expiracion.setHours(expiracion.getHours() + 24);
+
+    // 4. Insertar en tu tabla 'consumidor' vinculándolo a la tienda
+    const { error: dbError } = await supabase.from('consumidor').insert([{
+      nombre,
+      apellido, 
+      mail,
+      id_auth: authData.user.id,
+      id_comercio: id_comercio, 
+      verificado: false,
+      token_verificacion: token,
+      token_expiracion: expiracion
+    }]);
+
+    if (dbError) {
+       console.error("❌ Error al insertar en tabla consumidor:", dbError.message);
+       return res.status(500).json({ error: "No se pudo crear el perfil del consumidor" });
+    }
+
+    // 5. Envío de Mail: Se envía a la variable 'mail' (el correo que puso el cliente)
+    const urlVerificacion = `https://pfc-aia.onrender.com/api/auth/verificar/${token}`;
+    
+    const emailResult = await sendEmail(
+      mail, 
+      "Confirmá tu cuenta en la tienda 🛍️", 
+      plantillaVerificacion(nombre, urlVerificacion)
+    );
+
+    if (!emailResult.success) {
+      console.warn("⚠️ Usuario creado pero el mail falló:", emailResult.error);
+    }
+
+    res.status(201).json({ message: "Registro exitoso. ¡Revisá tu casilla de correo!" });
+
+  } catch (error) {
+    console.error("❌ Error crítico en registrarConsumidor:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
 export const login = async (req, res) => {
   const { mail, contrasena, tipo, id_comercio } = req.body; 
   // tipo: 'usuario' o 'consumidor'
@@ -413,4 +473,157 @@ export const login = async (req, res) => {
     console.error("Error en login:", error);
     res.status(500).json({ error: "Error interno en el servidor." });
   }
+};
+*/
+
+import crypto from 'crypto';
+import { supabase } from '../config/supabase.js';
+import { sendEmail } from './mailer.controller.js';
+import { plantillaVerificacion } from '../utils/emailTemplates.js';
+import pool from '../db/db.js';
+import bcrypt from 'bcrypt';
+
+// --- FUNCIONES DE APOYO (Mantenelas arriba) ---
+const columnCache = new Map();
+async function getTableColumns(tableName) {
+  if (columnCache.has(tableName)) return columnCache.get(tableName);
+  const result = await pool.query(
+    "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1",
+    [tableName]
+  );
+  const cols = new Set(result.rows.map((r) => r.column_name));
+  columnCache.set(tableName, cols);
+  return cols;
+}
+
+// --- 1. REGISTRO UNIFICADO ---
+export const registrarUsuario = async (req, res) => {
+  const { mail, password, nombre, apellido, tipo, id_comercio } = req.body;
+  const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
+
+  try {
+    // Registro en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: mail,
+      password: password,
+    });
+
+    if (authError) return res.status(400).json({ error: authError.message });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiracion = new Date();
+    expiracion.setHours(expiracion.getHours() + 24);
+
+    // Insertar en la tabla correspondiente
+    const { error: dbError } = await supabase.from(tabla).insert([{
+      nombre,
+      apellido, // Extraído del body
+      mail,
+      id_auth: authData.user.id,
+      id_comercio: tipo === 'consumidor' ? id_comercio : null,
+      verificado: false,
+      token_verificacion: token,
+      token_expiracion: expiracion
+    }]);
+
+    if (dbError) return res.status(500).json({ error: dbError.message });
+
+    // Envío de Mail: USAMOS EL MAIL DEL BODY
+    const urlVerificacion = `https://pfc-aia.onrender.com/api/auth/verificar/${token}?tipo=${tipo}`;
+    await sendEmail(mail, "Activá tu cuenta en Emprendify 🚀", plantillaVerificacion(nombre, urlVerificacion));
+
+    res.status(201).json({ message: "Registro exitoso. Revisá tu mail." });
+  } catch (error) {
+    console.error("Error en registro:", error);
+    res.status(500).json({ error: "Error en el servidor" });
+  }
+};
+
+// --- 2. LOGIN UNIFICADO (Soporta ambos tipos) ---
+export const loginUsuario = async (req, res) => {
+  const { mail, contrasena, tipo, id_comercio } = req.body;
+  const mailNormalizado = (mail || '').trim().toLowerCase();
+
+  try {
+    // 1. Auth en Supabase
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: mailNormalizado,
+      password: contrasena,
+    });
+
+    if (authError) return res.status(401).json({ error: "Credenciales incorrectas" });
+
+    // 2. Buscar perfil
+    const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
+    let query = supabase.from(tabla).select('*').eq('id_auth', authData.user.id);
+
+    if (tipo === 'consumidor') {
+      if (!id_comercio) return res.status(400).json({ error: "Falta ID de comercio" });
+      query = query.eq('id_comercio', id_comercio);
+    }
+
+    const { data: perfil, error: dbError } = await query.single();
+
+    if (dbError || !perfil) return res.status(401).json({ error: "Perfil no encontrado en esta tienda" });
+
+    if (!perfil.verificado) {
+      return res.status(403).json({ error: "Cuenta no verificada", unverified: true });
+    }
+
+    const { token_verificacion, ...usuarioSeguro } = perfil;
+    res.json({ ...usuarioSeguro, role: tipo });
+
+  } catch (error) {
+    console.error("Error en login:", error);
+    res.status(500).json({ error: "Error interno" });
+  }
+};
+
+// --- 3. VERIFICACIÓN Y REENVÍO ---
+export const verificarCuenta = async (req, res) => {
+    const { token } = req.params;
+    const { tipo } = req.query;
+    const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
+    const idCol = tipo === 'consumidor' ? 'id_consumidor' : 'id_usuario';
+
+    try {
+        const { data: user, error } = await supabase.from(tabla)
+            .select('*').eq('token_verificacion', token).single();
+
+        if (error || !user || new Date() > new Date(user.token_expiracion)) {
+            return res.status(400).send("<h1>El enlace es inválido o expiró.</h1>");
+        }
+
+        await supabase.from(tabla)
+            .update({ verificado: true, token_verificacion: null, token_expiracion: null })
+            .eq(idCol, user[idCol]);
+
+        res.redirect(`https://emprendify.vercel.app/login?verificado=true`);
+    } catch (error) {
+        res.status(500).send("Error en la verificación");
+    }
+};
+
+export const reenviarVerificacion = async (req, res) => {
+    const { mail, tipo } = req.body;
+    const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
+
+    try {
+        const token = crypto.randomBytes(32).toString('hex');
+        const exp = new Date();
+        exp.setHours(exp.getHours() + 24);
+
+        const { data: user, error } = await supabase.from(tabla)
+            .update({ token_verificacion: token, token_expiracion: exp })
+            .eq('mail', mail).select().single();
+
+        if (error || !user) return res.status(404).json({ error: "Usuario no encontrado." });
+
+        const url = `https://pfc-aia.onrender.com/api/auth/verificar/${token}?tipo=${tipo}`;
+        await sendEmail(mail, "Nuevo enlace de verificación", plantillaVerificacion(user.nombre, url));
+        
+        return res.json({ message: "Correo reenviado." });
+    } catch (error) {
+        res.status(500).json({ error: "Error al reenviar" });
+    }
 };

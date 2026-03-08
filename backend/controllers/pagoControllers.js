@@ -2,10 +2,12 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { supabase } from '../config/supabase.js';
 import { sendEmail } from '../utils/mailer.js';
 import { generarFacturaHTML } from '../utils/emailTemplates.js';
-
+/*
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
-
+*/
+const FRONTEND_URL = "https://emprendify.vercel.app";
+const BACKEND_URL = "https://pfc-aia.onrender.com";
 // 1. Notificaciones (Mantenemos tu lógica pero corregimos la consulta)
 export const procesarNotificaciones = async (idPedido) => {
   try {
@@ -60,18 +62,20 @@ export const crearPreferencia = async (req, res) => {
     const preference = new Preference(client);
 
     const result = await preference.create({
-      body: {
+      body:{
         items: items.map(i => ({
-          title: i.nombre,
+          title: i.nombre || i.producto_nombre || "Producto de Emprendify",
           unit_price: Number(i.precio),
           quantity: Number(i.cantidad),
           currency_id: 'ARS'
         })),
         // 🔑 CLAVE: El external_reference para que recibirConfirmacionPago funcione
         external_reference: id_pedido, 
-        back_urls: {
+       back_urls: {
+          // El cliente vuelve a través de tu backend para que proceses la lógica
           success: `${BACKEND_URL}/api/pagos/callback`,
-          failure: `${FRONTEND_URL}/pago-error`,
+          failure: `${FRONTEND_URL}/tienda/${comercioData.slug}/confirmacion?status=error`,
+          pending: `${FRONTEND_URL}/tienda/${comercioData.slug}/confirmacion?status=pending`,
         },
         auto_return: "approved",
       }

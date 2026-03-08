@@ -1,5 +1,6 @@
 import pool from "../db/db.js";
-import { sendEmail } from '../utils/mailer.js';
+import { sendEmail } from '../utils/mailer.controller.js';
+//import { sendEmail } from '../utils/mailer.js';
 import { generarMailSeguimiento } from '../utils/emailTemplates.js';
 
 const ESTADOS_PEDIDO_VALIDOS = [
@@ -21,7 +22,7 @@ function generateOrderNumber() {
 }
 
 // --- FUNCIÓN DE APOYO PARA NOTIFICACIONES ---
-const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
+/*const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
   try {
     const result = await pool.query(
       `SELECT p.numero_pedido, p.total, p.id_envio, 
@@ -59,7 +60,47 @@ const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
     console.error("❌ Error en notificación de seguimiento:", error.message);
   }
 };
+*/
+const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
+  try {
+    // 🔍 Buscamos los datos REALES del cliente para este pedido
+    const result = await pool.query(
+      `SELECT p.numero_pedido, p.total, p.id_envio, 
+              c.mail AS cliente_mail, c.nombre AS cliente_nombre,
+              com.nombre_comercio
+       FROM pedido p
+       JOIN consumidor c ON p.id_consumidor = c.id_consumidor
+       JOIN comercio com ON p.id_comercio = com.id_comercio
+       WHERE p.id_pedido = $1`,
+      [id_pedido]
+    );
 
+    const datos = result.rows[0];
+
+    if (datos && datos.cliente_mail) {
+      const html = generarMailSeguimiento(
+        { 
+          numero_pedido: datos.numero_pedido, 
+          total: datos.total, 
+          id_envio: datos.id_envio,
+          comercio: { nombre_comercio: datos.nombre_comercio }
+        }, 
+        nuevoEstado, 
+        datos.cliente_nombre
+      );
+
+      // 🚀 ¡CLAVE! Aquí usamos 'datos.cliente_mail', NO 'process.env.EMAIL_USER'
+      await sendEmail(
+        datos.cliente_mail, 
+        `Novedades de tu pedido #${datos.numero_pedido}: ${nuevoEstado}`,
+        html
+      );
+      console.log(`📧 Mail enviado con éxito a: ${datos.cliente_mail}`);
+    }
+  } catch (error) {
+    console.error("❌ Error enviando mail:", error.message);
+  }
+};
 
 // ... mantener crearPedido y listarPedidosPorComercio igual que antes ...
 
@@ -294,7 +335,7 @@ export const listarPedidosPorComercio = async (req, res) => {
 };
 
 
-export const actualizarEstadoPedido = async (req, res) => {
+/*export const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id_pedido } = req.params;
     const { estado, id_comercio } = req.body;
@@ -326,5 +367,26 @@ export const actualizarEstadoPedido = async (req, res) => {
   } catch (error) {
     console.error('Error actualizarEstadoPedido:', error);
     res.status(500).json({ error: 'Error al actualizar estado del pedido' });
+  }
+};*/
+export const actualizarEstadoPedido = async (req, res) => {
+  const { id_pedido } = req.params;
+  const { estado, id_comercio } = req.body;
+
+  try {
+    // 1. Update en la DB
+    const result = await pool.query(
+      `UPDATE pedido SET estado = $1 WHERE id_pedido = $2 AND id_comercio = $3 RETURNING *`,
+      [estado, id_pedido, id_comercio]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    // 2. Disparar notificación (aquí se usa la función de arriba)
+    notificarSeguimientoCliente(id_pedido, estado);
+
+    res.json({ mensaje: 'Estado actualizado', pedido: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
