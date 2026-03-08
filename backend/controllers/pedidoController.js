@@ -1,5 +1,5 @@
 import pool from "../db/db.js";
-import { sendEmail } from '../utils/mailer.controller.js';
+import { sendEmail } from '../controllers/mailer.controller.js';
 //import { sendEmail } from '../utils/mailer.js';
 import { generarMailSeguimiento } from '../utils/emailTemplates.js';
 
