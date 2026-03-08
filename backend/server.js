@@ -31,12 +31,32 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
+const allowVercelPreviews = process.env.ALLOW_VERCEL_PREVIEWS === "true";
+
+const isAllowedOrigin = (origin) => {
+  const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+  if (allowedOrigins.includes(normalizedOrigin)) return true;
+  if (!allowVercelPreviews) return false;
+
+  try {
+    const parsed = new URL(normalizedOrigin);
+    return parsed.protocol === "https:" && parsed.hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+};
 
 // 4. CONFIGURACIÓN DE MIDDLEWARES
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl/postman/server-to-server) with no Origin header.
+    if (!origin) return callback(null, true);
+    if (isAllowedOrigin(origin)) return callback(null, true);
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true // Recomendado si vas a usar cookies o sesiones luego
 }));
 app.use(express.json());

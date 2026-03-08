@@ -254,6 +254,25 @@ Verificar:
 - Disponibilidad de la pasarela de pago.
 - Metodo de pago habilitado en el comercio.
 
+### 6.5 La web en Vercel solo funciona si tengo el servidor local prendido
+
+Esto ocurre cuando el frontend desplegado sigue apuntando a `http://localhost:4000`.
+
+Para resolverlo:
+
+1. Desplegar el backend en un hosting publico (por ejemplo Render/Railway/Fly.io).
+2. En Vercel (proyecto frontend), configurar `VITE_API_BASE_URL` con la URL publica del backend.
+3. En el backend, configurar:
+   - `FRONTEND_URL=https://tu-proyecto.vercel.app`
+   - `CORS_ORIGINS=https://tu-proyecto.vercel.app,https://www.tu-dominio.com` (si aplica)
+   - `ALLOW_VERCEL_PREVIEWS=true` (opcional, para aceptar dominios preview `*.vercel.app`)
+4. Hacer redeploy de frontend y backend.
+
+Resultado esperado:
+
+- La tienda funciona en Vercel sin depender de `localhost`.
+- Las llamadas API responden desde el backend publico.
+
 ## 7. Recomendaciones De Operacion
 
 - Probar los flujos criticos despues de cambios funcionales.
