@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -22,6 +22,7 @@ import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
 import PedidoConfirmado from "./pages/PedidoConfirmado";
 import Checkout from "./pages/Checkout";
+import { DEFAULT_FAVICON, setDocumentBranding } from "./utils/branding";
 
 // Componente para proteger rutas
 function ProtectedRoute({ element }) {
@@ -38,6 +39,13 @@ function PublicRoute({ element }) {
 export default function App() {
   const [storeLogo, setStoreLogo] = useState(null);
   const location = useLocation();
+
+  useEffect(() => {
+    setDocumentBranding({
+      title: "Emprendify",
+      favicon: DEFAULT_FAVICON,
+    });
+  }, [location.pathname]);
   
   // Detectar si estamos en la ruta de tienda pública
   const esTiendaPublica = location.pathname.startsWith('/tienda/');
