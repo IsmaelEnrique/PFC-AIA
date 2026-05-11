@@ -497,7 +497,7 @@ async function getTableColumns(tableName) {
 }
 
 // --- 1. REGISTRO UNIFICADO ---
-export const registrarUsuario = async (req, res) => {
+/*export const registrarUsuario = async (req, res) => {
   const { mail, password, nombre, apellido, tipo, id_comercio } = req.body;
   const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
 
@@ -508,7 +508,10 @@ export const registrarUsuario = async (req, res) => {
       password: password,
     });
 
-    if (authError) return res.status(400).json({ error: authError.message });
+  if (authError) {
+    console.log("SUPABASE ERROR:", authError);
+    return res.status(400).json({ error: authError.message });
+  }
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiracion = new Date();
@@ -538,6 +541,95 @@ export const registrarUsuario = async (req, res) => {
     res.status(500).json({ error: "Error en el servidor" });
   }
 };
+*/
+
+export const registrarUsuario = async (req, res) => {
+    console.log("🔥🔥🔥 AUTH REGISTRAR NUEVO 🔥🔥🔥");
+  console.log("=== NUEVO REGISTRO ===");
+  console.log("BODY:", req.body);
+
+  const { mail, password, nombre, tipo, id_comercio } = req.body;
+
+  try {
+    console.log("ANTES SIGNUP SUPABASE");
+
+    const { data: authData, error: authError } =
+      await supabase.auth.signUp({
+        email: mail,
+        password: password,
+      });
+
+    console.log("RESPUESTA SIGNUP:");
+    console.log(authData);
+    console.log(authError);
+
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
+
+    let dbError;
+
+    // 👉 Usuario / vendedor
+    if (tipo === "usuario") {
+      const { error } = await supabase
+        .from("usuario")
+        .insert([
+          {
+            nombre_usuario: nombre,
+            mail,
+            contrasena: password,
+            verificado: false,
+          },
+        ]);
+
+      dbError = error;
+    }
+
+    // 👉 Consumidor
+    if (tipo === "consumidor") {
+      const { error } = await supabase
+        .from("consumidor")
+        .insert([
+          {
+            nombre,
+            mail,
+            contrasena: password,
+            id_comercio,
+            verificado: false,
+          },
+        ]);
+
+      dbError = error;
+    }
+
+    if (dbError) {
+      return res.status(500).json({ error: dbError.message });
+    }
+
+    console.log("ANTES SENDMAIL");
+
+   const urlVerificacion =
+      `https://pfc-aia.onrender.com/api/auth/verificar?mail=${encodeURIComponent(mail)}&tipo=${tipo}`;
+
+    await sendEmail(
+      mail,
+      "Activá tu cuenta en Emprendify 🚀",
+      plantillaVerificacion(nombre, urlVerificacion)
+    );
+
+    console.log("MAIL ENVIADO");
+
+    return res.status(201).json({
+      message: "Registro exitoso. Revisá tu correo.",
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Error en servidor",
+    });
+  }
+};
 
 // --- 2. LOGIN UNIFICADO (Soporta ambos tipos) ---
 export const loginUsuario = async (req, res) => {
@@ -555,7 +647,7 @@ export const loginUsuario = async (req, res) => {
 
     // 2. Buscar perfil
     const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
-    let query = supabase.from(tabla).select('*').eq('id_auth', authData.user.id);
+    let query = supabase.from(tabla).select('*').eq("mail", mailNormalizado);
 
     if (tipo === 'consumidor') {
       if (!id_comercio) return res.status(400).json({ error: "Falta ID de comercio" });
@@ -581,29 +673,41 @@ export const loginUsuario = async (req, res) => {
 
 // --- 3. VERIFICACIÓN Y REENVÍO ---
 export const verificarCuenta = async (req, res) => {
-    const { token } = req.params;
-    const { tipo } = req.query;
-    const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
-    const idCol = tipo === 'consumidor' ? 'id_consumidor' : 'id_usuario';
+  const { mail, tipo } = req.query;
 
-    try {
-        const { data: user, error } = await supabase.from(tabla)
-            .select('*').eq('token_verificacion', token).single();
+  const tabla = tipo === "consumidor" ? "consumidor" : "usuario";
 
-        if (error || !user || new Date() > new Date(user.token_expiracion)) {
-            return res.status(400).send("<h1>El enlace es inválido o expiró.</h1>");
-        }
+  try {
+    console.log("MAIL:", mail);
+    console.log("TABLA:", tabla);
 
-        await supabase.from(tabla)
-            .update({ verificado: true, token_verificacion: null, token_expiracion: null })
-            .eq(idCol, user[idCol]);
+    const { data, error } = await supabase
+      .from(tabla)
+      .update({ verificado: true })
+      .eq("mail", mail)
+      .select();
 
-        res.redirect(`https://emprendify.vercel.app/login?verificado=true`);
-    } catch (error) {
-        res.status(500).send("Error en la verificación");
+    console.log("UPDATE DATA:", data);
+    console.log("UPDATE ERROR:", error);
+
+    if (error || !data || data.length === 0) {
+      return res.redirect(
+        "https://emprendify.vercel.app/login?error=true"
+      );
     }
-};
 
+    return res.redirect(
+      "https://emprendify.vercel.app/login?verificado=true"
+    );
+
+  } catch (error) {
+    console.log("CATCH:", error);
+
+    return res.redirect(
+      "https://emprendify.vercel.app/login?error=true"
+    );
+  }
+};
 export const reenviarVerificacion = async (req, res) => {
     const { mail, tipo } = req.body;
     const tabla = tipo === 'consumidor' ? 'consumidor' : 'usuario';
@@ -626,4 +730,38 @@ export const reenviarVerificacion = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Error al reenviar" });
     }
+};
+
+export const activarCuenta = async (req, res) => {
+  try {
+    const { mail, tipo } = req.body;
+
+    console.log("ACTIVAR CUENTA");
+    console.log("MAIL:", mail);
+    console.log("TIPO:", tipo);
+
+    const tabla =
+      tipo === "consumidor"
+        ? "consumidor"
+        : "usuario";
+
+    const { data, error } = await supabase
+      .from(tabla)
+      .update({ verificado: true })
+      .eq("mail", mail)
+      .select();
+
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    if (error) {
+      return res.status(500).json({ error });
+    }
+
+    res.json({ ok: true, data });
+
+  } catch (error) {
+    console.log("CATCH:", error);
+    res.status(500).json({ error: "Error servidor" });
+  }
 };

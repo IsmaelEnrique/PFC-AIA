@@ -11,8 +11,8 @@ const router = express.Router();
 
 router.get("/", getUsuarios);
 router.get("/:id", getUsuarioById);
-router.post("/", createUsuario);
-router.post("/login", loginUsuario);
+//router.post("/", createUsuario);
+//router.post("/login", loginUsuario);
 router.put("/perfil", updatePerfilUsuario);
 
 export default router;

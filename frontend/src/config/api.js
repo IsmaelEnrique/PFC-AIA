@@ -16,3 +16,5 @@ export function assetUrl(path = "") {
   if (/^https?:\/\//i.test(path)) return path;
   return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
 }
+console.log("API_BASE_URL:", API_BASE_URL);
+console.log("PROD:", import.meta.env.PROD);

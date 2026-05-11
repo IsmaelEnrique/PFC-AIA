@@ -39,30 +39,25 @@ export const getUsuarioById = async (req, res) => {
 // Crear un nuevo usuario
 export const createUsuario = async (req, res) => {
   try {
-    const { nombre, apellido, mail, contrasena } = req.body;
+    const { nombre, mail, contrasena } = req.body;
 
-    if (!nombre || !apellido || !mail || !contrasena) {
+    if (!nombre || !mail || !contrasena) {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
-    
-    const format = (texto) => texto
-      .trim()
-      .toLowerCase()
-      .replace(/\b\w/g, (l) => l.toUpperCase());
 
-    const nombre_usuario = `${format(apellido)} ${format(nombre)}`;
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
     const result = await pool.query(
       `INSERT INTO usuario (nombre_usuario, mail, contrasena, verificado)
-       VALUES ($1, $2, $3, $4)
+       VALUES ($1, $2, $3, false)
        RETURNING id_usuario, nombre_usuario, mail, verificado`,
-      [nombre_usuario, mail, hashedPassword, false]
+      [nombre, mail, hashedPassword]
     );
 
     res.status(201).json(result.rows[0]);
+
   } catch (error) {
-    console.error("Error al crear usuario:", error);
+    console.error(error);
     res.status(500).json({ error: "Error al crear usuario" });
   }
 };
