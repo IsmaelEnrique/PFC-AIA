@@ -3,6 +3,8 @@ import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from 'react';
 import TiendaLoading from '../components/TiendaLoading';
 import { initMercadoPago, Wallet } from '@mercadopago/sdk-react'; // 👈 Importamos el SDK
+import { API_BASE_URL } from "../config/api";
+import { setDocumentBranding } from "../utils/branding";
 
 // Inicializamos con tu llave pública
 initMercadoPago('APP_USR-ba81a412-c9a4-4d0c-9c9a-d2cce8db9847'); 
@@ -20,6 +22,11 @@ export default function PedidoConfirmado() {
   const [loading, setLoading] = useState(false);
   const [preferenceId, setPreferenceId] = useState(null); // 👈 Estado para el ID de pago
   const [loadingPay, setLoadingPay] = useState(false);
+  const logoComercio = tiendaData?.comercio?.logo
+    ? (tiendaData.comercio.logo.startsWith("http")
+        ? tiendaData.comercio.logo
+        : `${API_BASE_URL}${tiendaData.comercio.logo}`)
+    : null;
 
   const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || 'Metodo');
   const shippingLabel = (id) => ({ 1: 'Retiro en el local', 2: 'Envio por Correo' }[id] || 'Metodo de envio');
@@ -41,6 +48,16 @@ export default function PedidoConfirmado() {
     };
     fetchTienda();
   }, [slug]);
+
+  useEffect(() => {
+    const nombreComercio = tiendaData?.comercio?.nombre_comercio;
+    if (nombreComercio) {
+      setDocumentBranding({
+        title: nombreComercio,
+        favicon: logoComercio,
+      });
+    }
+  }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   // 2. 🚀 Lógica para generar el pago de Mercado Pago
   useEffect(() => {

@@ -1,9 +1,10 @@
-import { apiUrl } from "../config/api";
+import { API_BASE_URL, apiUrl } from "../config/api";
 import { useEffect, useState } from "react";
 import TiendaLoading from "../components/TiendaLoading";
 import { useParams, useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
 import { getConsumidorSession } from "../utils/consumidorSession";
+import { setDocumentBranding } from "../utils/branding";
 // render checkout content without the store template/header
 
 export default function Checkout() {
@@ -20,6 +21,11 @@ export default function Checkout() {
 
   const tipoDiseño = tiendaData?.comercio ? Number(tiendaData.comercio.tipo_diseño) : 1;
   const comercioId = tiendaData?.comercio?.id_comercio;
+  const logoComercio = tiendaData?.comercio?.logo
+    ? (tiendaData.comercio.logo.startsWith("http")
+        ? tiendaData.comercio.logo
+        : `${API_BASE_URL}${tiendaData.comercio.logo}`)
+    : null;
 
   useEffect(() => {
     if (!comercioId) {
@@ -70,6 +76,16 @@ export default function Checkout() {
       .then(u => setSellerUser(u))
       .catch(() => setSellerUser(null));
   }, [tiendaData]);
+
+  useEffect(() => {
+    const nombreComercio = tiendaData?.comercio?.nombre_comercio;
+    if (nombreComercio) {
+      setDocumentBranding({
+        title: nombreComercio,
+        favicon: logoComercio,
+      });
+    }
+  }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || `Pago ${id}`);
 

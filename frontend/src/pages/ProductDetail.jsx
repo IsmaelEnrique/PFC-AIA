@@ -10,6 +10,7 @@ import "../styles/tienda-publica.css";
 import "../styles/product-detail.css";
 import useCart from "../hooks/useCart";
 import { getConsumidorSession, clearConsumidorSession } from "../utils/consumidorSession";
+import { setDocumentBranding } from "../utils/branding";
 
 export default function ProductDetail() {
   const { slug, id } = useParams();
@@ -26,6 +27,11 @@ export default function ProductDetail() {
   const { carrito, setCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const comercioId = tiendaData?.comercio?.id_comercio;
+  const logoComercio = tiendaData?.comercio?.logo
+    ? (tiendaData.comercio.logo.startsWith("http")
+        ? tiendaData.comercio.logo
+        : `${API_BASE_URL}${tiendaData.comercio.logo}`)
+    : null;
 
   useEffect(() => {
     if (!comercioId) {
@@ -126,6 +132,16 @@ export default function ProductDetail() {
 
     if (slug && id) fetchData();
   }, [slug, id]);
+
+  useEffect(() => {
+    const nombreComercio = tiendaData?.comercio?.nombre_comercio;
+    if (nombreComercio) {
+      setDocumentBranding({
+        title: nombreComercio,
+        favicon: logoComercio,
+      });
+    }
+  }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   useEffect(() => {
     setImageLoaded(false);

@@ -8,6 +8,7 @@ import TemplateModern from '../templates/Modern/TemplateModern';
 import AuthModal from '../components/AuthModal';
 import CartModal from '../components/CartModal';
 import { getConsumidorSession, clearConsumidorSession } from '../utils/consumidorSession';
+import { setDocumentBranding } from '../utils/branding';
 
 export default function AllProducts() {
   const { slug } = useParams();
@@ -28,6 +29,11 @@ export default function AllProducts() {
   const navigate = useNavigate();
   const location = useLocation();
   const comercioId = tiendaData?.comercio?.id_comercio;
+  const logoComercio = tiendaData?.comercio?.logo
+    ? (tiendaData.comercio.logo.startsWith('http')
+      ? tiendaData.comercio.logo
+      : `${API_BASE_URL}${tiendaData.comercio.logo}`)
+    : null;
 
   // Initialize selectedCategory from URL query `?cat=` if present
   useEffect(() => {
@@ -92,6 +98,16 @@ export default function AllProducts() {
 
     if (slug) fetchTienda();
   }, [slug]);
+
+  useEffect(() => {
+    const nombreComercio = tiendaData?.comercio?.nombre_comercio;
+    if (nombreComercio) {
+      setDocumentBranding({
+        title: nombreComercio,
+        favicon: logoComercio,
+      });
+    }
+  }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   // initial cart load handled by useCart
 

@@ -9,6 +9,7 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
   }, [productSafe]);
   const [seleccionValores, setSeleccionValores] = useState({});
   const [nombresCaracteristicas, setNombresCaracteristicas] = useState({});
+  const [cargandoNombresCaracteristicas, setCargandoNombresCaracteristicas] = useState(false);
 
   const variantDisplayName = (v) => {
     if (!v) return '';
@@ -40,7 +41,10 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
         const idCaracteristica = String(raw.id_caracteristica ?? raw.id ?? '');
         if (!idCaracteristica) return;
 
-        const nombreCaracteristica = raw.nombre_caracteristica || nombresCaracteristicas[idCaracteristica] || `Caracteristica ${idCaracteristica}`;
+        const nombreCaracteristica =
+          nombresCaracteristicas[idCaracteristica] ||
+          raw.nombre_caracteristica ||
+          'Caracteristica';
         const idValor = String(raw.id_valor ?? `${idCaracteristica}:${raw.nombre_valor || raw.valor || raw.nombre || ''}`);
         const nombreValor = raw.nombre_valor || raw.valor || raw.nombre || '';
 
@@ -79,12 +83,14 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
   useEffect(() => {
     const idProducto = productSafe?.id || productSafe?.id_producto;
     if (!isOpen || !idProducto) {
+      setCargandoNombresCaracteristicas(false);
       setNombresCaracteristicas({});
       return;
     }
 
     const fetchNombres = async () => {
       try {
+        setCargandoNombresCaracteristicas(true);
         const res = await fetch(apiUrl(`/api/productos/${idProducto}/caracteristicas`));
         if (!res.ok) {
           setNombresCaracteristicas({});
@@ -102,6 +108,8 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
         setNombresCaracteristicas(map);
       } catch {
         setNombresCaracteristicas({});
+      } finally {
+        setCargandoNombresCaracteristicas(false);
       }
     };
 
@@ -170,7 +178,11 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
             </div>
           )}
 
-          {!isSingle && caracteristicas.map((carac) => (
+          {!isSingle && cargandoNombresCaracteristicas && variantes.length > 0 && (
+            <p className="variantpicker-hint">Cargando opciones...</p>
+          )}
+
+          {!isSingle && !cargandoNombresCaracteristicas && caracteristicas.map((carac) => (
             <div key={carac.id_caracteristica} className="variantpicker-selector">
               <p className="variantpicker-selector-label">{carac.nombre_caracteristica}</p>
               <div className="variantpicker-selector-options">
@@ -191,15 +203,15 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
             </div>
           ))}
 
-          {!isSingle && !seleccionCompleta && variantes.length > 0 && (
+          {!isSingle && !cargandoNombresCaracteristicas && !seleccionCompleta && variantes.length > 0 && (
             <p className="variantpicker-hint">Selecciona una opción de cada característica.</p>
           )}
 
-          {!isSingle && seleccionCompleta && !varianteSeleccionada && (
+          {!isSingle && !cargandoNombresCaracteristicas && seleccionCompleta && !varianteSeleccionada && (
             <p className="variantpicker-hint error">No existe esa combinación.</p>
           )}
 
-          {!isSingle && varianteSeleccionada && (
+          {!isSingle && !cargandoNombresCaracteristicas && varianteSeleccionada && (
             <div className="variantpicker-item">
               <div className="variantpicker-info">
                 <div className="variantpicker-name">{variantDisplayName(varianteSeleccionada)}</div>

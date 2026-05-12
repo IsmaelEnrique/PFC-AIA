@@ -8,6 +8,7 @@ import TemplateModern from "../templates/Modern/TemplateModern";
 import AuthModal from "../components/AuthModal";
 import "../styles/tienda-publica.css";
 import { getConsumidorSession, clearConsumidorSession } from "../utils/consumidorSession";
+import { setDocumentBranding } from "../utils/branding";
 
 export default function TiendaPublica() {
   const { slug } = useParams();
@@ -37,6 +38,11 @@ export default function TiendaPublica() {
   }, [location]);
 
   const comercioId = tiendaData?.comercio?.id_comercio;
+  const logoComercio = tiendaData?.comercio?.logo
+    ? (tiendaData.comercio.logo.startsWith("http")
+        ? tiendaData.comercio.logo
+        : `${API_BASE_URL}${tiendaData.comercio.logo}`)
+    : null;
 
   // Cargar consumidor de la sesion del comercio actual.
   useEffect(() => {
@@ -83,6 +89,16 @@ export default function TiendaPublica() {
       fetchTienda();
     }
   }, [slug]);
+
+  useEffect(() => {
+    const nombreComercio = tiendaData?.comercio?.nombre_comercio;
+    if (nombreComercio) {
+      setDocumentBranding({
+        title: nombreComercio,
+        favicon: logoComercio,
+      });
+    }
+  }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   // Cart initialization and sync handled by `useCart`
 
