@@ -418,7 +418,7 @@ export default function ActivarComercio() {
                 fontFamily: "monospace",
                 wordBreak: "break-all"
               }}>
-                tudominio.com/tienda/<span style={{ background: "#fff3cd", borderRadius: "4px" }}>{form.slug || "tu-comercio"}</span>
+                emprendify.vercel.app/tienda/<span style={{ background: "#fff3cd", borderRadius: "4px" }}>{form.slug || "tu-comercio"}</span>
               </div>
             </div>
             <input

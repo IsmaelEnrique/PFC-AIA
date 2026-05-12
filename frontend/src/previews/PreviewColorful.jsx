@@ -11,7 +11,7 @@ export default function PreviewColorful({ logo }) {
         )}
         <div className="pc-title"></div>
       </div>
-      <div className="pc-description">Aquí se verá tu descripción</div>
+      {/* <div className="pc-description">Aquí se verá tu descripción</div> */}
       <div className="pc-products">
         <div className="pc-product">
           <div className="pc-product-img"></div>

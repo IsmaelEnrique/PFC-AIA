@@ -1,9 +1,10 @@
 import "./Modern.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import VariantPicker from '../../components/VariantPicker';
 
 export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -37,12 +38,12 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
             src={store.logo} 
             alt="Logo" 
             className="modern-logo-img"
-            style={{ maxHeight: `${store.logoSize || 50}px` }}
-            onClick={() => abrirCarrito && abrirCarrito()}
+            style={{ maxHeight: `${store.logoSize || 50}px`, cursor: 'pointer' }}
+            onClick={() => navigate(`/tienda/${store.comercio?.slug || ''}`)}
             role="button"
           />
         ) : (
-          <div className="modern-logo" onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</div>
+          <div className="modern-logo" onClick={() => navigate(`/tienda/${store.comercio?.slug || ''}`)} style={{cursor:'pointer'}}>{store.name}</div>
         )}
         <nav className="modern-nav">
           <a href="#" onClick={(e) => { e.preventDefault(); onShowAll ? onShowAll() : (onSelectCategory && onSelectCategory(null)); }}>Ver todo</a>
@@ -193,7 +194,7 @@ export default function TemplateModern({ store, agregarAlCarrito, cantidadCarrit
 
           {/* Botón flotante del carrito */}
           {abrirCarrito && (
-            <button className="carrito-flotante carrito-flotante-modern" onClick={abrirCarrito}>
+            <button className="carrito-flotante carrito-flotante-modern" onClick={abrirCarrito} title="Ver carrito">
               🛒
               {cantidadCarrito > 0 && (
                 <span className="carrito-badge">{cantidadCarrito}</span>

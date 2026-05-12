@@ -1,9 +1,10 @@
 import "./Minimal.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import VariantPicker from '../../components/VariantPicker';
 
 export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarrito, abrirCarrito, consumidor, abrirAuth, cerrarSesion, onSelectCategory, selectedCategory, onShowAll, showAll, hideHero = false, hideFooter = false, hideProducts = false, children }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -38,12 +39,12 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
               src={store.logo} 
               alt="Logo" 
               className="minimal-logo-img"
-              style={{ maxHeight: `${store.logoSize || 40}px` }}
-              onClick={() => abrirCarrito && abrirCarrito()}
+              style={{ maxHeight: `${store.logoSize || 40}px`, cursor: 'pointer' }}
+              onClick={() => navigate(`/tienda/${store.comercio?.slug || ''}`)}
               role="button"
             />
           ) : (
-            <h1 onClick={() => abrirCarrito && abrirCarrito()} style={{cursor:'pointer'}}>{store.name}</h1>
+            <h1 onClick={() => navigate(`/tienda/${store.comercio?.slug || ''}`)} style={{cursor:'pointer'}}>{store.name}</h1>
           )}
 
           <nav className="minimal-menu">
@@ -200,7 +201,7 @@ export default function TemplateMinimal({ store, agregarAlCarrito, cantidadCarri
 
           {/* Botón flotante del carrito */}
           {abrirCarrito && (
-            <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito}>
+            <button className="carrito-flotante carrito-flotante-minimal" onClick={abrirCarrito} title="Ver carrito">
               🛒
               {cantidadCarrito > 0 && (
                 <span className="carrito-badge">{cantidadCarrito}</span>
