@@ -2,12 +2,10 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { supabase } from '../config/supabase.js';
 import { sendEmail } from '../utils/mailer.js';
 import { generarFacturaHTML } from '../utils/emailTemplates.js';
-/*
+
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
-*/
-const FRONTEND_URL = "https://emprendify.vercel.app";
-const BACKEND_URL = "https://pfc-aia.onrender.com";
+
 // 1. Notificaciones (Mantenemos tu lógica pero corregimos la consulta)
 export const procesarNotificaciones = async (idPedido) => {
   try {
@@ -49,9 +47,9 @@ export const crearPreferencia = async (req, res) => {
   try {
     // Buscamos el token del dueño de ESTA tienda
     const { data: vendedor, error: errV } = await supabase
-      .from('usuario')
+      .from('comercio')
       .select('mp_access_token')
-      .eq('id_comercio', id_comercio) // Relación directa o vía tabla comercio
+      .eq('id_comercio', id_comercio)
       .single();
 
     if (!vendedor?.mp_access_token) {
@@ -70,12 +68,11 @@ export const crearPreferencia = async (req, res) => {
           currency_id: 'ARS'
         })),
         // 🔑 CLAVE: El external_reference para que recibirConfirmacionPago funcione
-        external_reference: id_pedido, 
-       back_urls: {
-          // El cliente vuelve a través de tu backend para que proceses la lógica
+        external_reference: id_pedido,
+        back_urls: {
           success: `${BACKEND_URL}/api/pagos/callback`,
-          failure: `${FRONTEND_URL}/tienda/${comercioData.slug}/confirmacion?status=error`,
-          pending: `${FRONTEND_URL}/tienda/${comercioData.slug}/confirmacion?status=pending`,
+          failure: `${FRONTEND_URL}`,
+          pending: `${FRONTEND_URL}`,
         },
         auto_return: "approved",
       }
@@ -103,11 +100,11 @@ export const recibirConfirmacionPago = async (req, res) => {
 
       await procesarNotificaciones(idPedido);
 
-      // Redirigimos a la tienda (Ajustá esta URL a la de tu tienda frontend)
-      return res.redirect(`${FRONTEND_URL}/pedido-exitoso?id=${idPedido}`);
+      // Redirigimos a la tienda principal tras el pago aprobado
+      return res.redirect(`${FRONTEND_URL}`);
     }
 
-    res.redirect(`${FRONTEND_URL}/pago-error`);
+    res.redirect(`${FRONTEND_URL}`);
   } catch (error) {
     res.status(500).send("Error interno");
   }

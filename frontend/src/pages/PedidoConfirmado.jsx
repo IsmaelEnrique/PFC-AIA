@@ -84,7 +84,7 @@ export default function PedidoConfirmado() {
          // ... dentro de generarPreferencia ...
 
           // 🔄 CAMBIO: Apuntamos al backend local para testear ahora mismo
-          const response = await fetch("https://pfc-aia.onrender.com/api/pagos/crear-preferencia", {
+          const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

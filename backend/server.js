@@ -111,11 +111,7 @@ const PORT = process.env.PORT || 4000;
 console.log("🔥 VERSION NUEVA SERVER JS CARGADA 🔥");
 console.log("🔥 AUTH ROUTES REGISTRADAS 🔥");
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
-});
 // 8. INICIO DEL SERVIDOR
-// Escuchamos primero para que el API esté disponible de inmediato
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
   
