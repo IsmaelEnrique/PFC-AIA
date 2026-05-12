@@ -2,6 +2,8 @@
 import pool from "../db/db.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:4000";
+const MP_REDIRECT_URI = process.env.MP_REDIRECT_URI || `${BACKEND_URL}/api/mp/callback`;
 
 export const vincularVendedor = async (req, res) => {
   const { code, state } = req.query; // 'code' es el permiso, 'state' es el ID del usuario
@@ -15,7 +17,7 @@ export const vincularVendedor = async (req, res) => {
         client_id: process.env.MP_CLIENT_ID,
         grant_type: "authorization_code",
         code: code,
-        redirect_uri: process.env.MP_REDIRECT_URI,
+        redirect_uri: MP_REDIRECT_URI,
       }),
     });
 
