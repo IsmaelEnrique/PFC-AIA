@@ -73,7 +73,7 @@ export default function MetodosPagoEnvio() {
   const handleVincularMP = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const clientId = "7848395303150296"; 
-    const redirectUri = encodeURIComponent(apiUrl("/api/pagos/callback"));
+    const redirectUri = encodeURIComponent(apiUrl("/api/mp/callback"));
     const state = user.id_usuario;
     window.location.href = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;
   };
