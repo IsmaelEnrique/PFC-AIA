@@ -87,7 +87,7 @@ export default function Checkout() {
     }
   }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
-  const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || `Pago ${id}`);
+  const paymentLabel = (id) => ({ 1: 'Efectivo', /*2: 'Mercado Pago',*/ 3: 'Transferencia' }[id] || `Pago ${id}`);
 
   const variantLabel = (variante) => {
     if (!variante) return '';

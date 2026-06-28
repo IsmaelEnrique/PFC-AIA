@@ -2,12 +2,12 @@ import { apiUrl } from "../config/api";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from 'react';
 import TiendaLoading from '../components/TiendaLoading';
-import { initMercadoPago, Wallet } from '@mercadopago/sdk-react'; // 👈 Importamos el SDK
+// import { initMercadoPago, Wallet } from '@mercadopago/sdk-react'; // 👈 Importamos el SDK
 import { API_BASE_URL } from "../config/api";
 import { setDocumentBranding } from "../utils/branding";
 
 // Inicializamos con tu llave pública
-initMercadoPago('APP_USR-ba81a412-c9a4-4d0c-9c9a-d2cce8db9847'); 
+// initMercadoPago('APP_USR-ba81a412-c9a4-4d0c-9c9a-d2cce8db9847'); 
 
 export default function PedidoConfirmado() {
   const { slug } = useParams();
@@ -20,15 +20,18 @@ export default function PedidoConfirmado() {
 
   const [tiendaData, setTiendaData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [preferenceId, setPreferenceId] = useState(null); // 👈 Estado para el ID de pago
-  const [loadingPay, setLoadingPay] = useState(false);
+  // const [preferenceId, setPreferenceId] = useState(null); // 👈 Estado para el ID de pago
+  // const [loadingPay, setLoadingPay] = useState(false);
   const logoComercio = tiendaData?.comercio?.logo
     ? (tiendaData.comercio.logo.startsWith("http")
         ? tiendaData.comercio.logo
         : `${API_BASE_URL}${tiendaData.comercio.logo}`)
     : null;
 
-  const paymentLabel = (id) => ({ 1: 'Efectivo', 2: 'Mercado Pago', 3: 'Transferencia' }[id] || 'Metodo');
+  const paymentLabel = (id) => ({ 1: 'Efectivo', 
+    //2: 'Mercado Pago', 
+    3: 'Transferencia'
+   }[id] || 'Metodo');
   const shippingLabel = (id) => ({ 1: 'Retiro en el local', 2: 'Envio por Correo' }[id] || 'Metodo de envio');
 
   useEffect(() => {
@@ -60,56 +63,56 @@ export default function PedidoConfirmado() {
   }, [tiendaData?.comercio?.nombre_comercio, logoComercio]);
 
   // 2. 🚀 Lógica para generar el pago de Mercado Pago
-  useEffect(() => {
-    // Si el pedido existe y el método de pago es 2 (Mercado Pago)
-    if (pedido && Number(pedido.id_pago) === 2 && !preferenceId) {
-      const generarPreferencia = async () => {
-        try {
-          setLoadingPay(true);
-          // Dentro de generarPreferencia, cambia la línea del fetch por esta:
-          /*const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id_pedido: pedido.id_pedido, // Enviamos el UUID del pedido recién creado
-              id_comercio: pedido.id_comercio, // Para buscar el token del vendedor
-              items: detalles.map(d => ({
-                nombre: d.producto_nombre || "Producto",
-                precio: d.precio,
-                cantidad: d.cantidad
-              }))
-            })
-          });
-         */
-         // ... dentro de generarPreferencia ...
+  // useEffect(() => {
+  //   // Si el pedido existe y el método de pago es 2 (Mercado Pago)
+  //   if (pedido && Number(pedido.id_pago) === 2 && !preferenceId) {
+  //     const generarPreferencia = async () => {
+  //       try {
+  //         setLoadingPay(true);
+  //         // Dentro de generarPreferencia, cambia la línea del fetch por esta:
+  //         /*const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify({
+  //             id_pedido: pedido.id_pedido, // Enviamos el UUID del pedido recién creado
+  //             id_comercio: pedido.id_comercio, // Para buscar el token del vendedor
+  //             items: detalles.map(d => ({
+  //               nombre: d.producto_nombre || "Producto",
+  //               precio: d.precio,
+  //               cantidad: d.cantidad
+  //             }))
+  //           })
+  //         });
+  //        */
+  //        // ... dentro de generarPreferencia ...
 
-          // 🔄 CAMBIO: Apuntamos al backend local para testear ahora mismo
-          const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id_pedido: pedido.id_pedido,
-              id_comercio: pedido.id_comercio,
-              items: detalles.map(d => ({
-                nombre: d.producto_nombre || "Producto",
-                precio: d.precio,
-                cantidad: d.cantidad
-              }))
-            })
-          });
+  //         // 🔄 CAMBIO: Apuntamos al backend local para testear ahora mismo
+  //         const response = await fetch(apiUrl("/api/pagos/crear-preferencia"), {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify({
+  //             id_pedido: pedido.id_pedido,
+  //             id_comercio: pedido.id_comercio,
+  //             items: detalles.map(d => ({
+  //               nombre: d.producto_nombre || "Producto",
+  //               precio: d.precio,
+  //               cantidad: d.cantidad
+  //             }))
+  //           })
+  //         });
           
-          if (!response.ok) throw new Error("Error en la respuesta del servidor");
-          const data = await response.json();
-          if (data.id) setPreferenceId(data.id);
-        } catch (error) {
-          console.error("Error al crear preferencia:", error);
-        } finally {
-          setLoadingPay(false);
-        }
-      };
-      generarPreferencia();
-    }
-  }, [pedido, detalles, preferenceId]);
+  //         if (!response.ok) throw new Error("Error en la respuesta del servidor");
+  //         const data = await response.json();
+  //         if (data.id) setPreferenceId(data.id);
+  //       } catch (error) {
+  //         console.error("Error al crear preferencia:", error);
+  //       } finally {
+  //         setLoadingPay(false);
+  //       }
+  //     };
+  //     generarPreferencia();
+  //   }
+  // }, [pedido, detalles, preferenceId]);
 
   if (loading || !tiendaData) return <TiendaLoading />;
 
@@ -160,7 +163,7 @@ export default function PedidoConfirmado() {
               <p><strong>Método de pago:</strong> {paymentLabel(pedido.id_pago)}</p>
               
               {/* --- 🚀 AQUÍ VOLVEMOS A AGREGAR LA LÓGICA DEL BOTÓN --- */}
-              {Number(pedido.id_pago) === 2 && (
+              {/* {Number(pedido.id_pago) === 2 && (
                 <div className="mp-button-container" style={{ marginTop: '20px' }}>
                   {preferenceId ? (
                     <>
@@ -173,11 +176,11 @@ export default function PedidoConfirmado() {
                     </p>
                   )}
                 </div>
-              )}
+              )} */}
               {/* --------------------------------------------------- */}
 
               {Number(pedido.id_pago) === 1 && <p>Coordinaremos el pago al momento de la entrega. Esperá nuestro mensaje.</p>}
-              {Number(pedido.id_pago) === 3 && (
+              {Number(pedido.id_pago) === 2 && (
                 <p>Esperamos tu comprobante al número {comercio.contacto || '---'} o por mail {(usuario.mail || comercio.mail) || '---'}.</p>
               )}
 

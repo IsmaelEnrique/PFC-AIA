@@ -1,13 +1,15 @@
-import express from 'express';
-// Importamos los controladores que ya tenés
-import { crearPreferencia, recibirConfirmacionPago } from '../controllers/pagoControllers.js';
+// import express from 'express';
+// // Importamos los controladores que ya tenés
+// import { crearPreferencia, recibirConfirmacionPago } from '../controllers/pagoControllers.js';
 
-const router = express.Router();
+// const router = express.Router();
 
-// 🚀 ESTA ES LA LÍNEA CLAVE: Debe ser .post y coincidir con el nombre
-router.post("/crear-preferencia", crearPreferencia); 
+// // 🚀 ESTA ES LA LÍNEA CLAVE: Debe ser .post y coincidir con el nombre
+// router.post("/crear-preferencia", crearPreferencia); 
 
-// Esta es para cuando vuelve de Mercado Pago
-router.get("/callback", recibirConfirmacionPago);
+// // Esta es para cuando vuelve de Mercado Pago
+// router.get("/callback", recibirConfirmacionPago);
 
-export default router;
+// export default router;
+
+///SEGUN CHAT HAY QUE BORRAR ESTE ARCHIVO

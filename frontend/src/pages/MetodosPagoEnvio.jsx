@@ -9,7 +9,7 @@ export default function MetodosPagoEnvio() {
   // 1. ✅ ESTADO INICIAL: Todo en false para la primera vez
   const [payments, setPayments] = useState({
     efectivo: false,
-    mercadoPago: false,
+    // mercadoPago: false,
     transferencia: false,
   });
 
@@ -19,8 +19,8 @@ export default function MetodosPagoEnvio() {
   });
 
   const [saved, setSaved] = useState(false);
-  const [isMpLinked, setIsMpLinked] = useState(false);
-  const [mpStatus, setMpStatus] = useState(null);
+  // const [isMpLinked, setIsMpLinked] = useState(false);
+  // const [mpStatus, setMpStatus] = useState(null);
 
   const [bank, setBank] = useState({
     cta_bancaria: "",
@@ -35,9 +35,9 @@ export default function MetodosPagoEnvio() {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) return;
 
-    const status = searchParams.get("status");
-    if (status === "success") setMpStatus("¡Mercado Pago vinculado con éxito!");
-    if (status === "error") setMpStatus("Error al vincular Mercado Pago.");
+    // const status = searchParams.get("status");
+    // if (status === "success") setMpStatus("¡Mercado Pago vinculado con éxito!");
+    // if (status === "error") setMpStatus("Error al vincular Mercado Pago.");
 
     fetch(`${API_BASE}/api/comercio/metodos?id_usuario=${user.id_usuario}`)
       .then((res) => res.json())
@@ -45,7 +45,7 @@ export default function MetodosPagoEnvio() {
         if (data && data.payments) {
           setPayments({
             efectivo: !!data.payments.find(p => p === 1),
-            mercadoPago: !!data.payments.find(p => p === 2),
+            // mercadoPago: !!data.payments.find(p => p === 2),
             transferencia: !!data.payments.find(p => p === 3),
           });
           setShipping({
@@ -65,18 +65,18 @@ export default function MetodosPagoEnvio() {
             nombre_banco: u.nombre_banco || "",
             nombre_titular: u.nombre_titular || "",
           });
-          setIsMpLinked(!!u.mp_user_id);
+          // setIsMpLinked(!!u.mp_user_id);
         }
       });
   }, [searchParams]);
 
-  const handleVincularMP = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const clientId = "7848395303150296"; 
-    const redirectUri = encodeURIComponent(apiUrl("/api/mp/callback"));
-    const state = user.id_usuario;
-    window.location.href = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;
-  };
+  // const handleVincularMP = () => {
+  //   const user = JSON.parse(localStorage.getItem("user"));
+  //   const clientId = "7848395303150296"; 
+  //   const redirectUri = encodeURIComponent(apiUrl("/api/mp/callback"));
+  //   const state = user.id_usuario;
+  //   window.location.href = `https://auth.mercadopago.com.ar/authorization?client_id=${clientId}&response_type=code&platform_id=mp&redirect_uri=${redirectUri}&state=${state}`;
+  // };
 
   const handlePaymentChange = (e) => {
     const { name, checked } = e.target;
@@ -87,7 +87,7 @@ export default function MetodosPagoEnvio() {
     const user = JSON.parse(localStorage.getItem("user"));
     const paymentIds = [];
     if (payments.efectivo) paymentIds.push(1);
-    if (payments.mercadoPago) paymentIds.push(2);
+    // if (payments.mercadoPago) paymentIds.push(2);
     if (payments.transferencia) paymentIds.push(3);
 
     const shippingIds = [];
@@ -127,7 +127,7 @@ export default function MetodosPagoEnvio() {
           <button onClick={() => navigate("/admin")} className="btn btn-back">← Volver al panel</button>
         </div>
 
-        {mpStatus && <p className="success-text" style={{ textAlign: "center", fontWeight: "bold" }}>{mpStatus}</p>}
+        {/* {mpStatus && <p className="success-text" style={{ textAlign: "center", fontWeight: "bold" }}>{mpStatus}</p>} */}
 
         <div className="panel">
           <h3>Métodos de pago</h3>
@@ -136,13 +136,13 @@ export default function MetodosPagoEnvio() {
             <span> Efectivo</span>
           </label>
 
-          <label className="checkbox-row">
+          {/* <label className="checkbox-row">
             <input type="checkbox" name="mercadoPago" checked={payments.mercadoPago} onChange={handlePaymentChange} />
             <span> Mercado Pago</span>
-          </label>
+          </label> */}
 
           {/* Bloque Mercado Pago dinámico */}
-          {payments.mercadoPago && (
+          {/* {payments.mercadoPago && (
             <div style={{ marginLeft: "25px", padding: "15px", border: "1px solid #009EE3", borderRadius: "8px", backgroundColor: "#f0f9ff", marginBottom: "15px", marginTop: "10px" }}>
               <p style={{ fontSize: "14px", margin: "0 0 10px 0" }}>
                 {isMpLinked 
@@ -155,7 +155,7 @@ export default function MetodosPagoEnvio() {
                 </button>
               )}
             </div>
-          )}
+          )} */}
 
           <label className="checkbox-row">
             <input type="checkbox" name="transferencia" checked={payments.transferencia} onChange={handlePaymentChange} />

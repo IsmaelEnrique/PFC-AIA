@@ -1,9 +1,11 @@
-import express from "express";
-import { vincularVendedor } from "../controllers/mercadoPagoController.js";
+// import express from "express";
+// import { vincularVendedor } from "../controllers/mercadoPagoController.js";
 
-const router = express.Router();
+// const router = express.Router();
 
-// Esta ruta será: http://localhost:4000/api/pagos/callback
-router.get("/callback", vincularVendedor);
+// // Esta ruta será: http://localhost:4000/api/pagos/callback
+// router.get("/callback", vincularVendedor);
 
-export default router;
+// export default router;
+
+//SEGUN CHAT HAY QUE BORRAR ESTE ARICHIVO

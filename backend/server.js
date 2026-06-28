@@ -17,9 +17,9 @@ import caracteristicaRoutes from "./routes/caracteristica.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import carritoRoutes from "./routes/carrito.routes.js";
 import consumidorRoutes from "./routes/consumidor.routes.js";
-import mercadoPagoRoutes from "./routes/mercadoPago.routes.js";
-import pedidoRoutes from "./routes/pedido.routes.js";
-import pagoRoutes from './routes/pago.routes.js';
+// import mercadoPagoRoutes from "./routes/mercadoPago.routes.js";
+// import pedidoRoutes from "./routes/pedido.routes.js";
+//import pagoRoutes from './routes/pago.routes.js';
 
 // 3. IMPORTS DE UTILIDADES / CONFIG
 import pool from './db/db.js'; 
@@ -87,11 +87,11 @@ app.use("/api/caracteristicas", caracteristicaRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/carrito", carritoRoutes);
 app.use("/api/consumidor", consumidorRoutes);
-app.use("/api/pedidos", pedidoRoutes);
+//app.use("/api/pedidos", pedidoRoutes);
 
 // 🚀 RUTAS DE PAGO UNIFICADAS
-app.use("/api/mp", mercadoPagoRoutes); // Para vinculación (Vendedor)
-app.use('/api/pagos', pagoRoutes);     // Para compras (Cliente)
+// app.use("/api/mp", mercadoPagoRoutes); // Para vinculación (Vendedor)
+// app.use('/api/pagos', pagoRoutes);     // Para compras (Cliente)
 
 // 7. LÓGICA DE MIGRACIONES (Sin cambios, está perfecta)
 const runMigrations = async () => {
