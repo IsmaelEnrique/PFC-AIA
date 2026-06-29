@@ -45,20 +45,35 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendEmail = async (to, subject, html) => {
+export const createEmailSender = (client = resend) => async (to, subject, html, options = {}) => {
   try {
-    const data = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: to,
-      subject: subject,
-      html: html
-    });
+    const senderAddress = options.from || process.env.EMAIL_FROM || process.env.EMAIL_USER || "onboarding@resend.dev";
+    const senderName = options.fromName || process.env.EMAIL_FROM_NAME || "Emprendify";
+    const from = `${senderName} <${senderAddress}>`;
 
-    console.log("✅ Email enviado:", data);
+    const payload = {
+      from,
+      to,
+      subject,
+      html
+    };
+
+    if (options.replyTo) {
+      payload.reply_to = options.replyTo;
+    }
+
+    const data = await client.emails.send(payload);
+
+    console.log(`✅ Email enviado desde ${from}:`, data);
     return { success: true };
 
   } catch (error) {
-    console.error("❌ Error enviando mail:", error);
+    console.error("❌ Error enviando mail:", error?.message || error);
+    if (error?.response?.body) {
+      console.error("Detalles Resend:", error.response.body);
+    }
     throw error;
   }
 };
+
+export const sendEmail = createEmailSender();

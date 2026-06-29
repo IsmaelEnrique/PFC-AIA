@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 
 import pool from '../db/db.js';
 import { toggleEstadoProducto, createVariante } from '../controllers/productoController.js';
-import { crearPedido } from '../controllers/pedidoController.js';
+import { crearPedido, getMailTemplateForEstado } from '../controllers/pedidoController.js';
 import { getTiendaPublica } from '../controllers/comercioController.js';
 import { agregarProducto } from '../controllers/carritoController.js';
+import { createEmailSender } from '../controllers/mailer.controller.js';
 
 function createMockRes() {
   return {
@@ -108,6 +109,48 @@ test('crearPedido devuelve 400 cuando el carrito esta vacio', async () => {
   assert.deepEqual(res.body, { error: 'El carrito está vacío o ya fue procesado.' });
 
   pool.query = originalQuery;
+});
+
+test('getMailTemplateForEstado devuelve el template correcto para estados de pedido', () => {
+  const confirmado = getMailTemplateForEstado('Confirmado');
+  const preparacion = getMailTemplateForEstado('En preparación');
+  const enviado = getMailTemplateForEstado('Enviado');
+
+  assert.ok(confirmado);
+  assert.equal(confirmado.subject, 'Tu pedido fue confirmado');
+  assert.ok(preparacion);
+  assert.equal(preparacion.subject, 'Tu pedido ya está siendo preparado');
+  assert.ok(enviado);
+  assert.equal(enviado.subject, 'Tu pedido fue enviado');
+});
+
+test('sendEmail usa el remitente verificado de Resend y conserva replyTo', async () => {
+  const originalEnv = process.env.EMAIL_FROM;
+  process.env.EMAIL_FROM = 'onboarding@resend.dev';
+
+  const payloads = [];
+  const mockClient = {
+    emails: {
+      send: async (payload) => {
+        payloads.push(payload);
+        return { id: 'msg_123' };
+      },
+    },
+  };
+
+  const sendEmailWithMock = createEmailSender(mockClient);
+
+  await sendEmailWithMock('cliente@test.com', 'Hola', '<p>test</p>', {
+    from: 'onboarding@resend.dev',
+    fromName: 'Mi tienda',
+    replyTo: 'vendedor@test.com',
+  });
+
+  assert.equal(payloads.length, 1);
+  assert.equal(payloads[0].from, 'Mi tienda <onboarding@resend.dev>');
+  assert.equal(payloads[0].reply_to, 'vendedor@test.com');
+
+  process.env.EMAIL_FROM = originalEnv;
 });
 
 test('crearPedido devuelve 400 cuando hay stock insuficiente en variante', async () => {

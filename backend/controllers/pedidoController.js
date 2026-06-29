@@ -61,16 +61,54 @@ function generateOrderNumber() {
   }
 };
 */
+export const getMailTemplateForEstado = (nuevoEstado) => {
+  const estado = String(nuevoEstado || '').trim();
+  const base = (pedidoNumero, nombreCliente) => `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+      <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+      <p>Tu pedido <strong>#${pedidoNumero}</strong> ha cambiado de estado.</p>
+    </div>
+  `;
+
+  const plantillas = {
+    Confirmado: {
+      subject: 'Tu pedido fue confirmado',
+      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya está confirmado. Gracias por tu compra.</p>`
+    },
+    'En preparación': {
+      subject: 'Tu pedido ya está siendo preparado',
+      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Estamos preparando tu pedido para enviarlo pronto.</p>`
+    },
+    Enviado: {
+      subject: 'Tu pedido fue enviado',
+      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya fue despachado y está en camino.</p>`
+    },
+    Entregado: {
+      subject: 'Tu pedido fue entregado',
+      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya fue entregado. Gracias por tu compra.</p>`
+    },
+    Cancelado: {
+      subject: 'Tu pedido fue cancelado',
+      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido fue cancelado. Si necesitás ayuda, contactanos.</p>`
+    }
+  };
+
+  return plantillas[estado] || null;
+};
+
 const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
   try {
-    // 🔍 Buscamos los datos REALES del cliente para este pedido
+    const plantilla = getMailTemplateForEstado(nuevoEstado);
+    if (!plantilla) return;
+
     const result = await pool.query(
       `SELECT p.numero_pedido, p.total, p.id_envio, 
               c.mail AS cliente_mail, c.nombre AS cliente_nombre,
-              com.nombre_comercio
+              com.nombre_comercio, u.mail AS comercio_mail
        FROM pedido p
        JOIN consumidor c ON p.id_consumidor = c.id_consumidor
        JOIN comercio com ON p.id_comercio = com.id_comercio
+       LEFT JOIN usuario u ON com.id_usuario = u.id_usuario
        WHERE p.id_pedido = $1`,
       [id_pedido]
     );
@@ -78,27 +116,34 @@ const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
     const datos = result.rows[0];
 
     if (datos && datos.cliente_mail) {
-      const html = generarMailSeguimiento(
-        { 
-          numero_pedido: datos.numero_pedido, 
-          total: datos.total, 
-          id_envio: datos.id_envio,
-          comercio: { nombre_comercio: datos.nombre_comercio }
-        }, 
-        nuevoEstado, 
-        datos.cliente_nombre
+      const html = plantilla.html(datos.numero_pedido, datos.cliente_nombre);
+      const verifiedFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'onboarding@resend.dev';
+      const fromName = datos.nombre_comercio || 'Emprendify';
+      const replyTo = datos.comercio_mail || undefined;
+
+      console.log('[mail-estado] intentando enviar', {
+        id_pedido,
+        nuevoEstado,
+        to: datos.cliente_mail,
+        from: verifiedFrom,
+        replyTo
+      });
+
+      await sendEmail(
+        datos.cliente_mail,
+        plantilla.subject,
+        html,
+        {
+          from: verifiedFrom,
+          fromName,
+          replyTo
+        }
       );
 
-      // 🚀 ¡CLAVE! Aquí usamos 'datos.cliente_mail', NO 'process.env.EMAIL_USER'
-      await sendEmail(
-        datos.cliente_mail, 
-        `Novedades de tu pedido #${datos.numero_pedido}: ${nuevoEstado}`,
-        html
-      );
-      console.log(`📧 Mail enviado con éxito a: ${datos.cliente_mail}`);
+      console.log(`📧 Mail de estado enviado a: ${datos.cliente_mail} desde ${verifiedFrom}`);
     }
   } catch (error) {
-    console.error("❌ Error enviando mail:", error.message);
+    console.error('❌ Error enviando mail:', error.message);
   }
 };
 
@@ -111,6 +156,10 @@ export const crearPedido = async (req, res) => {
 
     if (!id_carrito || !id_consumidor || !id_comercio || !id_pago || !id_envio) {
       return res.status(400).json({ error: 'Faltan datos requeridos para crear el pedido' });
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[crearPedido] payload', { id_carrito, id_consumidor, id_comercio, id_pago, id_envio, total });
     }
 
     // Obtener precio de envío del comercio y sumarlo al total si corresponde
@@ -130,18 +179,16 @@ export const crearPedido = async (req, res) => {
 
     const numero_pedido = generateOrderNumber();
     const fecha = new Date();
-    const estado = 'En espera';
+    const estado = Number(id_pago) === 1 ? 'Confirmado' : 'En espera';
 
     // Use a transaction: lock cart items, insert pedido, insert detalle_pedido rows, update variant stock, clear carrito.
     await pool.query('BEGIN');
 
-    // Lock rows to avoid duplicate order creation on double-submit/race conditions.
+    // Lock cart rows first to avoid duplicate order creation on double-submit/race conditions.
     const itemsRes = await pool.query(
-      `SELECT mpc.id_producto, mpc.id_variante, mpc.cantidad,
-        COALESCE(NULLIF(mpc.precio_unitario, 0), v.precio, 0) as precio_unitario
-       FROM m_n_prod_carrito mpc
-       LEFT JOIN variante v ON mpc.id_variante = v.id_variante
-       WHERE mpc.id_carrito = $1
+      `SELECT id_producto, id_variante, cantidad, precio_unitario
+       FROM m_n_prod_carrito
+       WHERE id_carrito = $1
        FOR UPDATE`,
       [id_carrito]
     );
@@ -383,7 +430,7 @@ export const actualizarEstadoPedido = async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
 
     // 2. Disparar notificación (aquí se usa la función de arriba)
-    notificarSeguimientoCliente(id_pedido, estado);
+    await notificarSeguimientoCliente(id_pedido, estado);
 
     res.json({ mensaje: 'Estado actualizado', pedido: result.rows[0] });
   } catch (error) {
