@@ -134,7 +134,7 @@ export default function PedidoConfirmado() {
         <p className="pedido-confirmado-intro">
           {esTransferencia
             ? 'Gracias por tu compra. Tu pedido fue creado correctamente en espera hasta que recibamos tu pago. Recibiras por mail las actualizaciones de tu pedido.'
-            : 'Gracias por tu compra. Tu pedido fue creado correctamente y ya quedo confirmado. Recibiras por mail las actualizaciones de tu pedido.'}
+            : 'Gracias por tu compra. Tu pedido fue creado correctamente y ya está confirmado. Recibiras por mail las actualizaciones de tu pedido.'}
         </p>
         {pedido?.numero_pedido && <p className="pedido-confirmado-number"><strong>Numero de pedido:</strong> {pedido.numero_pedido}</p>}
 

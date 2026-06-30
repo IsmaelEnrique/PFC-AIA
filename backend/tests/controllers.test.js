@@ -113,11 +113,14 @@ test('crearPedido devuelve 400 cuando el carrito esta vacio', async () => {
 
 test('getMailTemplateForEstado devuelve el template correcto para estados de pedido', () => {
   const confirmado = getMailTemplateForEstado('Confirmado');
+  const enEspera = getMailTemplateForEstado('En espera');
   const preparacion = getMailTemplateForEstado('En preparación');
   const enviado = getMailTemplateForEstado('Enviado');
 
   assert.ok(confirmado);
   assert.equal(confirmado.subject, 'Tu pedido fue confirmado');
+  assert.ok(enEspera);
+  assert.equal(enEspera.subject, 'Tu pedido está en espera');
   assert.ok(preparacion);
   assert.equal(preparacion.subject, 'Tu pedido ya está siendo preparado');
   assert.ok(enviado);

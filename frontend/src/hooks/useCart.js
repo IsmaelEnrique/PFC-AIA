@@ -31,7 +31,9 @@ export default function useCart({ tiendaData, consumidor }) {
     if (!nombre && caracteristicas.length) nombre = caracteristicas.map(c => c.valor).join(' - ');
     if (!nombre && v.titulo) nombre = v.titulo;
     const precio = v.precio || v.price || null;
-    const displayName = nombre || (caracteristicas.length ? caracteristicas.map(c => c.valor).join(' - ') : `Variante ${id || ''}`);
+    const fallbackName = nombre || (caracteristicas.length ? caracteristicas.map(c => c.valor).join(' - ') : `Variante ${id || ''}`);
+    const isGenericVariant = /^\s*Variante\s*\d+\s*$/i.test(fallbackName);
+    const displayName = isGenericVariant ? 'Producto único' : fallbackName;
     return { id_variante: id, nombre: nombre || displayName, displayName, caracteristicas, precio, __raw: v };
   };
 

@@ -21,6 +21,10 @@ export default function TiendaPublica() {
   const [consumidor, setConsumidor] = useState(null);
   const { carrito, setCarrito, agregarAlCarrito, quitarDelCarrito, actualizarCantidad, vaciarCarrito, calcularSubtotal, calcularTotal, cantidadTotalItems, syncOnLogin } = useCart({ tiendaData, consumidor });
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('');
   const location = useLocation();
   const isFaqPage = location.pathname.endsWith('/preguntas-frecuentes');
 
@@ -194,6 +198,51 @@ export default function TiendaPublica() {
 
   const tipoDiseño = Number(comercio.tipo_diseño);
 
+  // Build search/sort controls and apply to store products
+  const productsWithMeta = storeData.products.map(p => ({
+    ...p
+  }));
+
+  const processed = productsWithMeta
+    .filter(p => {
+      if (!search || String(search).trim() === '') return true;
+      return p.name.toLowerCase().includes(String(search).trim().toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sort === 'price_asc') return (a.effectivePrice || 0) - (b.effectivePrice || 0);
+      if (sort === 'price_desc') return (b.effectivePrice || 0) - (a.effectivePrice || 0);
+      if (sort === 'name_asc') return a.name.localeCompare(b.name);
+      if (sort === 'newest') {
+        const da = a._created_at ? new Date(a._created_at) : null;
+        const db = b._created_at ? new Date(b._created_at) : null;
+        if (da && db) return db - da;
+        return (b.id || 0) - (a.id || 0);
+      }
+      return 0;
+    });
+
+  const pagedProducts = processed.slice((page - 1) * pageSize, page * pageSize);
+
+  const controlsNode = (
+    <div className="controls-wrap">
+      <div className="controls-bar">
+        <input
+          className="control-input"
+          placeholder="Buscar producto..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+        />
+        <select className="control-select" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}>
+          <option value="">Ordenar</option>
+          <option value="price_asc">Precio: menor a mayor</option>
+          <option value="price_desc">Precio: mayor a menor</option>
+          <option value="name_asc">Nombre: A → Z</option>
+          <option value="newest">Más nuevos</option>
+        </select>
+      </div>
+    </div>
+  );
+
   // Manejar login/registro de consumidor
   const handleLogin = async (consumidorData) => {
     console.log('handleLogin (TiendaPublica) invoked with', consumidorData);
@@ -219,7 +268,8 @@ export default function TiendaPublica() {
     if (variante.nombre) return variante.nombre;
     if (variante.nombre_variante) return variante.nombre_variante;
     if (variante.valores && variante.valores.length) return variante.valores.map(v => v.nombre_valor || v.valor || '').filter(Boolean).join(' - ');
-    return `Variante ${variante.id_variante || variante.id || ''}`;
+    const fallback = `Variante ${variante.id_variante || variante.id || ''}`;
+    return /^\s*Variante\s*\d+\s*$/i.test(fallback) ? 'Producto único' : fallback;
   };
 
   const displayProductName = (item) => {
@@ -257,11 +307,16 @@ export default function TiendaPublica() {
       showAll: false
     };
 
+    // Replace store products with processed & paged products so controls affect listing
+    templateProps.store = { ...storeData, products: pagedProducts };
+
+    let templateChildren = controlsNode;
+
     if (isFaqPage) {
       templateProps.onShowAll = () => navigate(`/tienda/${slug}`);
       templateProps.hideHero = true;
       templateProps.hideProducts = true;
-      templateProps.children = (
+      templateChildren = (
         <section style={{ padding: '32px 20px' }}>
           <div style={{ maxWidth: '980px', margin: '0 auto', background: '#fff', border: '1px solid #eceff3', borderRadius: '14px', padding: '24px' }}>
             <h2 style={{ marginTop: 0, marginBottom: '14px' }}>Preguntas frecuentes</h2>
@@ -281,13 +336,13 @@ export default function TiendaPublica() {
 
     switch (tipoDiseño) {
       case 1:
-        return <TemplateMinimal {...templateProps} />;
+        return <TemplateMinimal {...templateProps}>{templateChildren}</TemplateMinimal>;
       case 2:
-        return <TemplateColorful {...templateProps} />;
+        return <TemplateColorful {...templateProps}>{templateChildren}</TemplateColorful>;
       case 3:
-        return <TemplateModern {...templateProps} />;
+        return <TemplateModern {...templateProps}>{templateChildren}</TemplateModern>;
       default:
-        return <TemplateMinimal {...templateProps} />;
+        return <TemplateMinimal {...templateProps}>{templateChildren}</TemplateMinimal>;
     }
   };
 

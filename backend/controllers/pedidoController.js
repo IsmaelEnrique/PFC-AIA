@@ -72,24 +72,58 @@ export const getMailTemplateForEstado = (nuevoEstado) => {
 
   const plantillas = {
     Confirmado: {
-      subject: 'Tu pedido fue confirmado',
-      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya está confirmado. Gracias por tu compra.</p>`
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} confirmado`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> fue confirmado. Te avisaremos si hay cambios en el estado o movimiento del envío.</p>
+        </div>
+      `
+    },
+    'En espera': {
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} - Pago en espera`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> fue creado en espera hasta que recibamos tu pago y el comprobante. Te avisaremos cuando esté confirmado.</p>
+        </div>
+      `
     },
     'En preparación': {
-      subject: 'Tu pedido ya está siendo preparado',
-      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Estamos preparando tu pedido para enviarlo pronto.</p>`
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} en preparación`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> está en preparación. Estamos preparando tu pedido para enviarlo pronto.</p>
+        </div>
+      `
     },
     Enviado: {
-      subject: 'Tu pedido fue enviado',
-      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya fue despachado y está en camino.</p>`
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} enviado`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> fue enviado. Pronto llegará a tu domicilio.</p>
+        </div>
+      `
     },
     Entregado: {
-      subject: 'Tu pedido fue entregado',
-      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido ya fue entregado. Gracias por tu compra.</p>`
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} entregado`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> fue entregado. Gracias por tu compra.</p>
+        </div>
+      `
     },
     Cancelado: {
-      subject: 'Tu pedido fue cancelado',
-      html: (pedidoNumero, nombreCliente) => `${base(pedidoNumero, nombreCliente)}<p>Tu pedido fue cancelado. Si necesitás ayuda, contactanos.</p>`
+      subject: (pedidoNumero) => `Pedido #${pedidoNumero} cancelado`,
+      html: (pedidoNumero, nombreCliente) => `
+        <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+          <h2 style="margin-bottom: 8px;">Hola ${nombreCliente || 'cliente'}!</h2>
+          <p>Tu pedido <strong>#${pedidoNumero}</strong> fue cancelado. Si necesitás ayuda, contactanos.</p>
+        </div>
+      `
     }
   };
 
@@ -121,6 +155,8 @@ const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
       const fromName = datos.nombre_comercio || 'Emprendify';
       const replyTo = datos.comercio_mail || undefined;
 
+      const subject = typeof plantilla.subject === 'function' ? plantilla.subject(datos.numero_pedido) : plantilla.subject;
+
       console.log('[mail-estado] intentando enviar', {
         id_pedido,
         nuevoEstado,
@@ -131,7 +167,7 @@ const notificarSeguimientoCliente = async (id_pedido, nuevoEstado) => {
 
       await sendEmail(
         datos.cliente_mail,
-        plantilla.subject,
+        subject,
         html,
         {
           from: verifiedFrom,
@@ -235,6 +271,18 @@ export const crearPedido = async (req, res) => {
     await pool.query('UPDATE carrito SET subtotal = 0 WHERE id_carrito = $1', [id_carrito]);
 
     await pool.query('COMMIT');
+
+    // Notificar al cliente cuando la compra se creó definitivamente.
+    // Efectivo: ya está confirmado. Transferencia: queda en espera hasta recibir el comprobante.
+    if (Number(id_pago) === 1 || Number(id_pago) === 3) {
+      console.log('[crearPedido] disparando notificacion de pedido', { id_pedido: pedidoRow.id_pedido, id_pago, estado });
+      try {
+        // Await the notification so we can log errors and ensure it runs
+        await notificarSeguimientoCliente(pedidoRow.id_pedido, estado);
+      } catch (e) {
+        console.error('[crearPedido] error en notificarSeguimientoCliente:', e?.message || e);
+      }
+    }
 
     // Traer detalles del pedido para la respuesta
     const detallesRes = await pool.query(
@@ -435,5 +483,22 @@ export const actualizarEstadoPedido = async (req, res) => {
     res.json({ mensaje: 'Estado actualizado', pedido: result.rows[0] });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Endpoint de prueba para disparar manualmente la notificación de seguimiento
+export const testNotify = async (req, res) => {
+  const { id_pedido } = req.params;
+  const estado = req.query.estado || 'En espera';
+
+  if (!id_pedido) return res.status(400).json({ error: 'id_pedido es requerido' });
+
+  try {
+    console.log('[testNotify] disparando notificacion manual', { id_pedido, estado });
+    await notificarSeguimientoCliente(Number(id_pedido), estado);
+    return res.json({ mensaje: 'Notificación enviada (o intentada)', id_pedido, estado });
+  } catch (error) {
+    console.error('[testNotify] error:', error?.message || error);
+    return res.status(500).json({ error: 'Error enviando notificación' });
   }
 };

@@ -35,7 +35,7 @@ export default function CartModal({ isOpen, onClose, carrito, cantidadTotalItems
                       <h4>{item.producto.name || (item.producto.nombre)}</h4>
                       {item.variante && (
                         <p className="carrito-item-variante">
-                          {item.variante.caracteristicas ? item.variante.caracteristicas.map(c => c.valor).join(' - ') : item.variante.nombre}
+                          {item.variante.displayName || item.variante.nombre || ''}
                         </p>
                       )}
                       <p className="carrito-item-precio">

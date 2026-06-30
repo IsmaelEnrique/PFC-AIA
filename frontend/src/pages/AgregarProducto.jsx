@@ -395,24 +395,55 @@ export default function AgregarProducto() {
     setCaracteristicasProducto(caracteristicasProducto.filter((_, i) => i !== index));
   };
 
+  const crearClaveVariante = (valores) => {
+    return (Array.isArray(valores) ? valores : [])
+      .filter((v, index, self) => v != null && v !== "" && self.indexOf(v) === index)
+      .join("|");
+  };
+
+  const normalizarValores = (valores) => {
+    return Array.from(new Set((Array.isArray(valores) ? valores : []).filter(v => v != null && v !== "")));
+  };
+
   const generarVariantes = () => {
+    if (productoUnico && variantes.some(v => v.esUnico)) {
+      const continuar = window.confirm(
+        "Estás convirtiendo un producto único en variantes. El precio y stock configurados para el producto único no se copiarán automáticamente a las nuevas variantes. ¿Deseas continuar?"
+      );
+      if (!continuar) {
+        return;
+      }
+    }
+
     setProductoUnico(false);
-    const caracteristicasConValores = caracteristicasProducto.filter(c => c.valores.length > 0);
-    
+
+    const caracteristicasConValores = Array.from(
+      new Map(
+        caracteristicasProducto
+          .filter(c => Array.isArray(c.valores) && c.valores.length > 0)
+          .map(c => [c.id_caracteristica, { ...c, valores: normalizarValores(c.valores) }])
+      ).values()
+    );
+
     if (caracteristicasConValores.length === 0) {
       alert("Selecciona al menos una característica con valores");
       return;
     }
 
-    // Generar combinaciones
     const combinaciones = generarCombinaciones(caracteristicasConValores);
-    
-    const nuevasVariantes = combinaciones.map(combo => ({
-      valores: combo,
-      precio: 0,
-      stock: 0,
-      activo: true,
-    }));
+    const existentes = new Map(variantes.map(v => [crearClaveVariante(v.valores), v]));
+
+    const nuevasVariantes = combinaciones.map(combo => {
+      const clave = crearClaveVariante(combo);
+      const anterior = existentes.get(clave);
+      return {
+        valores: combo,
+        precio: anterior?.precio || 0,
+        stock: anterior?.stock || 0,
+        activo: anterior?.activo ?? true,
+        esUnico: combo.length === 0,
+      };
+    });
 
     setVariantes(nuevasVariantes);
     setShowVariantes(true);
@@ -716,13 +747,14 @@ export default function AgregarProducto() {
                     type="button"
                     className={`btn ${productoUnico ? "btn-primary active" : "btn-primary"}`}
                     onClick={() => {
-                      // Producto único sin variantes - permitir ingreso directo de precio y stock
+                      // Producto único sin variantes - conservar el precio/stock existente si ya está habilitado
+                      const varianteUnica = variantes.find((v) => v.esUnico);
                       setProductoUnico(true);
                       setVariantes([{
                         valores: [],
-                        precio: 0,
-                        stock: 0,
-                        activo: true,
+                        precio: varianteUnica ? varianteUnica.precio : 0,
+                        stock: varianteUnica ? varianteUnica.stock : 0,
+                        activo: varianteUnica ? varianteUnica.activo : true,
                         esUnico: true
                       }]);
                       setShowVariantes(true);
@@ -928,7 +960,11 @@ export default function AgregarProducto() {
 
             {/* Botones */}
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
+              <button
+                type="submit"
+                className={`btn ${idProducto ? "btn-primary-blue" : "btn-primary"}`}
+                disabled={loading}
+              >
                 {loading ? "Guardando..." : (idProducto ? "Actualizar" : "Crear")} Producto
               </button>
               <button
@@ -946,7 +982,7 @@ export default function AgregarProducto() {
       <style>{`
         .panel-page {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          background: #f8fafc;
           padding: 20px;
         }
 
@@ -955,21 +991,22 @@ export default function AgregarProducto() {
           margin: 0 auto;
           background: white;
           border-radius: 12px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
           overflow: hidden;
         }
 
         .panel-title {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #14213d;
           color: white;
-          padding: 30px;
+          padding: 26px 30px;
           margin: 0;
           font-size: 28px;
-          font-weight: 600;
+          font-weight: 700;
+          letter-spacing: 0.2px;
         }
 
         .panel-title .accent {
-          color: #ffd700;
+          color: #fca311;
         }
 
         .panel-content {
@@ -979,19 +1016,18 @@ export default function AgregarProducto() {
         .btn {
           padding: 12px 24px;
           border: none;
-          border-radius: 6px;
+          border-radius: 8px;
           cursor: pointer;
-          font-weight: 500;
-          transition: all 0.3s;
+          font-weight: 600;
+          transition: all 0.2s ease;
           font-size: 14px;
         }
 
         .btn-back {
           background: white;
-          color: #667eea;
-          border: 2px solid #667eea;
+          color: #14213d;
+          border: 2px solid #14213d;
           margin-bottom: 20px;
-          font-weight: 600;
           display: inline-flex;
           align-items: center;
           gap: 8px;
@@ -1000,19 +1036,31 @@ export default function AgregarProducto() {
         }
 
         .btn-back:hover {
-          background: #667eea;
+          background: #14213d;
           color: white;
-          transform: translateX(-3px);
+          transform: translateX(-2px);
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #fca311;
           color: white;
+          border: none;
         }
 
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 8px 20px rgba(252, 163, 17, 0.24);
+        }
+
+        .btn-primary-blue {
+          background: #14213d;
+          color: white;
+          border: none;
+        }
+
+        .btn-primary-blue:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.24);
         }
 
         .btn-primary:disabled {
@@ -1022,12 +1070,13 @@ export default function AgregarProducto() {
         }
 
         .btn-secondary {
-          background: #e0e0e0;
-          color: #333;
+          background: #f5f5f5;
+          color: #14213d;
+          border: 1px solid #e2e8f0;
         }
 
         .btn-secondary:hover {
-          background: #d0d0d0;
+          background: #e2e8f0;
         }
 
         .btn-danger {

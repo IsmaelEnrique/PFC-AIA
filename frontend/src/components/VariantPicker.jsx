@@ -22,7 +22,8 @@ export default function VariantPicker({ isOpen, onClose, product, onSelectVarian
     if (v.valores && Array.isArray(v.valores) && v.valores.length) {
       return v.valores.map(x => x.nombre_valor || x.valor || '').filter(Boolean).join(' - ');
     }
-    return `Variante ${v.id_variante || v.id || ''}`;
+    const fallback = `Variante ${v.id_variante || v.id || ''}`;
+    return /^\s*Variante\s*\d+\s*$/i.test(fallback) ? 'Producto único' : fallback;
   };
 
   const isSingle = variantes.length === 1;

@@ -33,7 +33,7 @@ export default function AdminPanel() {
             Gestión de categorías
           </Link>
 
-          <Link to="/metodos-pago-envio" className="btn btn-secondary">
+          <Link to="/metodos-pago-envio" className="btn btn-secondary wide-btn">
             Métodos de pago y envíos
           </Link>
 

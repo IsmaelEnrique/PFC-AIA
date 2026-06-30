@@ -310,7 +310,7 @@ export default function ProductDetail() {
 
               {varianteSeleccionada && (
                 <div className="variante-item resumen-seleccion">
-                  <div>{varianteSeleccionada.nombre || `Variante ${varianteSeleccionada.id_variante}`}</div>
+                  <div>{(varianteSeleccionada.nombre || '').trim() || (varianteSeleccionada.id_variante ? 'Producto único' : '')}</div>
                   <div className="variante-precio">${parseFloat(varianteSeleccionada.precio).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
                   {Number(varianteSeleccionada.stock) > 0 ? (
                     <button className={addBtnClass} onClick={() => agregarAlCarrito(producto, varianteSeleccionada)}>Agregar al carrito</button>

@@ -56,9 +56,9 @@ export const generarMailSeguimiento = (pedido, nuevoEstado, nombreCliente) => {
       mensaje: 'Lo sentimos, tu pedido ha sido cancelado por el comercio. Si tenés dudas, contactate con ellos.'
     },
     'Confirmado': {
-      titulo: '¡Pedido Confirmado!',
+      titulo: 'Pedido Confirmado',
       color: '#38a169',
-      mensaje: '¡Buenas noticias! Tu pago fue verificado y el pedido ya está confirmado.'
+      mensaje: 'Tu pedido está confirmado. Te avisaremos si hay cambios en el estado o movimiento del envío.'
     },
     'En espera': {
       titulo: 'Pago en Espera',

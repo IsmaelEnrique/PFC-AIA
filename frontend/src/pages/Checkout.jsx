@@ -91,10 +91,13 @@ export default function Checkout() {
 
   const variantLabel = (variante) => {
     if (!variante) return '';
-    if (variante.caracteristicas && Array.isArray(variante.caracteristicas) && variante.caracteristicas.length) {
+    const hasCharacteristics = variante.caracteristicas && Array.isArray(variante.caracteristicas) && variante.caracteristicas.length;
+    if (hasCharacteristics) {
       return variante.caracteristicas.map(c => c.valor).join(' - ');
     }
-    return variante.nombre || variante.displayName || '';
+    const label = variante.nombre || variante.displayName || '';
+    const isGenericVariant = /^\s*Variante\s*\d+\s*$/i.test(label);
+    return isGenericVariant ? 'Producto único' : label;
   };
 
   const handleConfirm = async () => {
@@ -130,12 +133,20 @@ export default function Checkout() {
     try {
       setSubmittingOrder(true);
       const res = await fetch(apiUrl("/api/pedidos"), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (!res.ok) return alert(data.error || 'Error al crear pedido');
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : { error: await res.text() };
+      if (!res.ok) {
+        const errMessage = data?.error || data?.message || `Error al crear pedido (HTTP ${res.status})`;
+        return alert(errMessage);
+      }
       // success: navigate to confirmation with detalles and comercio info
       navigate(`/tienda/${slug}/pedido/${data.pedido.id_pedido}`, { state: { pedido: data.pedido, detalles: data.detalles, comercio: data.comercio, usuario: sellerUser } });
-    } catch (e) { console.error(e); alert('Error conectando al servidor'); }
-    finally { setSubmittingOrder(false); }
+    } catch (e) {
+      console.error('Error creando pedido:', e);
+      alert('Error conectando al servidor');
+    } finally { setSubmittingOrder(false); }
   };
 
   if (!tiendaData) return <TiendaLoading />;
